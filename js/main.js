@@ -1,0 +1,426 @@
+/* ============================================
+   PRATAP TRAVELS - Main JavaScript
+   ============================================ */
+
+// ---------- Navbar Toggle ----------
+document.addEventListener('DOMContentLoaded', function () {
+  const navToggle = document.getElementById('navToggle');
+  const navMenu = document.getElementById('navMenu');
+
+  if (navToggle && navMenu) {
+    navToggle.addEventListener('click', function () {
+      navMenu.classList.toggle('open');
+    });
+
+    // Close menu when clicking a link
+    navMenu.querySelectorAll('a').forEach(function (link) {
+      link.addEventListener('click', function () {
+        navMenu.classList.remove('open');
+      });
+    });
+  }
+
+  // ---------- Navbar scroll effect & Back to Top ----------
+  const navbar = document.getElementById('navbar');
+  const backToTop = document.getElementById('backToTop');
+  window.addEventListener('scroll', function () {
+    if (window.scrollY > 50) {
+      navbar.style.background = 'rgba(14, 47, 68, 0.98)';
+      navbar.style.boxShadow = '0 2px 20px rgba(0,0,0,0.15)';
+    } else {
+      navbar.style.background = 'rgba(26, 82, 118, 0.95)';
+      navbar.style.boxShadow = 'none';
+    }
+    // Back to top visibility
+    if (backToTop) {
+      if (window.scrollY > 400) {
+        backToTop.classList.add('visible');
+      } else {
+        backToTop.classList.remove('visible');
+      }
+    }
+  });
+  // Back to top click
+  if (backToTop) {
+    backToTop.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  // ---------- Route Filtering ----------
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const routeRows = document.querySelectorAll('#routesBody tr');
+
+  filterBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      // Update active button
+      filterBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+
+      var filter = btn.getAttribute('data-filter');
+
+      routeRows.forEach(function (row) {
+        if (filter === 'all' || row.getAttribute('data-category') === filter) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // ---------- Slider Pause on Hover ----------
+  var sliderTrack = document.getElementById('sliderTrack');
+  if (sliderTrack) {
+    var sliderWrapper = sliderTrack.parentElement;
+    sliderWrapper.addEventListener('mouseenter', function () {
+      sliderTrack.style.animationPlayState = 'paused';
+    });
+    sliderWrapper.addEventListener('mouseleave', function () {
+      sliderTrack.style.animationPlayState = 'running';
+    });
+
+    // ---------- Slider Touch/Swipe Support ----------
+    // Simple and reliable: pause on touch, resume after a short delay
+    sliderWrapper.addEventListener('touchstart', function () {
+      sliderTrack.style.animationPlayState = 'paused';
+    }, { passive: true });
+
+    sliderWrapper.addEventListener('touchend', function () {
+      setTimeout(function () {
+        sliderTrack.style.animationPlayState = 'running';
+      }, 2000);
+    }, { passive: true });
+
+    sliderWrapper.addEventListener('touchcancel', function () {
+      sliderTrack.style.animationPlayState = 'running';
+    }, { passive: true });
+  }
+
+  // ---------- EmailJS Initialization ----------
+  if (typeof emailjs !== 'undefined') {
+    emailjs.init('ApfbQ_yIjOVtMlf7L');
+  }
+
+  // ---------- Floating Book Button & Modal ----------
+  var floatingBookBtn = document.getElementById('floatingBookBtn');
+  var bookingModal = document.getElementById('bookingModal');
+  var modalClose = document.getElementById('modalClose');
+
+  if (floatingBookBtn && bookingModal) {
+    floatingBookBtn.addEventListener('click', function () {
+      bookingModal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    });
+
+    if (modalClose) {
+      modalClose.addEventListener('click', function () {
+        bookingModal.classList.add('hidden');
+        document.body.style.overflow = '';
+      });
+    }
+
+    bookingModal.addEventListener('click', function (e) {
+      if (e.target === bookingModal) {
+        bookingModal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !bookingModal.classList.contains('hidden')) {
+        bookingModal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // ---------- Booking Form with EmailJS ----------
+  var bookingForm = document.getElementById('bookingForm');
+  if (bookingForm) {
+    // Set minimum date to today
+    var dateInput = document.getElementById('bookDate');
+    if (dateInput) {
+      var today = new Date().toISOString().split('T')[0];
+      dateInput.setAttribute('min', today);
+    }
+
+    bookingForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      // Clear previous errors
+      var errors = bookingForm.querySelectorAll('.form-error');
+      errors.forEach(function (el) { el.textContent = ''; });
+      var errorInputs = bookingForm.querySelectorAll('.error');
+      errorInputs.forEach(function (el) { el.classList.remove('error'); });
+
+      var valid = true;
+
+      // Validate name
+      var name = document.getElementById('bookName');
+      if (!name.value.trim()) {
+        document.getElementById('nameError').textContent = 'Please enter your name';
+        name.classList.add('error');
+        valid = false;
+      }
+
+      // Validate phone
+      var phone = document.getElementById('bookPhone');
+      var phoneRegex = /^[6-9]\d{9}$/;
+      if (!phone.value.trim() || !phoneRegex.test(phone.value.replace(/\s/g, ''))) {
+        document.getElementById('phoneError').textContent = 'Enter a valid 10-digit phone number';
+        phone.classList.add('error');
+        valid = false;
+      }
+
+      // Validate email (optional but must be valid if provided)
+      var email = document.getElementById('bookEmail');
+      if (email.value.trim()) {
+        var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email.value)) {
+          document.getElementById('emailError').textContent = 'Enter a valid email address';
+          email.classList.add('error');
+          valid = false;
+        }
+      }
+
+      // Validate route
+      var route = document.getElementById('bookRoute');
+      if (!route.value) {
+        document.getElementById('routeError').textContent = 'Please select a destination';
+        route.classList.add('error');
+        valid = false;
+      }
+
+      // Validate date
+      var date = document.getElementById('bookDate');
+      if (!date.value) {
+        document.getElementById('dateError').textContent = 'Please select a travel date';
+        date.classList.add('error');
+        valid = false;
+      }
+
+      // Validate trip type
+      var type = document.getElementById('bookType');
+      if (!type.value) {
+        document.getElementById('typeError').textContent = 'Please select a trip type';
+        type.classList.add('error');
+        valid = false;
+      }
+
+      if (!valid) return;
+
+      // Build booking details
+      var nameVal = name.value.trim();
+      var phoneVal = phone.value.trim();
+      var emailVal = email.value.trim();
+      var routeVal = route.options[route.selectedIndex].text;
+      var dateVal = date.value;
+      var timeVal = document.getElementById('bookTime').value || 'Not specified';
+      var passengersVal = document.getElementById('bookPassengers').value;
+      var typeVal = type.options[type.selectedIndex].text;
+      var remarksVal = document.getElementById('bookRemarks').value.trim();
+
+      // Show loading state
+      var submitBtn = document.getElementById('submitBtn');
+      if (submitBtn) {
+        submitBtn.textContent = '⏳ Sending...';
+        submitBtn.disabled = true;
+      }
+
+      // Send email via EmailJS
+      var templateParams = {
+        to_email: 'prempratap7455@gmail.com',
+        from_name: nameVal,
+        from_phone: phoneVal,
+        from_email: emailVal || 'Not provided',
+        route: routeVal,
+        travel_date: dateVal,
+        travel_time: timeVal,
+        passengers: passengersVal,
+        trip_type: typeVal,
+        remarks: remarksVal || 'None'
+      };
+
+      if (typeof emailjs !== 'undefined') {
+        emailjs.send('service_jhqm31f', 'template_jhcl557', templateParams)
+          .then(function () {
+            bookingForm.classList.add('hidden');
+            document.getElementById('bookingSuccess').classList.remove('hidden');
+          })
+          .catch(function (error) {
+            console.error('EmailJS send failed:', error);
+            // Fallback: open WhatsApp
+            var msg = '🚗 *PRATAP TRAVELS - Booking Request*\n\n';
+            msg += '👤 *Name:* ' + nameVal + '\n';
+            msg += '📞 *Phone:* ' + phoneVal + '\n';
+            if (emailVal) msg += '📧 *Email:* ' + emailVal + '\n';
+            msg += '🗺 *Route:* ' + routeVal + '\n';
+            msg += '📅 *Date:* ' + dateVal + '\n';
+            msg += '⏰ *Time:* ' + timeVal + '\n';
+            msg += '👥 *Passengers:* ' + passengersVal + '\n';
+            msg += '🏷 *Trip Type:* ' + typeVal + '\n';
+            if (remarksVal) msg += '📝 *Remarks:* ' + remarksVal + '\n';
+            var whatsappUrl = 'https://wa.me/917991182806?text=' + encodeURIComponent(msg);
+            bookingForm.classList.add('hidden');
+            document.getElementById('bookingSuccess').classList.remove('hidden');
+            window.open(whatsappUrl, '_blank');
+          })
+          .finally(function () {
+            if (submitBtn) {
+              submitBtn.textContent = '🚗 Submit Booking Request';
+              submitBtn.disabled = false;
+            }
+          });
+      } else {
+        console.error('EmailJS library not loaded. If you opened this file directly (file://), serve it via HTTP instead.');
+        // EmailJS not loaded: fallback to WhatsApp
+        var fallbackMsg = '🚗 *PRATAP TRAVELS - Booking Request*\n\n';
+        fallbackMsg += '👤 *Name:* ' + nameVal + '\n';
+        fallbackMsg += '📞 *Phone:* ' + phoneVal + '\n';
+        if (emailVal) fallbackMsg += '📧 *Email:* ' + emailVal + '\n';
+        fallbackMsg += '🗺 *Route:* ' + routeVal + '\n';
+        fallbackMsg += '📅 *Date:* ' + dateVal + '\n';
+        fallbackMsg += '⏰ *Time:* ' + timeVal + '\n';
+        fallbackMsg += '👥 *Passengers:* ' + passengersVal + '\n';
+        fallbackMsg += '🏷 *Trip Type:* ' + typeVal + '\n';
+        if (remarksVal) fallbackMsg += '📝 *Remarks:* ' + remarksVal + '\n';
+        var fallbackUrl = 'https://wa.me/917991182806?text=' + encodeURIComponent(fallbackMsg);
+        bookingForm.classList.add('hidden');
+        document.getElementById('bookingSuccess').classList.remove('hidden');
+        window.open(fallbackUrl, '_blank');
+        if (submitBtn) {
+          submitBtn.textContent = '🚗 Submit Booking Request';
+          submitBtn.disabled = false;
+        }
+      }
+    });
+  }
+
+  // ---------- Drag & Drop Upload ----------
+  var uploadArea = document.getElementById('uploadArea');
+  if (uploadArea) {
+    uploadArea.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#2980b9';
+      uploadArea.style.background = '#f0f7ff';
+    });
+
+    uploadArea.addEventListener('dragleave', function () {
+      uploadArea.style.borderColor = '#d0d7de';
+      uploadArea.style.background = '';
+    });
+
+    uploadArea.addEventListener('drop', function (e) {
+      e.preventDefault();
+      uploadArea.style.borderColor = '#d0d7de';
+      uploadArea.style.background = '';
+      if (e.dataTransfer.files.length > 0) {
+        displayUploadedFiles(e.dataTransfer.files);
+      }
+    });
+  }
+});
+
+// ---------- Google Sign-In (Mock) ----------
+function handleGoogleSignIn() {
+  // Simulate Google Sign-In with a mock user
+  var mockUser = {
+    name: 'Guest User',
+    email: 'guest@prataptravels.com',
+    initial: 'G'
+  };
+
+  // In production, replace with actual Google Sign-In API
+  // gapi.load('auth2', function() { ... });
+
+  document.getElementById('authSection').classList.add('hidden');
+  document.getElementById('dashboardSection').classList.remove('hidden');
+
+  document.getElementById('userName').textContent = mockUser.name;
+  document.getElementById('userEmail').textContent = mockUser.email;
+  document.getElementById('userAvatar').textContent = mockUser.initial;
+
+  // Store login state
+  sessionStorage.setItem('pt_logged_in', 'true');
+  sessionStorage.setItem('pt_user', JSON.stringify(mockUser));
+}
+
+// ---------- Logout ----------
+function handleLogout() {
+  sessionStorage.removeItem('pt_logged_in');
+  sessionStorage.removeItem('pt_user');
+
+  document.getElementById('authSection').classList.remove('hidden');
+  document.getElementById('dashboardSection').classList.add('hidden');
+}
+
+// ---------- Check login state on page load ----------
+document.addEventListener('DOMContentLoaded', function () {
+  if (sessionStorage.getItem('pt_logged_in') === 'true') {
+    var user = JSON.parse(sessionStorage.getItem('pt_user'));
+    if (user && document.getElementById('authSection')) {
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+      document.getElementById('userName').textContent = user.name;
+      document.getElementById('userEmail').textContent = user.email;
+      document.getElementById('userAvatar').textContent = user.initial;
+    }
+  }
+});
+
+// ---------- File Upload ----------
+function handleFileUpload(event) {
+  var files = event.target.files;
+  if (files.length > 0) {
+    displayUploadedFiles(files);
+  }
+}
+
+function displayUploadedFiles(files) {
+  var container = document.getElementById('uploadedFiles');
+  if (!container) return;
+
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var div = document.createElement('div');
+    div.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f0f7ff;border-radius:8px;margin-bottom:8px;font-size:0.9rem;';
+    div.innerHTML = '<span>📎</span><span>' + escapeHtml(file.name) + '</span><span style="margin-left:auto;color:#27ae60;font-weight:700;">✓ Uploaded</span>';
+    container.appendChild(div);
+  }
+}
+
+function escapeHtml(text) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
+// ---------- Open Booking Modal (called from onclick handlers) ----------
+function openBookingModal() {
+  var modal = document.getElementById('bookingModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+// ---------- Reset Booking Form ----------
+function resetBookingForm() {
+  var form = document.getElementById('bookingForm');
+  var success = document.getElementById('bookingSuccess');
+  if (form && success) {
+    form.reset();
+    form.classList.remove('hidden');
+    success.classList.add('hidden');
+    var errors = form.querySelectorAll('.form-error');
+    errors.forEach(function (el) { el.textContent = ''; });
+    var errorInputs = form.querySelectorAll('.error');
+    errorInputs.forEach(function (el) { el.classList.remove('error'); });
+  }
+  var modal = document.getElementById('bookingModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+}
