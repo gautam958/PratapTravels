@@ -321,29 +321,34 @@ PratapTravels/
    ```
 4. Access admin dashboard at `http://localhost:8000/visitors.html`
 
-### Configuration
+### Configuration (`config.js`)
 
-Configuration is managed in two ways:
-
-**Production (Azure Static Web Apps):**
-Config values are served via the `/api/config` Azure Function endpoint. Set these **environment variables** in Azure Portal → Static Web App → Configuration → Application settings:
-
-| Variable | Description |
-|----------|-------------|
-| `AZURE_FUNCTION_URL` | Azure Function API URL for visitor tracking |
-| `AZURE_FUNCTION_KEY` | Function key for API access |
-| `GOOGLE_CLIENT_ID` | Google OAuth 2.0 Client ID |
-| `ALLOWED_EMAILS` | Comma-separated list of authorized admin emails |
-| `SITE_NAME` | Website name |
-| `SITE_URL` | Website URL |
-
-**Local Development:**
 Copy `config.example.js` to `config.js` and fill in your values. `config.js` is gitignored and will not be committed.
 
 ```bash
 cp config.example.js config.js
 # Edit config.js with your values
 ```
+
+```javascript
+var PT_CONFIG = {
+  // Azure Function API
+  AZURE_FUNCTION_URL: 'https://communication-fn.azurewebsites.net/api/visitors',
+  AZURE_FUNCTION_KEY: 'YOUR_FUNCTION_KEY_HERE',
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+
+  // Allowed admin emails
+  ALLOWED_EMAILS: ['your@email.com'],
+
+  // Website info
+  SITE_NAME: 'Pratap Travels',
+  SITE_URL: 'https://agreeable-meadow-041d69800.7.azurestaticapps.net'
+};
+```
+
+> **Note:** `config.js` is gitignored. Keep your actual values local only. The visitor tracking API (`communication-fn`) is a separate Azure Function App, so environment variables set in the Azure Static Web Apps portal are **not** accessible from browser JavaScript.
 
 ### Adding New Routes
 1. Add a photo to `images/routes/`
@@ -397,9 +402,7 @@ This site is deployed to **Azure Static Web Apps** with automatic CI/CD via GitH
 1. Create an Azure Static Web App in the [Azure Portal](https://portal.azure.com)
 2. Connect it to this GitHub repository
 3. Add the secret `AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_MEADOW_041D69800` to your GitHub repository
-4. Set **environment variables** in Azure Portal → Static Web App → Configuration → Application settings:
-   - `AZURE_FUNCTION_URL`, `AZURE_FUNCTION_KEY`, `GOOGLE_CLIENT_ID`, `ALLOWED_EMAILS`, `SITE_NAME`, `SITE_URL`
-5. Push to `main` to trigger deployment
+4. Push to `main` to trigger deployment
 
 ### Azure Function CORS
 Make sure the Azure Function allows your domain in the `allowedOrigins` array:

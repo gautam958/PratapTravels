@@ -1,25 +1,7 @@
 /* ============================================
    PRATAP TRAVELS - Configuration Template
+   Copy this file to config.js and fill in values
    ============================================ */
-
-/*
- * CONFIGURATION APPROACH:
- *
- * Production (Azure Static Web Apps):
- *   Config values are served via the /api/config Azure Function endpoint.
- *   Set these environment variables in Azure Portal → Static Web App → Configuration → Application settings:
- *
- *     AZURE_FUNCTION_URL  = https://communication-fn.azurewebsites.net/api/visitors
- *     AZURE_FUNCTION_KEY  = your-function-key
- *     GOOGLE_CLIENT_ID    = your-client-id.apps.googleusercontent.com
- *     ALLOWED_EMAILS      = email1@gmail.com,email2@gmail.com
- *     SITE_NAME           = Pratap Travels
- *     SITE_URL            = https://agreeable-meadow-041d69800.7.azurestaticapps.net
- *
- * Local Development:
- *   Copy this file to config.js and fill in your values.
- *   config.js is gitignored and will not be committed.
- */
 
 var PT_CONFIG = {
   // Azure Function API for visitor tracking

@@ -528,33 +528,6 @@ var PT_VISITOR_ID_KEY = "pt_vid";
 var VISITOR_RECORDS_KEY = "pt_visitor_records";
 var MAX_VISITOR_RECORDS = 5000;
 
-// ---------- Load Config from Azure Function (or local fallback) ----------
-var _configLoaded = false;
-
-async function loadConfig() {
-  if (_configLoaded) return;
-
-  // Try fetching from Azure Function config endpoint first
-  try {
-    var baseUrl = window.location.origin;
-    var resp = await fetch(baseUrl + "/api/config", { cache: "no-cache" });
-    if (resp.ok) {
-      var serverConfig = await resp.json();
-      if (serverConfig.AZURE_FUNCTION_URL) {
-        if (typeof PT_CONFIG === "undefined") PT_CONFIG = {};
-        Object.assign(PT_CONFIG, serverConfig);
-        _configLoaded = true;
-        return;
-      }
-    }
-  } catch (e) {
-    console.warn("Could not load config from server, using local config:", e.message);
-  }
-
-  // Fallback: config.js is already loaded via <script> tag
-  _configLoaded = true;
-}
-
 // ---------- Stable Visitor ID ----------
 function getVisitorId() {
   var vid = localStorage.getItem(PT_VISITOR_ID_KEY);
@@ -1086,24 +1059,6 @@ function clearVisitorLog() {
 
 // ---------- Init Visitor Dashboard ----------
 document.addEventListener("DOMContentLoaded", async function () {
-  // Load config from server (or local fallback)
-  await loadConfig();
-
-  // Dynamically set Google Client ID from server config (if different from default)
-  if (typeof PT_CONFIG !== "undefined" && PT_CONFIG.GOOGLE_CLIENT_ID) {
-    var gIdOnload = document.getElementById("g_id_onload");
-    if (gIdOnload && !gIdOnload.getAttribute("data-client_id")) {
-      gIdOnload.setAttribute("data-client_id", PT_CONFIG.GOOGLE_CLIENT_ID);
-    }
-    // Re-initialize Google Identity Services with the correct Client ID
-    if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
-      google.accounts.id.initialize({
-        client_id: PT_CONFIG.GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredentialResponse,
-      });
-    }
-  }
-
   // Only init dashboard if we're on the visitors page
   if (document.getElementById("visitorTableBody")) {
     // Try fetching fresh data from Azure Function API
