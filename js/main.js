@@ -360,11 +360,27 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ---------- Google Sign-In ----------
-// Uses Google Identity Services (GIS) library for OAuth 2.0
 function handleGoogleSignIn() {
-  // Check if Google Identity Services is loaded
   if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
-    google.accounts.id.prompt();
+    // Initialize Google ID configuration if it wasn't automatically initialized
+    google.accounts.id.initialize({
+      client_id:
+        "529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com",
+      callback: handleGoogleCredentialResponse,
+      use_fedcm_for_prompt: false, // Continues to disable FedCM inside Incognito
+    });
+
+    // 1. Try to display the overlay prompt
+    google.accounts.id.prompt((notification) => {
+      if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+        console.warn(
+          "One-tap prompt skipped or blocked in Incognito. Triggering pop-up selector directly.",
+        );
+
+        // 2. Fallback: If the overlay prompt is blocked by the browser, force the standard Google Pop-up window
+        google.accounts.id.login();
+      }
+    });
   } else {
     // Fallback: mock sign-in for local development
     console.warn(
