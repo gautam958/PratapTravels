@@ -660,6 +660,7 @@ async function trackVisit() {
 
   if (existing) {
     existing.lastSeen = now;
+    existing.timestamp = now;
     existing.visitCount = (existing.visitCount || 1) + 1;
     existing.device = parsed.device;
     existing.browser = parsed.browser;
