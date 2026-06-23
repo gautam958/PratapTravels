@@ -1660,6 +1660,23 @@ img {
   color: white;
 }
 
+.btn-export {
+  padding: 8px 16px;
+  border: 2px solid var(--success);
+  color: var(--success);
+  background: transparent;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.btn-export:hover {
+  background: var(--success);
+  color: white;
+}
+
 .vid-code {
   font-size: 0.78rem;
   background: #eef2f7;

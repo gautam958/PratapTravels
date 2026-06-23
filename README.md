@@ -2,28 +2,30 @@
 
 A modern, responsive static website for **Pratap Travels** — a private car rental and travel service based in Deoghar, Jharkhand, India.
 
+![Website](https://img.shields.io/badge/Website-agreeable--meadow--041d69800-blue?style=for-the-badge&logo=azure&logoColor=white)
+![Deployed](https://img.shields.io/badge/Deployed-Azure%20Static%20Web%20Apps-green?style=for-the-badge)
+
 ---
 
 ## 📋 Table of Contents
 
 - [Overview](#overview)
 - [Features](#features)
+- [Visitor Tracking](#visitor-tracking)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
-- [File Descriptions](#file-descriptions)
-- [Images Directory](#images-directory)
-- [Key Functionality](#key-functionality)
 - [Setup & Usage](#setup--usage)
 - [Email Integration (EmailJS)](#email-integration-emailjs)
+- [Google OAuth (Admin Dashboard)](#google-oauth-admin-dashboard)
+- [Deployment](#deployment)
 - [Responsive Design](#responsive-design)
 - [Contact Information](#contact-information)
-- [License](#license)
 
 ---
 
 ## Overview
 
-**Pratap Travels** offers private driver services, car rentals, tourism packages, airport transfers, and business travel from Deoghar. The website is a fully static HTML/CSS/JS site — no build tools or frameworks required. Just open `index.html` in a browser.
+**Pratap Travels** offers private driver services, car rentals, tourism packages, airport transfers, and business travel from Deoghar. The website is a fully static HTML/CSS/JS site — no build tools or frameworks required. Deployed to **Azure Static Web Apps** with automatic CI/CD via GitHub Actions.
 
 ---
 
@@ -44,35 +46,223 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **EmailJS Integration** — Sends booking form data via email (with WhatsApp fallback)
 - **Back-to-Top Button** — Appears on scroll, smooth scrolls to top
 - **Favicon** — Custom logo (`prataplog.jpeg`)
+- **Visitor Tracking** — Automatically tracks page views and sends data to Azure Function API
 
 ### 👥 Visitors Dashboard (`visitors.html`)
-- **Google Sign-In UI** (mock — replace with actual OAuth for production)
-- **Dashboard Stats** — Bookings count, confirmed trips, active offers
-- **My Bookings Panel** — Upcoming and past trip cards with status badges
-- **Personalized Offers Panel**
-- **Document Upload** — Drag & drop area for ID proof / documents
-- **Tourist Places Gallery** — Image grid with gradient fallbacks
+- **Google Sign-In** — Real Google OAuth 2.0 via Google Identity Services library
+- **KPI Cards** — Total Visitors, New Today, Returning, Active (30 min), Countries, Pages Visited
+- **Per-visitor deduplication** by anonymous ID
+- **Filterable/sortable table** with search, column headers
+- **Export options:** CSV and JSON file download
+- **Clear data** button to reset frontend records
+- **Data source:** Azure Function API with localStorage fallback
+- Protected by **Google Sign-In** — only authorized Google accounts can access (see `config.js`)
 
 ### 🎨 Design
 - Fully responsive (mobile, tablet, desktop)
 - CSS custom properties (variables) for consistent theming
 - Smooth transitions and hover effects throughout
 - Gold (`#f39c12`) accent color on navy (`#1a5276`) primary
+- AES-GCM encryption module (`crypto.js`) for secure data handling
+
+---
+
+## Visitor Tracking
+
+The site includes a visitor tracking system powered by an **Azure Function API** that records page views and provides an admin dashboard. This uses the same architecture and data structure as [gautam958web.in](https://gautam958web.in).
+
+### How It Works
+- Every page load sends a visitor record to the Azure Function API
+- Each visitor gets a unique anonymous ID (`pt_vid`) stored in localStorage
+- Records include browser, OS, device type, screen size, language, referrer, and page visited
+- The Azure Function enriches records with geolocation (ipinfo.io), country, city, region, timezone, and IP hash
+- New visitors use POST, returning visitors use PUT (with POST fallback if server data was lost)
+
+### Data Structure
+```json
+{
+  "visitorId": "vid_xxxxx",
+  "sello_vid": "vid_xxxxx",
+  "browser": "Chrome",
+  "os": "Windows",
+  "device": "Desktop",
+  "screen": "1920x1080",
+  "language": "en-US",
+  "referrer": "",
+  "page": "/index.html",
+  "user": "",
+  "country": "India",
+  "city": "Deoghar",
+  "region": "Jharkhand",
+  "timezone": "Asia/Kolkata",
+  "ipHash": "...",
+  "firstSeen": "2026-06-23T...",
+  "lastSeen": "2026-06-23T...",
+  "visitCount": 1
+}
+```
+
+### Admin Dashboard (`visitors.html`)
+- **KPI Cards:** Total Visitors, New Today, Returning, Active (30 min), Countries, Pages Visited
+- **Per-visitor deduplication** by anonymous ID
+- **Filterable/sortable table** with search
+- **Export options:** CSV and JSON file download
+- **Clear data** button to reset frontend records
+- **Data refresh:** Fetches fresh records from Azure Function API on load and manual refresh
+
+### Access (Google Sign-In)
+1. Navigate to `visitors.html`
+2. Click **"Sign in with Google"** and authenticate with your Google account
+3. Only emails listed in `config.js` `ALLOWED_EMAILS` are authorized
+4. View visitor analytics and export data
+
+### Azure Function API (`visitors`)
+
+The backend is an **Azure Function** (C# / .NET) that handles visitor data storage. The function URL is:
+
+```
+https://communication-fn.azurewebsites.net/api/visitors?code=<FUNCTION_KEY>
+```
+
+#### Supported HTTP Methods
+
+| Method | Description |
+|--------|-------------|
+| **POST** | Adds a new visitor record. Enriches with geolocation (ipinfo.io), country, city, region, timezone, and IP hash. |
+| **PUT** | Updates an existing visitor by `sello_vid` or `visitorId`. |
+| **GET** | Returns all stored visitor records as a JSON array. |
+
+#### CORS
+
+Requests from the following origins are allowed:
+- `https://gautam958web.in`
+- `https://agreeable-meadow-041d69800.7.azurestaticapps.net`
+
+#### Data Storage
+
+Visitor records are stored in `visitors.json` on the Azure Function's temp filesystem (`Path.GetTempPath()`). This means data may be lost if the function app restarts or scales down.
+
+#### Function Source Code (Reference)
+
+```csharp
+#r "Newtonsoft.Json"
+using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.IO;
+using System.Net.Http;
+using System.Linq;
+
+public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
+{
+    log.LogInformation($"Visitor API function triggered. Method: {req.Method}");
+
+    string origin = req.Headers["Origin"].FirstOrDefault();
+    var allowedOrigins = new[] { 
+        "https://gautam958web.in",
+        "https://agreeable-meadow-041d69800.7.azurestaticapps.net" 
+    };
+
+    if (!allowedOrigins.Contains(origin))
+    {
+        log.LogWarning($"Blocked request from origin: {origin}");
+        return new StatusCodeResult(StatusCodes.Status403Forbidden);
+    }
+
+    string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+    dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
+
+    string filePath = Path.Combine(Path.GetTempPath(), "visitors.json");
+
+    if (!File.Exists(filePath))
+    {
+        File.WriteAllText(filePath, "[]");
+    }
+
+    var visitors = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(filePath));
+
+    if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(req.Method, "PUT", StringComparison.OrdinalIgnoreCase))
+    {
+        string clientIpRaw = req.Headers["X-Forwarded-For"].FirstOrDefault();
+        string clientIp = clientIpRaw?.Split(',')[0].Split(':')[0];
+        log.LogInformation($"Visitor IP: {clientIp}");
+
+        dynamic geoData = null;
+        using (var httpClient = new HttpClient())
+        {
+            try
+            {
+                string url = $"https://ipinfo.io/{clientIp}/json";
+                var response = await httpClient.GetStringAsync(url);
+                geoData = JsonConvert.DeserializeObject(response);
+            }
+            catch (Exception ex)
+            {
+                log.LogWarning($"Geo lookup failed: {ex.Message}");
+            }
+        }
+
+        if (geoData != null && data != null)
+        {
+            data.country = geoData?.country ?? "Unknown";
+            data.city = geoData?.city ?? "Unknown";
+            data.region = geoData?.region ?? "Unknown";
+            data.timezone = geoData?.timezone ?? "Unknown";
+            data.ipHash = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(clientIp ?? "unknown"));
+        }
+
+        if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase))
+        {
+            visitors.Add(data);
+            File.WriteAllText(filePath, JsonConvert.SerializeObject(visitors, Formatting.Indented));
+            return new OkObjectResult(new { message = "Visitor added", id = data.visitorId ?? data.sello_vid });
+        }
+        else if (string.Equals(req.Method, "PUT", StringComparison.OrdinalIgnoreCase))
+        {
+            string visitorId = data?.visitorId ?? data?.sello_vid;
+            if (string.IsNullOrEmpty(visitorId))
+                return new BadRequestObjectResult("visitorId or sello_vid is required for PUT.");
+
+            var existing = visitors.FirstOrDefault(v => v.visitorId == visitorId || v.sello_vid == visitorId);
+            if (existing == null)
+                return new NotFoundObjectResult($"Visitor {visitorId} not found.");
+
+            int index = visitors.IndexOf(existing);
+            visitors[index] = data;
+
+            File.WriteAllText(filePath, JsonConvert.SerializeObject(visitors, Formatting.Indented));
+            return new OkObjectResult(new { message = "Visitor updated", id = visitorId });
+        }
+    }
+    else if (string.Equals(req.Method, "GET", StringComparison.OrdinalIgnoreCase))
+    {
+        return new OkObjectResult(visitors);
+    }
+
+    return new BadRequestObjectResult("Unsupported HTTP method.");
+}
+```
+
+> **⚠️ Note:** This function uses the Azure Function temp filesystem for storage. Data is ephemeral and will be lost on function restart.
 
 ---
 
 ## Tech Stack
 
-| Layer     | Technology               |
-|-----------|--------------------------|
-| Markup    | HTML5                    |
-| Styling   | CSS3 (Custom Properties) |
-| Logic     | Vanilla JavaScript (ES5+)|
-| Email     | EmailJS Browser SDK      |
-| Fonts     | System (`Segoe UI`)      |
-| Icons     | Emoji + Inline SVGs      |
-
-**No frameworks, no build tools, no dependencies.** Pure static files.
+| Category | Technology |
+|----------|------------|
+| **Frontend** | HTML5, CSS3, JavaScript (ES5+/ES6+) |
+| **JS Files** | `main.js` (portfolio + visitor tracking), `crypto.js` (AES-GCM encryption) |
+| **Styling** | CSS Custom Properties, Flexbox, CSS Grid |
+| **Fonts** | System (`Segoe UI`) |
+| **Icons** | Emoji + Inline SVGs |
+| **Backend API** | Azure Functions (Visitor Tracking) |
+| **Auth** | Google Identity Services (OAuth 2.0) |
+| **Email** | EmailJS Browser SDK |
+| **Hosting** | Azure Static Web Apps |
+| **CI/CD** | GitHub Actions |
+| **Version Control** | Git & GitHub |
 
 ---
 
@@ -80,165 +270,78 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 
 ```
 PratapTravels/
-├── index.html              # Main landing page
-├── visitors.html           # Visitor dashboard page
+├── index.html                         # Main landing page
+├── visitors.html                      # Admin visitor dashboard
+├── config.js                          # Azure Function + Google OAuth config
+├── config.example.js                  # Config template (reference)
 ├── css/
-│   └── style.css           # All styles (responsive, animations, components)
+│   └── style.css                      # All styles (responsive, animations, components)
 ├── js/
-│   └── main.js             # All JavaScript (navbar, slider, form, modal, auth)
+│   ├── main.js                        # Portfolio JS + visitor tracking + dashboard
+│   └── crypto.js                      # AES-GCM encryption module (Web Crypto API)
 ├── images/
-│   ├── hero/               # Hero banner + logo
+│   ├── hero/                          # Hero banner + logo
 │   │   ├── pratapHeroImage.jpeg
 │   │   └── prataplog.jpeg
-│   ├── routes/             # Route destination photos
-│   │   ├── babadham.jpeg
-│   │   ├── basukinath.jpeg
-│   │   ├── tarapith-temple.jpg
-│   │   ├── sultanganj1.jpg
-│   │   ├── sultanganj2.jpg
-│   │   ├── ranchi_1577382578748.jpg
-│   │   ├── Patna_Golghar_2.jpg
-│   │   ├── masanjor-dumka.jpeg
-│   │   ├── dhanbad.jpeg
-│   │   ├── trikutparvat.jpg
-│   │   ├── naulakha.jpg
-│   │   ├── aims-deoghar.jpg
-│   │   ├── sarath.jpeg
-│   │   └── budhayi.jpeg
-│   ├── gallery/            # Gallery images (currently empty — uses routes/ as fallback)
-│   └── services/           # Service icons (currently empty — uses emoji fallbacks)
+│   └── routes/                        # Route destination photos
+│       ├── babadham.jpeg
+│       ├── basukinath.jpeg
+│       └── ... (14 route images)
 ├── partials/
-│   └── booking-modal.html  # Booking modal HTML partial (reference)
-├── .gitignore              # Git ignore rules
-└── README.md               # This file
+│   └── booking-modal.html             # Booking modal HTML partial (reference)
+├── .github/workflows/
+│   └── azure-static-web-apps-agreeable-meadow-041d69800.yml
+├── .gitignore
+└── README.md
 ```
-
----
-
-## File Descriptions
-
-### `index.html`
-The main landing page containing:
-- **Navbar** — Fixed top nav with brand logo, links to all sections, mobile toggle
-- **Hero** — Full-viewport hero with background image and CTA buttons
-- **Services** — 3-column service cards
-- **Slider** — Auto-scrolling route image carousel (13 unique images × 2 for seamless loop)
-- **Routes & Pricing** — Filterable table with 16 routes, thumbnails, and pricing
-- **Offers** — 5 promotional cards
-- **Rentals** — Vehicle rental packages
-- **Contact** — Contact info, WhatsApp, social media links
-- **Footer** — Brand, address, social icons
-- **Floating Book Button** — Fixed-position CTA
-- **Booking Modal** — Full booking form with EmailJS integration
-- **EmailJS SDK** — Loaded from CDN
-
-### `visitors.html`
-The visitor dashboard page containing:
-- **Auth Section** — Google Sign-In mock UI
-- **Dashboard** — Stats cards, booking list, offers, document upload, gallery
-- **Session management** via `sessionStorage`
-
-### `css/style.css`
-Single stylesheet (~900 lines) covering:
-- **CSS Custom Properties** — Color palette, shadows, radii, transitions
-- **Reset & Base** — Box-sizing, typography, container
-- **Navbar** — Fixed, glassmorphism, mobile slide-down menu
-- **Hero** — Full-height, background image with gradient overlay, float animation
-- **Buttons** — Primary, outline, secondary, WhatsApp variants
-- **Services** — Card grid with hover lift
-- **Slider** — CSS keyframe `slideLeft` animation, edge fade gradients
-- **Routes Table** — Styled table with popular badges, thumbnail column
-- **Booking Form** — Modal overlay, form groups, error states, success message
-- **Offers** — Gradient cards with decorative circles
-- **Rentals** — Bordered cards with featured badge
-- **Contact** — Dark section, social link circles
-- **Footer** — Dark theme, social icons
-- **Floating Button** — Pulse animation
-- **Back-to-Top** — Scroll-triggered visibility
-- **Visitors Page** — Auth card, dashboard grid, panels, gallery, upload area
-- **Responsive** — 3 breakpoints (992px, 768px, 480px)
-
-### `js/main.js`
-Single JavaScript file (~400 lines) with:
-- **DOMContentLoaded wrapper** — All initialization
-- **Navbar** — Toggle open/close, close on link click, scroll background effect
-- **Back-to-Top** — Toggle visibility at 400px scroll, smooth scroll to top
-- **Route Filtering** — Filter buttons toggle row visibility by `data-category`
-- **Slider** — Pause on hover, touch start/end handlers
-- **EmailJS Init** — `emailjs.init('YOUR_PUBLIC_KEY')`
-- **Modal** — Open (button click), close (X, overlay click, Escape key), body scroll lock
-- **Booking Form Validation** — Name required, phone (Indian 10-digit regex `/^[6-9]\d{9}$/`), email optional validation, route/date/type required
-- **Email Sending** — `emailjs.send()` with formatted template params, WhatsApp fallback on failure
-- **Reset Booking Form** — Clears form, errors, closes modal
-- **File Upload** — Drag & drop handlers, file list display with XSS-safe `escapeHtml()`
-- **Google Sign-In Mock** — Sets mock user in `sessionStorage`, toggles auth/dashboard views
-- **Session Check** — Restores login state on page load
-
----
-
-## Images Directory
-
-| Folder      | Purpose                        | Current Files                                  |
-|-------------|--------------------------------|------------------------------------------------|
-| `hero/`     | Hero banner background + logo  | `pratapHeroImage.jpeg`, `prataplog.jpeg`       |
-| `routes/`   | Destination photos for slider & table | 14 `.jpeg`/`.jpg` files              |
-| `gallery/`  | Visitor gallery (empty)        | Uses `routes/` images as fallback              |
-| `services/` | Service card icons (empty)     | Uses emoji fallbacks (✈️, 🏞️, 💼)              |
-
-**Image naming:** Files should be placed directly in the correct folder. The HTML references specific filenames (e.g., `images/routes/babadham.jpeg`). If an image is missing, the `onerror` handler replaces it with an emoji fallback.
-
----
-
-## Key Functionality
-
-### Route Image Slider
-- CSS `@keyframes slideLeft` animation (40s cycle, infinite loop)
-- Slides duplicated for seamless infinite scroll
-- **Hover** pauses animation
-- **Touch swipe** pauses on touchstart, resumes after 2s on touchend
-- Edge fade gradients on left/right
-
-### Route Filtering
-- Filter buttons: All, Pilgrimage, City, Local
-- Routes have `data-category` attribute: `pilgrimage`, `city`, `local`
-- JavaScript toggles `display: none` on non-matching rows
-
-### Booking Form & Email
-- **Validation:** Name (required), Phone (Indian 10-digit regex), Email (optional, validated if provided), Route (required), Date (required, min=today), Trip Type (required)
-- **EmailJS:** Sends form data to configured Gmail via EmailJS service
-- **WhatsApp Fallback:** If EmailJS fails or isn't configured, opens WhatsApp with pre-filled booking message
-- **Loading State:** Submit button shows "Sending..." during email send
-- **Success State:** Hides form, shows success message with "Book Another Ride" button
-
-### Modal System
-- Floating button triggers modal open
-- Close via: X button, overlay click, Escape key
-- Body scroll locked when modal is open
-- CSS animations: `fadeIn` (overlay), `slideUp` (modal content)
-
-### Visitor Dashboard
-- Mock Google Sign-In (replace with real OAuth for production)
-- `sessionStorage` for login state persistence
-- Drag & drop file upload with visual feedback
-- Booking cards with status badges (Confirmed, Pending, Completed)
 
 ---
 
 ## Setup & Usage
 
-### Quick Start
-1. Clone or download the project
-2. Open `index.html` in any modern browser
-3. That's it — no server required for basic viewing
+### Prerequisites
+- Modern web browser (Chrome, Firefox, Safari, Edge)
 
-### Local Development
-```bash
-# Serve with any static file server
-npx serve .
-# or
-python3 -m http.server 8000
-# or
-php -S localhost:8000
+### Quick Start
+1. Clone the repository
+   ```bash
+   git clone https://github.com/gautam958/PratapTravels.git
+   cd PratapTravels
+   ```
+2. Open directly in browser
+   ```bash
+   open index.html          # macOS
+   xdg-open index.html      # Linux
+   start index.html         # Windows
+   ```
+3. **Or use a local server** (required for visitor tracking and Google Sign-In):
+   ```bash
+   npx serve .
+   # or
+   python3 -m http.server 8000
+   ```
+4. Access admin dashboard at `http://localhost:8000/visitors.html`
+
+### Configuration (`config.js`)
+
+Edit `config.js` with your values:
+
+```javascript
+var PT_CONFIG = {
+  // Azure Function API
+  AZURE_FUNCTION_URL: 'https://communication-fn.azurewebsites.net/api/visitors',
+  AZURE_FUNCTION_KEY: 'YOUR_FUNCTION_KEY_HERE',
+
+  // Google OAuth
+  GOOGLE_CLIENT_ID: 'YOUR_CLIENT_ID.apps.googleusercontent.com',
+
+  // Allowed admin emails
+  ALLOWED_EMAILS: ['your@email.com'],
+
+  // Website info
+  SITE_NAME: 'Pratap Travels',
+  SITE_URL: 'https://agreeable-meadow-041d69800.7.azurestaticapps.net'
+};
 ```
 
 ### Adding New Routes
@@ -253,25 +356,56 @@ php -S localhost:8000
 
 The booking form uses [EmailJS](https://www.emailjs.com/) to send emails directly from the browser (no backend needed).
 
-### Setup Steps
-1. Create a free account at [emailjs.com](https://www.emailjs.com/)
-2. **Email Services** → Add New Service → Connect your Gmail (`prempratap7455@gmail.com`)
-3. **Email Templates** → Create a template with these variables:
-   - `{{from_name}}`, `{{from_phone}}`, `{{from_email}}`
-   - `{{route}}`, `{{travel_date}}`, `{{travel_time}}`
-   - `{{passengers}}`, `{{trip_type}}`, `{{remarks}}`
-4. **Account** → Copy your **Public Key**
-5. In `js/main.js`, replace:
-   - `'YOUR_PUBLIC_KEY'` with your actual public key
-   - `'service_prataptravels'` with your actual service ID
-   - `'template_booking'` with your actual template ID
-
 ### Current Configuration
 - **Recipient:** `prempratap7455@gmail.com`
 - **WhatsApp Fallback Number:** `+91 79911 82806`
-- **Service ID:** `service_jhqm31f` (configured)
-- **Template ID:** `template_jhcl557` (configured)
-- **Public Key:** `ApfbQ_yIjOVtMlf7L` (configured)
+- **Service ID:** `service_jhqm31f`
+- **Template ID:** `template_jhcl557`
+- **Public Key:** `ApfbQ_yIjOVtMlf7L`
+
+---
+
+## Google OAuth (Admin Dashboard)
+
+The visitor dashboard uses **Google Identity Services** (GIS) library for OAuth 2.0 authentication.
+
+### Setup
+1. Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add **Authorized JavaScript origins:**
+   - `https://agreeable-meadow-041d69800.7.azurestaticapps.net`
+   - `http://localhost:8000` (for local development)
+4. Copy the Client ID into:
+   - `config.js` → `GOOGLE_CLIENT_ID`
+   - `visitors.html` → `g_id_onload` div `data-client_id` attribute
+
+### How It Works
+1. User clicks "Sign in with Google" on `visitors.html`
+2. Google Identity Services shows the One Tap prompt
+3. On successful auth, the `handleGoogleCredentialResponse` callback fires
+4. The JWT token is decoded and the email is checked against `ALLOWED_EMAILS`
+5. If authorized, the dashboard loads visitor data from the Azure Function API
+
+---
+
+## Deployment
+
+This site is deployed to **Azure Static Web Apps** with automatic CI/CD via GitHub Actions.
+
+### Setup
+1. Create an Azure Static Web App in the [Azure Portal](https://portal.azure.com)
+2. Connect it to this GitHub repository
+3. Add the secret `AZURE_STATIC_WEB_APPS_API_TOKEN_AGREEABLE_MEADOW_041D69800` to your GitHub repository
+4. Push to `main` to trigger deployment
+
+### Azure Function CORS
+Make sure the Azure Function allows your domain in the `allowedOrigins` array:
+```csharp
+var allowedOrigins = new[] { 
+    "https://gautam958web.in",
+    "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
+};
+```
 
 ---
 
@@ -279,10 +413,10 @@ The booking form uses [EmailJS](https://www.emailjs.com/) to send emails directl
 
 | Breakpoint | Behavior |
 |------------|----------|
-| > 992px    | Full desktop layout, 3-column grids |
-| ≤ 992px    | 2-column grids, smaller typography |
-| ≤ 768px    | Single column, mobile nav menu, route thumbnail column hidden |
-| ≤ 480px    | Full-width buttons, circular floating book button (icon only), modal full-height |
+| > 992px | Full desktop layout, 3-column grids |
+| ≤ 992px | 2-column grids, smaller typography |
+| ≤ 768px | Single column, mobile nav menu, route thumbnail column hidden |
+| ≤ 480px | Full-width buttons, circular floating book button (icon only), modal full-height |
 
 ---
 
@@ -292,10 +426,9 @@ The booking form uses [EmailJS](https://www.emailjs.com/) to send emails directl
 - **Email:** prempratap7455@gmail.com
 - **Address:** Belabagan, Deoghar, Jharkhand, India
 - **WhatsApp:** [Chat on WhatsApp](https://wa.me/917991182806)
-- **Social:** Facebook, Instagram (links placeholder — update with actual URLs)
+- **Website:** [agreeable-meadow-041d69800.7.azurestaticapps.net](https://agreeable-meadow-041d69800.7.azurestaticapps.net)
+- **Social:** [Facebook](https://www.facebook.com/share/1BidrZ1sDY/), [Instagram](https://www.instagram.com/prem_958_)
 
 ---
 
-## License
-
-© 2026 Pratap Travels. All rights reserved.
+**Made with ❤️ by [Gautam Kumar](https://www.linkedin.com/in/gautam958)**

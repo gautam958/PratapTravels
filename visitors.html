@@ -37,7 +37,12 @@
   <section class="auth-section" id="authSection">
     <div class="auth-card">
       <h2>🔒 Admin Access Required</h2>
-      <p>Sign in with Google to view visitor analytics</p>
+      <p>Sign in with an authorized Google account to view visitor analytics</p>
+      <div id="g_id_onload"
+        data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com"
+        data-callback="handleGoogleCredentialResponse"
+        data-auto_prompt="false">
+      </div>
       <button class="google-btn" id="googleSignIn" onclick="handleGoogleSignIn()">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -48,7 +53,7 @@
         Sign in with Google
       </button>
       <div class="auth-divider">or</div>
-      <p style="font-size: 0.85rem; color: #999;">Admin accounts only. Google OAuth coming soon.</p>
+      <p style="font-size: 0.85rem; color: #999;">Admin accounts only. Contact the site owner for access.</p>
     </div>
   </section>
 
@@ -65,8 +70,10 @@
             <div class="user-email" id="userEmail">admin@prataptravels.com</div>
           </div>
         </div>
-        <div style="display:flex;gap:10px;align-items:center;">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
           <button class="btn-refresh" onclick="refreshVisitorData()" title="Refresh data">🔄 Refresh</button>
+          <button class="btn-export" onclick="exportCSV()" title="Export as CSV">📥 CSV</button>
+          <button class="btn-export" onclick="exportJSON()" title="Export as JSON">📥 JSON</button>
           <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
         </div>
       </div>
@@ -160,6 +167,9 @@
     </div>
   </footer>
 
+  <!-- Google Identity Services for OAuth 2.0 -->
+  <script src="https://accounts.google.com/gsi/client" defer></script>
+  <script src="config.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

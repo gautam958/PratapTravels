@@ -322,28 +322,66 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 });
 
-// ---------- Google Sign-In (Mock) ----------
+// ---------- Google Sign-In ----------
+// Uses Google Identity Services (GIS) library for OAuth 2.0
 function handleGoogleSignIn() {
-  // Simulate Google Sign-In with a mock user
-  var mockUser = {
-    name: 'Guest User',
-    email: 'guest@prataptravels.com',
-    initial: 'G'
-  };
+  // Check if Google Identity Services is loaded
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    google.accounts.id.prompt();
+  } else {
+    // Fallback: mock sign-in for local development
+    console.warn('Google Identity Services not loaded. Using mock sign-in for development.');
+    var mockUser = {
+      name: 'Guest User',
+      email: 'guest@prataptravels.com',
+      initial: 'G'
+    };
+    _handleAuthSuccess(mockUser);
+  }
+}
 
-  // In production, replace with actual Google Sign-In API
-  // gapi.load('auth2', function() { ... });
+// Callback from Google Identity Services (credential response)
+function handleGoogleCredentialResponse(response) {
+  try {
+    // Decode the JWT token from Google
+    var payload = JSON.parse(atob(response.credential.split('.')[1]));
+    var email = payload.email || '';
+    var name = payload.name || '';
+    var picture = payload.picture || '';
 
+    // Check if email is in allowed list
+    var allowed = (typeof PT_CONFIG !== 'undefined' && PT_CONFIG.ALLOWED_EMAILS) ? PT_CONFIG.ALLOWED_EMAILS : [];
+    if (allowed.length > 0 && allowed.indexOf(email) === -1) {
+      alert('Access denied. Your email (' + email + ') is not authorized.\n\nContact the site owner for access.');
+      return;
+    }
+
+    var user = {
+      name: name,
+      email: email,
+      picture: picture,
+      initial: name ? name.charAt(0).toUpperCase() : email.charAt(0).toUpperCase()
+    };
+
+    _handleAuthSuccess(user);
+  } catch (e) {
+    console.error('Google credential parsing failed:', e);
+    alert('Google sign-in failed. Please try again.');
+  }
+}
+
+// Common auth success handler
+function _handleAuthSuccess(user) {
   document.getElementById('authSection').classList.add('hidden');
   document.getElementById('dashboardSection').classList.remove('hidden');
 
-  document.getElementById('userName').textContent = mockUser.name;
-  document.getElementById('userEmail').textContent = mockUser.email;
-  document.getElementById('userAvatar').textContent = mockUser.initial;
+  document.getElementById('userName').textContent = user.name;
+  document.getElementById('userEmail').textContent = user.email;
+  document.getElementById('userAvatar').textContent = user.initial;
 
   // Store login state
   sessionStorage.setItem('pt_logged_in', 'true');
-  sessionStorage.setItem('pt_user', JSON.stringify(mockUser));
+  sessionStorage.setItem('pt_user', JSON.stringify(user));
 }
 
 // ---------- Logout ----------
@@ -426,11 +464,11 @@ function resetBookingForm() {
 }
 
 /* ============================================
-   VISITOR TRACKING (Sello-style)
+   VISITOR TRACKING (Azure Function API)
+   Same data structure & logic as gautam958web.in
    ============================================ */
 
 var PT_VISITOR_ID_KEY = 'pt_vid';
-var PT_GEO_CACHE_KEY = 'pt_geo_cache';
 var VISITOR_RECORDS_KEY = 'pt_visitor_records';
 var MAX_VISITOR_RECORDS = 5000;
 
@@ -472,60 +510,19 @@ function parseUA(ua) {
   return { device: device, browser: browser, os: os };
 }
 
-// ---------- Geo Lookup (cached 24h) ----------
-// Multi-source with graceful fallback. Geo APIs block file:// origins;
-// when running locally, only IP (via ipify) is captured. Full geo
-// works when deployed to HTTPS (Azure, GitHub Pages, etc.).
-var GEO_SOURCES = [
-  {
-    url: 'https://ipapi.co/json/',
-    parse: function (d) {
-      return { ip: d.ip || '', city: d.city || '', region: d.region || '', country: d.country_name || d.country || '', timezone: d.timezone || '' };
+// ---------- Get Azure Function URL ----------
+function getVisitorApiUrl() {
+  if (typeof PT_CONFIG !== 'undefined' && PT_CONFIG.AZURE_FUNCTION_URL) {
+    var url = PT_CONFIG.AZURE_FUNCTION_URL;
+    if (PT_CONFIG.AZURE_FUNCTION_KEY && PT_CONFIG.AZURE_FUNCTION_KEY !== 'YOUR_FUNCTION_KEY_HERE') {
+      url += '?code=' + encodeURIComponent(PT_CONFIG.AZURE_FUNCTION_KEY);
     }
-  },
-  {
-    url: 'https://ipwho.is/',
-    parse: function (d) {
-      return { ip: d.ip || '', city: d.city || '', region: d.region || '', country: d.country || '', timezone: (d.timezone && d.timezone.id) || '' };
-    }
+    return url;
   }
-];
-
-var EMPTY_GEO = { ip: '', city: '', region: '', country: '', timezone: '' };
-
-async function lookupGeo() {
-  // Check cache first
-  try {
-    var cached = localStorage.getItem(PT_GEO_CACHE_KEY);
-    if (cached) {
-      var parsed = JSON.parse(cached);
-      if (Date.now() - parsed.ts < 24 * 60 * 60 * 1000) {
-        return parsed.geo;
-      }
-    }
-  } catch (e) { /* ignore */ }
-
-  // Try each geo source until one works
-  for (var i = 0; i < GEO_SOURCES.length; i++) {
-    var src = GEO_SOURCES[i];
-    try {
-      var resp = await fetch(src.url, { signal: AbortSignal.timeout(5000) });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      var data = await resp.json();
-      var geo = src.parse(data);
-      localStorage.setItem(PT_GEO_CACHE_KEY, JSON.stringify({ ts: Date.now(), geo: geo }));
-      return geo;
-    } catch (e) {
-      continue;
-    }
-  }
-
-  // All geo sources failed — this is expected when running from file:// protocol.
-  // Geo data will work when deployed to HTTPS (Azure, GitHub Pages, etc.).
-  return EMPTY_GEO;
+  return null;
 }
 
-// ---------- Read / Write Visitor Records ----------
+// ---------- Read / Write Visitor Records (localStorage fallback) ----------
 function getVisitorRecords() {
   try {
     var data = localStorage.getItem(VISITOR_RECORDS_KEY);
@@ -537,7 +534,6 @@ function getVisitorRecords() {
 
 function saveVisitorRecords(records) {
   try {
-    // Cap at MAX_VISITOR_RECORDS
     if (records.length > MAX_VISITOR_RECORDS) {
       records = records.slice(0, MAX_VISITOR_RECORDS);
     }
@@ -548,12 +544,15 @@ function saveVisitorRecords(records) {
 }
 
 // ---------- Track Visit (fires on every page load) ----------
+// Sends visitor data to Azure Function API (same structure as gautam958web.in)
 async function trackVisit() {
   var vid = getVisitorId();
   var ua = navigator.userAgent;
   var parsed = parseUA(ua);
   var path = window.location.pathname + window.location.hash;
   var referrer = document.referrer || '';
+  var screenRes = window.screen.width + 'x' + window.screen.height;
+  var lang = navigator.language || navigator.userLanguage || '';
   var loggedUser = '';
 
   try {
@@ -564,8 +563,26 @@ async function trackVisit() {
     }
   } catch (e) { /* ignore */ }
 
-  var geo = await lookupGeo();
+  var now = new Date().toISOString();
 
+  // Build visitor record matching gautam958web.in data structure
+  var visitorData = {
+    visitorId: vid,
+    sello_vid: vid,
+    browser: parsed.browser,
+    os: parsed.os,
+    device: parsed.device,
+    screen: screenRes,
+    language: lang,
+    referrer: referrer,
+    page: path,
+    user: loggedUser,
+    firstSeen: now,
+    lastSeen: now,
+    visitCount: 1
+  };
+
+  // Also save to localStorage as fallback
   var records = getVisitorRecords();
   var existing = null;
   for (var i = 0; i < records.length; i++) {
@@ -575,50 +592,86 @@ async function trackVisit() {
     }
   }
 
-  var now = new Date().toISOString();
-
   if (existing) {
-    // Returning visitor — update
     existing.lastSeen = now;
     existing.visitCount = (existing.visitCount || 1) + 1;
-    existing.ip = geo.ip || existing.ip;
     existing.device = parsed.device;
     existing.browser = parsed.browser;
     existing.os = parsed.os;
-    existing.city = geo.city || existing.city;
-    existing.region = geo.region || existing.region;
-    existing.country = geo.country || existing.country;
-    existing.timezone = geo.timezone || existing.timezone;
+    existing.screen = screenRes;
+    existing.language = lang;
     existing.referrer = referrer || existing.referrer;
-    // Add path to pages if not already there
     if (!existing.pages) existing.pages = [];
     if (existing.pages.indexOf(path) === -1) {
       existing.pages.push(path);
       if (existing.pages.length > 20) existing.pages = existing.pages.slice(-20);
     }
     if (loggedUser) existing.user = loggedUser;
+    visitorData = existing;
   } else {
-    // New visitor
-    records.unshift({
-      visitorId: vid,
-      ip: geo.ip,
-      city: geo.city,
-      region: geo.region,
-      country: geo.country,
-      timezone: geo.timezone,
-      device: parsed.device,
-      browser: parsed.browser,
-      os: parsed.os,
-      pages: [path],
-      referrer: referrer,
-      user: loggedUser,
-      firstSeen: now,
-      lastSeen: now,
-      visitCount: 1
-    });
+    visitorData.pages = [path];
+    records.unshift(visitorData);
   }
 
   saveVisitorRecords(records);
+
+  // POST to Azure Function API (fire-and-forget)
+  var apiUrl = getVisitorApiUrl();
+  if (apiUrl) {
+    try {
+      var headers = { 'Content-Type': 'application/json' };
+      var body = JSON.stringify(visitorData);
+
+      // Use PUT if returning visitor (Azure Function updates by sello_vid/visitorId)
+      var method = existing ? 'PUT' : 'POST';
+
+      var resp = await fetch(apiUrl, {
+        method: method,
+        headers: headers,
+        body: body,
+        mode: 'cors'
+      });
+
+      // If PUT fails with 404 (server data lost), fall back to POST
+      if (resp.status === 404 && method === 'PUT') {
+        await fetch(apiUrl, {
+          method: 'POST',
+          headers: headers,
+          body: body,
+          mode: 'cors'
+        });
+      }
+    } catch (e) {
+      console.warn('Visitor API POST failed (stored locally):', e.message);
+    }
+  }
+}
+
+// ---------- Fetch Visitor Records from Azure Function API ----------
+async function fetchVisitorRecordsFromApi() {
+  var apiUrl = getVisitorApiUrl();
+  if (!apiUrl) return null;
+
+  try {
+    var resp = await fetch(apiUrl, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors'
+    });
+
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+
+    if (Array.isArray(data)) {
+      // Cache in localStorage
+      saveVisitorRecords(data);
+      return data;
+    }
+  } catch (e) {
+    console.warn('Visitor API GET failed, using localStorage:', e.message);
+  }
+
+  return null;
 }
 
 /* ============================================
@@ -772,11 +825,78 @@ function renderVisitorTable() {
   });
 }
 
+// ---------- Export as CSV ----------
+function exportCSV() {
+  var records = getVisitorRecords();
+  if (records.length === 0) {
+    showToast('No data to export.', 'error');
+    return;
+  }
+  var headers = ['Visitor ID', 'IP', 'Country', 'State', 'City', 'Device', 'Browser', 'OS', 'Pages', 'Visits', 'First Seen', 'Last Seen', 'User'];
+  var rows = records.map(function (r) {
+    return [
+      r.visitorId || '',
+      r.ip || '',
+      r.country || '',
+      r.region || '',
+      r.city || '',
+      r.device || '',
+      r.browser || '',
+      r.os || '',
+      (r.pages || []).join(' | '),
+      r.visitCount || 1,
+      r.firstSeen || '',
+      r.lastSeen || '',
+      r.user || ''
+    ];
+  });
+  var csv = headers.join(',') + '\n' + rows.map(function (row) {
+    return row.map(function (cell) {
+      var s = String(cell).replace(/"/g, '""');
+      return '"' + s + '"';
+    }).join(',');
+  }).join('\n');
+  downloadFile(csv, 'pratap-travels-visitors.csv', 'text/csv');
+  showToast('CSV exported successfully.', 'success');
+}
+
+// ---------- Export as JSON ----------
+function exportJSON() {
+  var records = getVisitorRecords();
+  if (records.length === 0) {
+    showToast('No data to export.', 'error');
+    return;
+  }
+  var json = JSON.stringify(records, null, 2);
+  downloadFile(json, 'pratap-travels-visitors.json', 'application/json');
+  showToast('JSON exported successfully.', 'success');
+}
+
+// ---------- Download Helper ----------
+function downloadFile(content, filename, mimeType) {
+  var blob = new Blob([content], { type: mimeType });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ---------- Refresh ----------
-function refreshVisitorData() {
+async function refreshVisitorData() {
+  // Try fetching from Azure Function API first
+  var apiRecords = await fetchVisitorRecordsFromApi();
+  if (apiRecords) {
+    showToast('Data refreshed from server.', 'success');
+  }
   renderVisitorTable();
   updateKPIs();
-  showToast('Visitor data refreshed.', 'info');
+  if (!apiRecords) {
+    showToast('Using cached data (API unavailable).', 'info');
+  }
 }
 
 // ---------- Clear Log ----------
@@ -790,9 +910,11 @@ function clearVisitorLog() {
 }
 
 // ---------- Init Visitor Dashboard ----------
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
   // Only init dashboard if we're on the visitors page
   if (document.getElementById('visitorTableBody')) {
+    // Try fetching fresh data from Azure Function API
+    await fetchVisitorRecordsFromApi();
     renderVisitorTable();
     updateKPIs();
   }

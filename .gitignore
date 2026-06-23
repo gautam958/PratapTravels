@@ -59,3 +59,5 @@ coverage/
 # Keep images, but ignore any temp/processed versions
 images/**/*.tmp
 images/**/*.temp
+
+
