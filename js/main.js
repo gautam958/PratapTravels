@@ -424,3 +424,381 @@ function resetBookingForm() {
     document.body.style.overflow = '';
   }
 }
+
+/* ============================================
+   VISITOR TRACKING (Sello-style)
+   ============================================ */
+
+var PT_VISITOR_ID_KEY = 'pt_vid';
+var PT_GEO_CACHE_KEY = 'pt_geo_cache';
+var VISITOR_RECORDS_KEY = 'pt_visitor_records';
+var MAX_VISITOR_RECORDS = 5000;
+
+// ---------- Stable Visitor ID ----------
+function getVisitorId() {
+  var vid = localStorage.getItem(PT_VISITOR_ID_KEY);
+  if (!vid) {
+    vid = 'vid_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 11);
+    localStorage.setItem(PT_VISITOR_ID_KEY, vid);
+  }
+  return vid;
+}
+
+// ---------- Parse User Agent ----------
+function parseUA(ua) {
+  var device = 'Unknown';
+  var browser = 'Unknown';
+  var os = 'Unknown';
+
+  // Device
+  if (/Mobile|Android.*Mobile|iPhone/i.test(ua)) device = 'Mobile';
+  else if (/iPad|Tablet|Android(?!.*Mobile)/i.test(ua)) device = 'Tablet';
+  else device = 'Desktop';
+
+  // Browser
+  if (/Edg\//i.test(ua)) browser = 'Edge';
+  else if (/OPR|Opera/i.test(ua)) browser = 'Opera';
+  else if (/Chrome/i.test(ua) && !/Edg/i.test(ua)) browser = 'Chrome';
+  else if (/Firefox/i.test(ua)) browser = 'Firefox';
+  else if (/Safari/i.test(ua) && !/Chrome/i.test(ua)) browser = 'Safari';
+
+  // OS
+  if (/Windows/i.test(ua)) os = 'Windows';
+  else if (/Mac OS/i.test(ua)) os = 'macOS';
+  else if (/Linux/i.test(ua)) os = 'Linux';
+  else if (/Android/i.test(ua)) os = 'Android';
+  else if (/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+
+  return { device: device, browser: browser, os: os };
+}
+
+// ---------- Geo Lookup (cached 24h) ----------
+// Multi-source with graceful fallback. Geo APIs block file:// origins;
+// when running locally, only IP (via ipify) is captured. Full geo
+// works when deployed to HTTPS (Azure, GitHub Pages, etc.).
+var GEO_SOURCES = [
+  {
+    url: 'https://ipapi.co/json/',
+    parse: function (d) {
+      return { ip: d.ip || '', city: d.city || '', region: d.region || '', country: d.country_name || d.country || '', timezone: d.timezone || '' };
+    }
+  },
+  {
+    url: 'https://ipwho.is/',
+    parse: function (d) {
+      return { ip: d.ip || '', city: d.city || '', region: d.region || '', country: d.country || '', timezone: (d.timezone && d.timezone.id) || '' };
+    }
+  }
+];
+
+var EMPTY_GEO = { ip: '', city: '', region: '', country: '', timezone: '' };
+
+async function lookupGeo() {
+  // Check cache first
+  try {
+    var cached = localStorage.getItem(PT_GEO_CACHE_KEY);
+    if (cached) {
+      var parsed = JSON.parse(cached);
+      if (Date.now() - parsed.ts < 24 * 60 * 60 * 1000) {
+        return parsed.geo;
+      }
+    }
+  } catch (e) { /* ignore */ }
+
+  // Try each geo source until one works
+  for (var i = 0; i < GEO_SOURCES.length; i++) {
+    var src = GEO_SOURCES[i];
+    try {
+      var resp = await fetch(src.url, { signal: AbortSignal.timeout(5000) });
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      var data = await resp.json();
+      var geo = src.parse(data);
+      localStorage.setItem(PT_GEO_CACHE_KEY, JSON.stringify({ ts: Date.now(), geo: geo }));
+      return geo;
+    } catch (e) {
+      continue;
+    }
+  }
+
+  // All geo sources failed — this is expected when running from file:// protocol.
+  // Geo data will work when deployed to HTTPS (Azure, GitHub Pages, etc.).
+  return EMPTY_GEO;
+}
+
+// ---------- Read / Write Visitor Records ----------
+function getVisitorRecords() {
+  try {
+    var data = localStorage.getItem(VISITOR_RECORDS_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveVisitorRecords(records) {
+  try {
+    // Cap at MAX_VISITOR_RECORDS
+    if (records.length > MAX_VISITOR_RECORDS) {
+      records = records.slice(0, MAX_VISITOR_RECORDS);
+    }
+    localStorage.setItem(VISITOR_RECORDS_KEY, JSON.stringify(records));
+  } catch (e) {
+    console.error('Error saving visitor records:', e);
+  }
+}
+
+// ---------- Track Visit (fires on every page load) ----------
+async function trackVisit() {
+  var vid = getVisitorId();
+  var ua = navigator.userAgent;
+  var parsed = parseUA(ua);
+  var path = window.location.pathname + window.location.hash;
+  var referrer = document.referrer || '';
+  var loggedUser = '';
+
+  try {
+    var userStr = sessionStorage.getItem('pt_user');
+    if (userStr) {
+      var user = JSON.parse(userStr);
+      loggedUser = user.email || user.name || '';
+    }
+  } catch (e) { /* ignore */ }
+
+  var geo = await lookupGeo();
+
+  var records = getVisitorRecords();
+  var existing = null;
+  for (var i = 0; i < records.length; i++) {
+    if (records[i].visitorId === vid) {
+      existing = records[i];
+      break;
+    }
+  }
+
+  var now = new Date().toISOString();
+
+  if (existing) {
+    // Returning visitor — update
+    existing.lastSeen = now;
+    existing.visitCount = (existing.visitCount || 1) + 1;
+    existing.ip = geo.ip || existing.ip;
+    existing.device = parsed.device;
+    existing.browser = parsed.browser;
+    existing.os = parsed.os;
+    existing.city = geo.city || existing.city;
+    existing.region = geo.region || existing.region;
+    existing.country = geo.country || existing.country;
+    existing.timezone = geo.timezone || existing.timezone;
+    existing.referrer = referrer || existing.referrer;
+    // Add path to pages if not already there
+    if (!existing.pages) existing.pages = [];
+    if (existing.pages.indexOf(path) === -1) {
+      existing.pages.push(path);
+      if (existing.pages.length > 20) existing.pages = existing.pages.slice(-20);
+    }
+    if (loggedUser) existing.user = loggedUser;
+  } else {
+    // New visitor
+    records.unshift({
+      visitorId: vid,
+      ip: geo.ip,
+      city: geo.city,
+      region: geo.region,
+      country: geo.country,
+      timezone: geo.timezone,
+      device: parsed.device,
+      browser: parsed.browser,
+      os: parsed.os,
+      pages: [path],
+      referrer: referrer,
+      user: loggedUser,
+      firstSeen: now,
+      lastSeen: now,
+      visitCount: 1
+    });
+  }
+
+  saveVisitorRecords(records);
+}
+
+/* ============================================
+   VISITOR DASHBOARD (admin page)
+   ============================================ */
+
+// ---------- Format Date ----------
+function formatDate(isoString) {
+  if (!isoString) return '-';
+  var d = new Date(isoString);
+  if (isNaN(d.getTime())) return '-';
+  var options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+  return d.toLocaleDateString('en-IN', options);
+}
+
+// ---------- Toast Notification ----------
+function showToast(message, type) {
+  type = type || 'success';
+  var container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  // Cap at 3 visible toasts
+  while (container.children.length >= 3) {
+    container.removeChild(container.firstChild);
+  }
+
+  var toast = document.createElement('div');
+  toast.className = 'toast toast-' + type;
+  toast.innerHTML = '<span class="toast-icon">' + (type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️') + '</span><span class="toast-message">' + escapeHtml(message) + '</span>';
+  container.appendChild(toast);
+
+  setTimeout(function () { toast.classList.add('toast-show'); }, 10);
+
+  setTimeout(function () {
+    toast.classList.remove('toast-show');
+    setTimeout(function () {
+      if (toast.parentElement) toast.parentElement.removeChild(toast);
+    }, 400);
+  }, 4000);
+}
+
+// ---------- Truncate Visitor ID for display ----------
+function shortId(vid) {
+  if (!vid) return '-';
+  return vid.length > 16 ? vid.substring(0, 16) + '…' : vid;
+}
+
+// ---------- Update KPI Cards ----------
+function updateKPIs() {
+  var records = getVisitorRecords();
+  var now = Date.now();
+  var thirtyMinAgo = now - 30 * 60 * 1000;
+  var todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  var todayMs = todayStart.getTime();
+
+  var totalVisitors = records.length;
+  var newToday = 0;
+  var returning = 0;
+  var activeNow = 0;
+  var countries = {};
+  var pages = {};
+
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+
+    // New today: firstSeen is today
+    if (new Date(r.firstSeen).getTime() >= todayMs) newToday++;
+    else returning++;
+
+    // Active: lastSeen within 30 min
+    if (new Date(r.lastSeen).getTime() >= thirtyMinAgo) activeNow++;
+
+    // Countries
+    if (r.country) countries[r.country] = true;
+
+    // Pages
+    if (r.pages) {
+      for (var j = 0; j < r.pages.length; j++) {
+        pages[r.pages[j]] = true;
+      }
+    }
+  }
+
+  var elTotal = document.getElementById('kpiTotal');
+  var elNewToday = document.getElementById('kpiNewToday');
+  var elReturning = document.getElementById('kpiReturning');
+  var elActive = document.getElementById('kpiActive');
+  var elCountries = document.getElementById('kpiCountries');
+  var elPages = document.getElementById('kpiPages');
+
+  if (elTotal) elTotal.textContent = totalVisitors;
+  if (elNewToday) elNewToday.textContent = newToday;
+  if (elReturning) elReturning.textContent = returning;
+  if (elActive) elActive.textContent = activeNow;
+  if (elCountries) elCountries.textContent = Object.keys(countries).length;
+  if (elPages) elPages.textContent = Object.keys(pages).length;
+}
+
+// ---------- Render Visitor Table ----------
+function renderVisitorTable() {
+  var tbody = document.getElementById('visitorTableBody');
+  var emptyState = document.getElementById('emptyVisitorState');
+  if (!tbody) return;
+
+  var records = getVisitorRecords();
+  var searchInput = document.getElementById('visitorSearch');
+  var query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+
+  tbody.innerHTML = '';
+
+  var filtered = records;
+  if (query) {
+    filtered = records.filter(function (r) {
+      var haystack = [
+        r.ip, r.city, r.region, r.country, r.device, r.browser, r.os,
+        (r.pages || []).join(' '), r.user, r.visitorId
+      ].join(' ').toLowerCase();
+      return haystack.indexOf(query) !== -1;
+    });
+  }
+
+  if (filtered.length === 0) {
+    if (emptyState) emptyState.classList.remove('hidden');
+    return;
+  }
+
+  if (emptyState) emptyState.classList.add('hidden');
+
+  filtered.forEach(function (r) {
+    var tr = document.createElement('tr');
+
+    var deviceInfo = r.device + ' · ' + r.browser + ' · ' + r.os;
+    var pagesList = (r.pages || []).join(', ') || '-';
+    var userLabel = r.user || '<span style="color:#999">anonymous</span>';
+
+    tr.innerHTML =
+      '<td><code class="vid-code" title="' + escapeHtml(r.visitorId) + '">' + escapeHtml(shortId(r.visitorId)) + '</code></td>' +
+      '<td>' + escapeHtml(r.ip || '-') + '</td>' +
+      '<td>' + escapeHtml(r.country || '-') + '</td>' +
+      '<td>' + escapeHtml(r.region || '-') + '</td>' +
+      '<td>' + escapeHtml(r.city || '-') + '</td>' +
+      '<td><small>' + escapeHtml(deviceInfo) + '</small></td>' +
+      '<td><small title="' + escapeHtml(pagesList) + '">' + escapeHtml(pagesList.length > 40 ? pagesList.substring(0, 40) + '…' : pagesList) + '</small></td>' +
+      '<td>' + (r.visitCount || 1) + '</td>' +
+      '<td><small>' + formatDate(r.firstSeen) + '</small></td>' +
+      '<td><small>' + formatDate(r.lastSeen) + '</small></td>' +
+      '<td>' + userLabel + '</td>';
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- Refresh ----------
+function refreshVisitorData() {
+  renderVisitorTable();
+  updateKPIs();
+  showToast('Visitor data refreshed.', 'info');
+}
+
+// ---------- Clear Log ----------
+function clearVisitorLog() {
+  if (confirm('Are you sure you want to clear all visitor records? This cannot be undone.')) {
+    localStorage.removeItem(VISITOR_RECORDS_KEY);
+    renderVisitorTable();
+    updateKPIs();
+    showToast('Visitor log cleared.', 'info');
+  }
+}
+
+// ---------- Init Visitor Dashboard ----------
+document.addEventListener('DOMContentLoaded', function () {
+  // Only init dashboard if we're on the visitors page
+  if (document.getElementById('visitorTableBody')) {
+    renderVisitorTable();
+    updateKPIs();
+  }
+
+  // Auto-track this page visit (fires on every page that loads main.js)
+  if (typeof trackVisit === 'function') {
+    trackVisit().catch(function () { /* fire-and-forget tracking */ });
+  }
+});
