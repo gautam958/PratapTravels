@@ -37,6 +37,7 @@ yarn.lock
 .env.production
 .env.development
 *.env
+config.js
 
 # --- Build Output ---
 dist/
