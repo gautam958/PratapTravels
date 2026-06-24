@@ -20,13 +20,17 @@
           ☰
         </button>
         <div class="navbar-menu" id="navMenu">
-          <a href="#services">Services</a>
-          <a href="#routes">Routes</a>
-          <a href="#offers">Offers</a>
-          <a href="#rentals">Rentals</a>
-          <a href="#hire-driver">Hire Driver</a>
-          <a href="#contact">Contact</a>
-          <a href="visitors.html">Visitors</a>
+          <a href="#services" data-i18n="nav.services">सेवाएँ</a>
+          <a href="#routes" data-i18n="nav.routes">मार्ग</a>
+          <a href="#offers" data-i18n="nav.offers">ऑफ़र</a>
+          <a href="#rentals" data-i18n="nav.rentals">किराया</a>
+          <a href="#hire-driver" data-i18n="nav.hire-driver">ड्राइवर किराया</a>
+          <a href="#contact" data-i18n="nav.contact">संपर्क</a>
+          <a href="visitors.html" data-i18n="nav.visitors">आगंतुक</a>
+          <div class="lang-toggle">
+            <button class="lang-toggle-btn active" id="langBtnHi">HI</button>
+            <button class="lang-toggle-btn" id="langBtnEn">EN</button>
+          </div>
         </div>
       </div>
     </nav>
@@ -34,18 +38,16 @@
     <!-- ===== Hero Section ===== -->
     <section class="hero" id="hero">
       <div class="hero-content">
-        <div class="hero-badge">🌟 Trusted Since Generations</div>
-        <h1>Your Journey, <span>Our Priority</span></h1>
-        <p>
-          Experience the comfort of a private driver with PRATAP TRAVELS.
-          Whether it's airport transfers, business trips, or leisure tours, we
-          deliver safe, reliable, and stylish travel every time.
+        <div class="hero-badge" data-i18n="hero.badge">🌟 पीढ़ियों से भरोसेमंद</div>
+        <h1><span data-i18n="hero.title1">आपकी यात्रा,</span> <span data-i18n="hero.title2">हमारी प्राथमिकता</span></h1>
+        <p data-i18n="hero.desc">
+          PRATAP TRAVELS के साथ प्राइवेट ड्राइवर की सुविधा का अनुभव करें। हवाई अड्डे के ट्रांसफर, व्यापारिक यात्राओं या पर्यटन के लिए, हम हर बार सुरक्षित, भरोसेमंद और शानदार यात्रा प्रदान करते हैं।
         </p>
         <div class="hero-buttons">
           <button class="btn btn-primary" onclick="openBookingModal()">
-            📞 Book Now
+            <span data-i18n="hero.book-now">📞 अभी बुक करें</span>
           </button>
-          <a href="#routes" class="btn btn-outline">🗺 View Packages</a>
+          <a href="#routes" class="btn btn-outline"><span data-i18n="hero.view-packages">🗺 पैकेज देखें</span></a>
         </div>
       </div>
     </section>
@@ -54,51 +56,48 @@
     <section class="section" id="services">
       <div class="container">
         <div class="section-header">
-          <h2>Our Services</h2>
-          <p>Travel Made Simple with PRATAP TRAVELS</p>
+          <h2 data-i18n="services.title">हमारी सेवाएँ</h2>
+          <p data-i18n="services.subtitle">PRATAP TRAVELS के साथ यात्रा आसान</p>
           <div class="line"></div>
         </div>
         <div class="services-grid">
           <!-- Service 1 -->
           <div class="service-card">
             <div class="service-icon">✈️</div>
-            <h3>Airport Transfers</h3>
-            <p>
-              On-time pickups and hassle-free transfers to any airport.
-              Professional drivers with luxury vehicles.
+            <h3 data-i18n="services.airport.title">हवाई अड्डा ट्रांसफर</h3>
+            <p data-i18n="services.airport.desc">
+              समय पर पिकअप और किसी भी हवाई अड्डे तक बिना किसी परेशानी के ट्रांसफर। पेशेवर ड्राइवर और लक्जरी वाहन।
             </p>
             <ul>
-              <li>On-time pickups guaranteed</li>
-              <li>Meet & greet service</li>
-              <li>Flight tracking included</li>
+              <li data-i18n="services.airport.li1">समय पर पिकअप की गारंटी</li>
+              <li data-i18n="services.airport.li2">मीट एंड ग्रीट सेवा</li>
+              <li data-i18n="services.airport.li3">फ़्लाइट ट्रैकिंग शामिल</li>
             </ul>
           </div>
           <!-- Service 2 -->
           <div class="service-card">
             <div class="service-icon">🏞️</div>
-            <h3>Tourism & Pilgrimage</h3>
-            <p>
-              From quick deliveries to long scenic drives, we make every trip
-              smooth and enjoyable for families and groups.
+            <h3 data-i18n="services.tourism.title">पर्यटन और तीर्थयात्रा</h3>
+            <p data-i18n="services.tourism.desc">
+              त्वरित डिलीवरी से लेकर लंबी सुंदर ड्राइव तक, हम परिवारों और समूहों के लिए हर यात्रा को सुगम और आनंददायक बनाते हैं।
             </p>
             <ul>
-              <li>Baba Dham & temple circuits</li>
-              <li>Family-friendly packages</li>
-              <li>Customized itineraries</li>
+              <li data-i18n="services.tourism.li1">बाबा धाम और मंदिर सर्किट</li>
+              <li data-i18n="services.tourism.li2">परिवार के अनुकूल पैकेज</li>
+              <li data-i18n="services.tourism.li3">अनुकूलित यात्रा कार्यक्रम</li>
             </ul>
           </div>
           <!-- Service 3 -->
           <div class="service-card">
             <div class="service-icon">💼</div>
-            <h3>Business Travel</h3>
-            <p>
-              Smart travel solutions for professionals. Seamless travel for
-              business meetings, corporate events, and more.
+            <h3 data-i18n="services.business.title">व्यापारिक यात्रा</h3>
+            <p data-i18n="services.business.desc">
+              पेशेवरों के लिए स्मार्ट यात्रा समाधान। व्यापारिक बैठकों, कॉर्पोरेट कार्यक्रमों और अन्य के लिए निर्बाध यात्रा।
             </p>
             <ul>
-              <li>Reliable executive service</li>
-              <li>Discreet & professional drivers</li>
-              <li>Customized travel plans</li>
+              <li data-i18n="services.business.li1">भरोसेमंद एग्ज़ीक्यूटिव सेवा</li>
+              <li data-i18n="services.business.li2">गोपनीय और पेशेवर ड्राइवर</li>
+              <li data-i18n="services.business.li3">अनुकूलित यात्रा योजनाएँ</li>
             </ul>
           </div>
         </div>
@@ -109,8 +108,8 @@
     <section class="section slider-section" id="slider">
       <div class="container">
         <div class="section-header">
-          <h2>Explore Our Destinations</h2>
-          <p>Discover the beauty of every route we offer</p>
+          <h2 data-i18n="slider.title">हमारे गंतव्य खोजें</h2>
+          <p data-i18n="slider.subtitle">हमारे द्वारा दी जाने वाली हर मार्ग की सुंदरता की खोज करें</p>
           <div class="line"></div>
         </div>
       </div>
@@ -317,20 +316,20 @@
     <section class="section pricing-section" id="routes">
       <div class="container">
         <div class="section-header">
-          <h2>Routes & Pricing</h2>
-          <p>Affordable private driver services to popular destinations</p>
+          <h2 data-i18n="routes.title">मार्ग और कीमतें</h2>
+          <p data-i18n="routes.subtitle">लोकप्रिय गंतव्यों तक सस्ती प्राइवेट ड्राइवर सेवाएँ</p>
           <div class="line"></div>
         </div>
 
         <div class="routes-controls">
-          <button class="filter-btn active" data-filter="all">
-            All Routes
+          <button class="filter-btn active" data-filter="all" data-i18n="routes.filter.all">
+            सभी मार्ग
           </button>
-          <button class="filter-btn" data-filter="pilgrimage">
-            🛕 Pilgrimage
+          <button class="filter-btn" data-filter="pilgrimage" data-i18n="routes.filter.pilgrimage">
+            🛕 तीर्थयात्रा
           </button>
-          <button class="filter-btn" data-filter="city">🏙️ City</button>
-          <button class="filter-btn" data-filter="local">📍 Local</button>
+          <button class="filter-btn" data-filter="city" data-i18n="routes.filter.city">🏙️ शहर</button>
+          <button class="filter-btn" data-filter="local" data-i18n="routes.filter.local">📍 स्थानीय</button>
         </div>
 
         <div class="routes-table-wrapper">
@@ -338,11 +337,11 @@
             <thead>
               <tr>
                 <th></th>
-                <th>Route</th>
-                <th>Distance</th>
-                <th>Duration</th>
-                <th>Price (Approx.)</th>
-                <th>Highlights</th>
+                <th data-i18n="routes.th.route">मार्ग</th>
+                <th data-i18n="routes.th.distance">दूरी</th>
+                <th data-i18n="routes.th.duration">अवधि</th>
+                <th data-i18n="routes.th.price">कीमत (अनुमानित)</th>
+                <th data-i18n="routes.th.highlights">मुख्य आकर्षण</th>
               </tr>
             </thead>
             <tbody id="routesBody">
@@ -607,55 +606,50 @@
     <section class="section" id="offers">
       <div class="container">
         <div class="section-header">
-          <h2>Attractive Offers</h2>
-          <p>Special packages for every type of traveller</p>
+          <h2 data-i18n="offers.title">आकर्षक ऑफ़र</h2>
+          <p data-i18n="offers.subtitle">हर प्रकार के यात्री के लिए विशेष पैकेज</p>
           <div class="line"></div>
         </div>
         <div class="offers-grid">
           <div class="offer-card">
             <div class="offer-emoji">🙏</div>
-            <h3>Pilgrimage Combo</h3>
-            <p>
-              Deoghar → Basukinath + Sultanganj in one day. Special darshan
-              assistance included.
+            <h3 data-i18n="offers.pilgrimage.title">तीर्थयात्रा कॉम्बो</h3>
+            <p data-i18n="offers.pilgrimage.desc">
+              देवघर → बासुकीनाथ + सुल्तानगंज एक दिन में। विशेष दर्शन सहायता शामिल।
             </p>
-            <div class="offer-price">Starting ₹3,500</div>
+            <div class="offer-price" data-i18n="offers.pilgrimage.price">₹3,500 से शुरू</div>
           </div>
           <div class="offer-card">
             <div class="offer-emoji">🏖️</div>
-            <h3>Weekend Getaway</h3>
-            <p>
-              Deoghar → Tarapith + Nandan Pahar family package. Perfect for a
-              refreshing weekend.
+            <h3 data-i18n="offers.weekend.title">वीकेंड गेटअवे</h3>
+            <p data-i18n="offers.weekend.desc">
+              देवघर → तारापीठ + नंदन पहाड़ परिवार पैकेज। ताज़गी भरे वीकेंड के लिए एकदम सही।
             </p>
-            <div class="offer-price">Starting ₹2,800</div>
+            <div class="offer-price" data-i18n="offers.weekend.price">₹2,800 से शुरू</div>
           </div>
           <div class="offer-card">
             <div class="offer-emoji">💼</div>
-            <h3>Business Express</h3>
-            <p>
-              Deoghar → Ranchi / Kolkata / Patna with Wi-Fi enabled car +
-              complimentary water bottles.
+            <h3 data-i18n="offers.business.title">बिज़नेस एक्सप्रेस</h3>
+            <p data-i18n="offers.business.desc">
+              देवघर → रांची / कोलकाता / पटना वाई-फाई इनेबल्ड कार + मुफ़्त पानी की बोतलें।
             </p>
-            <div class="offer-price">Starting ₹5,000</div>
+            <div class="offer-price" data-i18n="offers.business.price">₹5,000 से शुरू</div>
           </div>
           <div class="offer-card">
             <div class="offer-emoji">👨‍👩‍👧‍👦</div>
-            <h3>Family Fun Deal</h3>
-            <p>
-              Deoghar Waterpark + Tapovan Hills half-day trip. Perfect for kids
-              and parents alike.
+            <h3 data-i18n="offers.family.title">फैमिली फन डील</h3>
+            <p data-i18n="offers.family.desc">
+              देवघर वॉटरपार्क + तपोवन हिल्स आधे दिन की यात्रा। बच्चों और माता-पिता दोनों के लिए एकदम सही।
             </p>
-            <div class="offer-price">Starting ₹1,200</div>
+            <div class="offer-price" data-i18n="offers.family.price">₹1,200 से शुरू</div>
           </div>
           <div class="offer-card">
             <div class="offer-emoji">🎉</div>
-            <h3>Festival Special (Shravani Mela)</h3>
-            <p>
-              Flat ₹500 off on Baba Dham + Basukinath packages. Celebrate the
-              festival with ease!
+            <h3 data-i18n="offers.festival.title">त्योहार विशेष (श्रावणी मेला)</h3>
+            <p data-i18n="offers.festival.desc">
+              बाबा धाम + बासुकीनाथ पैकेज पर ₹500 की छूट। आसानी से त्योहार मनाएँ!
             </p>
-            <div class="offer-price">₹500 OFF</div>
+            <div class="offer-price" data-i18n="offers.festival.price">₹500 छूट</div>
           </div>
         </div>
       </div>
@@ -665,53 +659,52 @@
     <section class="section rental-section" id="rentals">
       <div class="container">
         <div class="section-header">
-          <h2>Vehicle Rentals</h2>
-          <p>Well-maintained vehicles for short or long trips</p>
+          <h2 data-i18n="rentals.title">वाहन किराया</h2>
+          <p data-i18n="rentals.subtitle">छोटी या लंबी यात्राओं के लिए अच्छी तरह से रखरखाव वाले वाहन</p>
           <div class="line"></div>
         </div>
         <div class="rental-grid">
           <div class="rental-card">
-            <h3>Professional & Trustworthy</h3>
+            <h3 data-i18n="rentals.card1.title">पेशेवर और भरोसेमंद</h3>
             <ul>
-              <li>Well-maintained vehicles</li>
-              <li>Valid ID proof required (Aadhaar, DL, Passport)</li>
-              <li>Refundable security deposit</li>
-              <li>Simple paperwork, quick approval</li>
+              <li data-i18n="rentals.card1.li1">अच्छी तरह से रखरखाव वाले वाहन</li>
+              <li data-i18n="rentals.card1.li2">मान्य पहचान पत्र आवश्यक (आधार, डीएल, पासपोर्ट)</li>
+              <li data-i18n="rentals.card1.li3">वापसी योग्य सिक्योरिटी डिपॉजिट</li>
+              <li data-i18n="rentals.card1.li4">सरल कागज़ी कार्रवाई, त्वरित अनुमोदन</li>
             </ul>
             <button class="btn btn-secondary" onclick="openBookingModal()">
-              📞 Call Now
+              <span data-i18n="rentals.card1.btn">📞 अभी कॉल करें</span>
             </button>
           </div>
           <div class="rental-card featured">
-            <h3>Easy Rentals in Deoghar</h3>
+            <h3 data-i18n="rentals.card2.title">देवघर में आसान किराया</h3>
             <ul>
-              <li>ID proof submission (mandatory)</li>
-              <li>Security deposit for safety</li>
+              <li data-i18n="rentals.card2.li1">पहचान पत्र जमा करना (अनिवार्य)</li>
+              <li data-i18n="rentals.card2.li2">सुरक्षा के लिए सिक्योरिटी डिपॉजिट</li>
             </ul>
             <button class="btn btn-primary" onclick="openBookingModal()">
-              📞 Book Today
+              <span data-i18n="rentals.card2.btn">📞 आज ही बुक करें</span>
             </button>
           </div>
           <div class="rental-card">
-            <h3>Work & Worship</h3>
+            <h3 data-i18n="rentals.card3.title">काम और पूजा</h3>
             <ul>
-              <li>Security deposit (refundable)</li>
-              <li>Valid ID proof & documents</li>
-              <li>Transparent pricing, no hidden charges</li>
+              <li data-i18n="rentals.card3.li1">सिक्योरिटी डिपॉजिट (वापसी योग्य)</li>
+              <li data-i18n="rentals.card3.li2">मान्य पहचान पत्र और दस्तावेज़</li>
+              <li data-i18n="rentals.card3.li3">पारदर्शी कीमतें, कोई छिपी लागत नहीं</li>
             </ul>
             <button class="btn btn-secondary" onclick="openBookingModal()">
-              📞 Reserve Now
+              <span data-i18n="rentals.card3.btn">📞 अभी आरक्षित करें</span>
             </button>
           </div>
         </div>
         <div class="rental-banner">
-          <h3>🎉 Book for 3+ Days and Get 10% OFF!</h3>
-          <p>
-            Special discount on extended rentals. Perfect for pilgrimages and
-            business trips.
+          <h3 data-i18n="rentals.banner.title">🎉 3+ दिनों के लिए बुक करें और पाएँ 10% छूट!</h3>
+          <p data-i18n="rentals.banner.desc">
+            लंबे किराये पर विशेष छूट। तीर्थयात्राओं और व्यापारिक यात्राओं के लिए एकदम सही।
           </p>
           <button class="btn btn-primary" onclick="openBookingModal()">
-            📞 Claim Offer
+            <span data-i18n="rentals.banner.btn">📞 ऑफ़र का लाभ उठाएँ</span>
           </button>
         </div>
       </div>
@@ -719,19 +712,15 @@
 
     <!-- ===== Hire Driver Service ===== -->
     <section class="section hire-driver-section" id="hire-driver">
-      <div class="container">
-        <div class="section-header">
-          <h2>Hire Driver Service</h2>
-          <p>Professional and reliable drivers for all your travel needs</p>
+      <div class="container">          <div class="section-header">
+          <h2 data-i18n="hire-driver.title">ड्राइवर किराया सेवा</h2>
+          <p data-i18n="hire-driver.subtitle">आपकी सभी यात्रा आवश्यकताओं के लिए पेशेवर और भरोसेमंद ड्राइवर</p>
           <div class="line"></div>
         </div>
         <div class="hire-driver-content">
           <div class="hire-driver-intro">
-            <p>
-              We provide professional and reliable drivers to support your travel
-              needs. Whether you require assistance for short trips within the local
-              area or long-distance journeys to far destinations, our drivers ensure
-              safe, punctual, and comfortable travel.
+            <p data-i18n="hire-driver.intro">
+              हम आपकी यात्रा आवश्यकताओं को पूरा करने के लिए पेशेवर और भरोसेमंद ड्राइवर प्रदान करते हैं। चाहे आपको स्थानीय क्षेत्र में छोटी यात्राओं के लिए सहायता चाहिए या दूर के गंतव्यों तक लंबी दूरी की यात्राओं के लिए, हमारे ड्राइवर सुरक्षित, समय पर और आरामदायक यात्रा सुनिश्चित करते हैं।
             </p>
           </div>
 
@@ -740,11 +729,11 @@
             <table class="hire-driver-table">
               <thead>
                 <tr>
-                  <th>Service Type</th>
-                  <th>Service Details</th>
-                  <th>Per Day Charge</th>
-                  <th>Food & Lodging Allowance</th>
-                  <th>Additional Charges / Terms</th>
+                  <th data-i18n="hire-driver.th.service">सेवा प्रकार</th>
+                  <th data-i18n="hire-driver.th.details">सेवा विवरण</th>
+                  <th data-i18n="hire-driver.th.charge">प्रति दिन शुल्क</th>
+                  <th data-i18n="hire-driver.th.food">खाना और आवास भत्ता</th>
+                  <th data-i18n="hire-driver.th.terms">अतिरिक्त शुल्क / शर्तें</th>
                 </tr>
               </thead>
               <tbody>
@@ -773,15 +762,11 @@
             </table>
           </div>
 
-          <div class="hire-driver-footer">
-            <p>
-              Our drivers are courteous, well-trained, and familiar with both local
-              and regional routes. They follow safety practices and provide a
-              stress-free travel experience, whether you're booking for a single day
-              or multiple days.
+          <div class="hire-driver-footer">              <p data-i18n="hire-driver.footer">
+              हमारे ड्राइवर विनम्र, अच्छी तरह से प्रशिक्षित और स्थानीय और क्षेत्रीय मार्गों से परिचित हैं। वे सुरक्षा प्रथाओं का पालन करते हैं और तनाव-मुक्त यात्रा अनुभव प्रदान करते हैं, चाहे आप एक दिन या कई दिनों के लिए बुकिंग कर रहे हों।
             </p>
             <button class="btn btn-primary" onclick="openBookingModal()">
-              📞 Hire a Driver
+              <span data-i18n="hire-driver.btn">📞 ड्राइवर किराया पर लें</span>
             </button>
           </div>
         </div>
@@ -790,34 +775,33 @@
 
     <!-- ===== Contact Section ===== -->
     <section class="section contact-section" id="contact">
-      <div class="container">
-        <div class="section-header">
-          <h2>Contact Us</h2>
-          <p>We're here to help you plan the perfect trip</p>
+      <div class="container">          <div class="section-header">
+          <h2 data-i18n="contact.title">संपर्क करें</h2>
+          <p data-i18n="contact.subtitle">हम आपकी सही यात्रा की योजना बनाने में मदद के लिए यहाँ हैं</p>
           <div class="line"></div>
         </div>
         <div class="contact-grid">
           <div class="contact-card">
             <div class="icon">📞</div>
-            <h3>Call Us</h3>
+            <h3 data-i18n="contact.call.title">हमें कॉल करें</h3>
             <p>+91 79911 82086</p>
             <p>+91 87978 71251</p>
           </div>
           <div class="contact-card">
             <div class="icon">📍</div>
-            <h3>Visit Us</h3>
+            <h3 data-i18n="contact.visit.title">हमसे मिलें</h3>
             <p>Belabagan, Deoghar<br />Jharkhand, India</p>
           </div>
           <div class="contact-card">
             <div class="icon">💬</div>
-            <h3>WhatsApp</h3>
-            <p>Quick booking via WhatsApp</p>
+            <h3 data-i18n="contact.whatsapp.title">व्हाट्सएप</h3>
+            <p data-i18n="contact.whatsapp.desc">व्हाट्सएप के माध्यम से त्वरित बुकिंग</p>
             <a
               href="https://wa.me/7991182086?text=Hi%20PRATAP%20TRAVELS%2C%20I%20want%20to%20book%20a%20ride."
               class="btn btn-whatsapp"
               target="_blank"
               rel="noopener"
-              >💬 Chat on WhatsApp</a
+              ><span data-i18n="contact.whatsapp.btn">💬 व्हाट्सएप पर चैट करें</span></a
             >
           </div>
         </div>
@@ -866,7 +850,7 @@
         <div class="contact-cta">
           <br />
           <button class="btn btn-primary" onclick="openBookingModal()">
-            📞 Book Your Ride Now
+            <span data-i18n="contact.cta">📞 अभी अपनी यात्रा बुक करें</span>
           </button>
         </div>
       </div>
@@ -920,7 +904,7 @@
         </div>
         <div class="footer-divider"></div>
         <div class="footer-bottom">
-          <p>&copy; 2026 Pratap Travels. All rights reserved.</p>
+          <p data-i18n="footer.rights">© 2026 प्रताप ट्रैवल्स। सर्वाधिकार सुरक्षित।</p>
         </div>
       </div>
     </footer>
@@ -937,7 +921,7 @@
       id="floatingBookBtn"
       aria-label="Book Your Ride"
     >
-      🚗 <span>Book Now</span>
+      🚗 <span data-i18n="floating.btn">बुक करें</span>
     </button>
 
     <!-- Booking Modal -->
@@ -947,19 +931,20 @@
           &times;
         </button>
         <div class="modal-header">
-          <h2>🚗 Book Your Ride</h2>
-          <p>Fill out the form and we'll confirm shortly</p>
+          <h2 data-i18n="modal.title">🚗 अपनी यात्रा बुक करें</h2>
+          <p data-i18n="modal.subtitle">फ़ॉर्म भरें और हम जल्द ही पुष्टि करेंगे</p>
         </div>
         <div class="modal-body">
           <form class="booking-form" id="bookingForm" novalidate>
             <div class="form-row">
               <div class="form-group">
-                <label for="bookName">Full Name *</label>
+                <label for="bookName" data-i18n="modal.name">पूरा नाम *</label>
                 <input
                   type="text"
                   id="bookName"
                   name="name"
-                  placeholder="Enter your full name"
+                  data-i18n-placeholder="modal.name.placeholder"
+                  placeholder="अपना पूरा नाम दर्ज करें"
                   required
                 />
                 <span
@@ -970,12 +955,13 @@
                 ></span>
               </div>
               <div class="form-group">
-                <label for="bookPhone">Phone Number *</label>
+                <label for="bookPhone" data-i18n="modal.phone">फ़ोन नंबर *</label>
                 <input
                   type="tel"
                   id="bookPhone"
                   name="phone"
-                  placeholder="e.g. 7991182086"
+                  data-i18n-placeholder="modal.phone.placeholder"
+                  placeholder="जैसे 7991182086"
                   required
                 />
                 <span
@@ -988,12 +974,13 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="bookEmail">Email Address</label>
+                <label for="bookEmail" data-i18n="modal.email">ईमेल पता</label>
                 <input
                   type="email"
                   id="bookEmail"
                   name="email"
-                  placeholder="e.g. you@example.com"
+                  data-i18n-placeholder="modal.email.placeholder"
+                  placeholder="जैसे you@example.com"
                 />
                 <span
                   class="form-error"
@@ -1003,10 +990,10 @@
                 ></span>
               </div>
               <div class="form-group">
-                <label for="bookRoute">Route *</label>
+                <label for="bookRoute" data-i18n="modal.route">मार्ग *</label>
                 <select id="bookRoute" name="route" required>
-                  <option value="" disabled selected>
-                    Select your destination
+                  <option value="" disabled selected data-i18n="modal.route.default">
+                    अपना गंतव्य चुनें
                   </option>
                   <option value="Basukinath">Deoghar → Basukinath</option>
                   <option value="Tarapith">Deoghar → Tarapith</option>
@@ -1032,7 +1019,7 @@
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="bookDate">Travel Date *</label>
+                <label for="bookDate" data-i18n="modal.date">यात्रा की तिथि *</label>
                 <input type="date" id="bookDate" name="date" required />
                 <span
                   class="form-error"
@@ -1042,31 +1029,31 @@
                 ></span>
               </div>
               <div class="form-group">
-                <label for="bookTime">Preferred Time</label>
+                <label for="bookTime" data-i18n="modal.time">पसंदीदा समय</label>
                 <input type="time" id="bookTime" name="time" />
               </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="bookPassengers">No. of Passengers</label>
+                <label for="bookPassengers" data-i18n="modal.passengers">यात्रियों की संख्या</label>
                 <select id="bookPassengers" name="passengers">
-                  <option value="1">1 Passenger</option>
-                  <option value="2">2 Passengers</option>
-                  <option value="3">3 Passengers</option>
-                  <option value="4" selected>4 Passengers</option>
-                  <option value="5">5 Passengers</option>
-                  <option value="6">6 Passengers</option>
-                  <option value="7">7 Passengers</option>
+                  <option value="1">1 यात्री</option>
+                  <option value="2">2 यात्री</option>
+                  <option value="3">3 यात्री</option>
+                  <option value="4" selected>4 यात्री</option>
+                  <option value="5">5 यात्री</option>
+                  <option value="6">6 यात्री</option>
+                  <option value="7">7 यात्री</option>
                 </select>
               </div>
               <div class="form-group">
-                <label for="bookType">Trip Type *</label>
+                <label for="bookType" data-i18n="modal.type">यात्रा प्रकार *</label>
                 <select id="bookType" name="type" required>
-                  <option value="" disabled selected>Select trip type</option>
-                  <option value="one-way">One Way</option>
-                  <option value="round-trip">Round Trip</option>
-                  <option value="full-day">Full Day / Multi-day</option>
-                  <option value="rental">Vehicle Rental</option>
+                  <option value="" disabled selected data-i18n="modal.type.default">यात्रा प्रकार चुनें</option>
+                  <option value="one-way" data-i18n="modal.type.one-way">एक तरफ़ा</option>
+                  <option value="round-trip" data-i18n="modal.type.round-trip">राउंड ट्रिप</option>
+                  <option value="full-day" data-i18n="modal.type.full-day">पूरा दिन / बहु-दिवसीय</option>
+                  <option value="rental" data-i18n="modal.type.rental">वाहन किराया</option>
                 </select>
                 <span
                   class="form-error"
@@ -1075,15 +1062,15 @@
                   aria-live="polite"
                 ></span>
               </div>
-            </div>
-            <div class="form-group form-full">
-              <label for="bookRemarks">Special Requests / Remarks</label>
-              <textarea
-                id="bookRemarks"
-                name="remarks"
-                rows="3"
-                placeholder="Any special requirements... (airport pickup, multiple stops, etc.)"
-              ></textarea>
+            </div>              <div class="form-group form-full">
+                <label for="bookRemarks" data-i18n="modal.remarks">विशेष अनुरोध / टिप्पणियाँ</label>
+                <textarea
+                  id="bookRemarks"
+                  name="remarks"
+                  rows="3"
+                  data-i18n-placeholder="modal.remarks.placeholder"
+                  placeholder="कोई विशेष आवश्यकताएँ... (हवाई अड्डा पिकअप, कई स्टॉप आदि)"
+                ></textarea>
             </div>
             <div class="form-submit">
               <button
@@ -1091,29 +1078,33 @@
                 class="btn btn-primary btn-lg"
                 id="submitBtn"
               >
-                🚗 Submit Booking Request
+                <span data-i18n="modal.submit">🚗 बुकिंग अनुरोध जमा करें</span>
               </button>
-              <p class="form-note">
-                We'll confirm your booking via WhatsApp or phone within 30
-                minutes.
+              <p class="form-note" data-i18n="modal.note">
+                हम 30 मिनट के भीतर व्हाट्सएप या फ़ोन के माध्यम से आपकी बुकिंग की पुष्टि करेंगे।
               </p>
             </div>
           </form>
           <div class="booking-success hidden" id="bookingSuccess">
             <div class="success-icon">✅</div>
-            <h3>Booking Request Sent!</h3>
-            <p>
-              We've received your booking request. We'll contact you shortly to
-              confirm.
+            <h3 data-i18n="modal.success.title">बुकिंग अनुरोध भेजा गया!</h3>
+            <p data-i18n="modal.success.desc">
+              हमें आपका बुकिंग अनुरोध मिल गया है। हम जल्द ही पुष्टि के लिए आपसे संपर्क करेंगे।
             </p>
             <button class="btn btn-secondary" onclick="resetBookingForm()">
-              Book Another Ride
+              <span data-i18n="modal.success.btn">एक और यात्रा बुक करें</span>
             </button>
           </div>
         </div>
       </div>
     </div>
 
+    <script src="js/i18n.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        I18N.init();
+      });
+    </script>
     <script src="js/main.js"></script>
   </body>
 </html>

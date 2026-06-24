@@ -1825,6 +1825,42 @@ img {
   color: var(--text);
 }
 
+/* ---------- Language Toggle ---------- */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50px;
+  padding: 3px;
+  margin-left: 12px;
+  gap: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.lang-toggle-btn {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 50px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.lang-toggle-btn:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.lang-toggle-btn.active {
+  background: var(--accent);
+  color: var(--primary-dark);
+  box-shadow: 0 2px 8px rgba(243, 156, 18, 0.35);
+}
+
 /* ---------- Utility ---------- */
 .hidden {
   display: none !important;

@@ -1,0 +1,494 @@
+/* ============================================
+   PRATAP TRAVELS - Internationalization (i18n)
+   Hindi & English language support
+   ============================================ */
+
+var I18N = (function () {
+  var STORAGE_KEY = "pt_lang";
+  var currentLang = localStorage.getItem(STORAGE_KEY) || "hi"; // default Hindi
+
+  var translations = {
+    hi: {
+      // Navbar
+      "nav.services": "सेवाएँ",
+      "nav.routes": "मार्ग",
+      "nav.offers": "ऑफ़र",
+      "nav.rentals": "किराया",
+      "nav.hire-driver": "ड्राइवर किराया",
+      "nav.contact": "संपर्क",
+      "nav.visitors": "आगंतुक",
+
+      // Hero
+      "hero.badge": "🌟 पीढ़ियों से भरोसेमंद",
+      "hero.title1": "आपकी यात्रा,",
+      "hero.title2": "हमारी प्राथमिकता",
+      "hero.desc": "PRATAP TRAVELS के साथ प्राइवेट ड्राइवर की सुविधा का अनुभव करें। हवाई अड्डे के ट्रांसफर, व्यापारिक यात्राओं या पर्यटन के लिए, हम हर बार सुरक्षित, भरोसेमंद और शानदार यात्रा प्रदान करते हैं।",
+      "hero.book-now": "📞 अभी बुक करें",
+      "hero.view-packages": "🗺 पैकेज देखें",
+
+      // Services
+      "services.title": "हमारी सेवाएँ",
+      "services.subtitle": "PRATAP TRAVELS के साथ यात्रा आसान",
+      "services.airport.title": "हवाई अड्डा ट्रांसफर",
+      "services.airport.desc": "समय पर पिकअप और किसी भी हवाई अड्डे तक बिना किसी परेशानी के ट्रांसफर। पेशेवर ड्राइवर और लक्जरी वाहन।",
+      "services.airport.li1": "समय पर पिकअप की गारंटी",
+      "services.airport.li2": "मीट एंड ग्रीट सेवा",
+      "services.airport.li3": "फ़्लाइट ट्रैकिंग शामिल",
+      "services.tourism.title": "पर्यटन और तीर्थयात्रा",
+      "services.tourism.desc": "त्वरित डिलीवरी से लेकर लंबी सुंदर ड्राइव तक, हम परिवारों और समूहों के लिए हर यात्रा को सुगम और आनंददायक बनाते हैं।",
+      "services.tourism.li1": "बाबा धाम और मंदिर सर्किट",
+      "services.tourism.li2": "परिवार के अनुकूल पैकेज",
+      "services.tourism.li3": "अनुकूलित यात्रा कार्यक्रम",
+      "services.business.title": "व्यापारिक यात्रा",
+      "services.business.desc": "पेशेवरों के लिए स्मार्ट यात्रा समाधान। व्यापारिक बैठकों, कॉर्पोरेट कार्यक्रमों और अन्य के लिए निर्बाध यात्रा।",
+      "services.business.li1": "भरोसेमंद एग्ज़ीक्यूटिव सेवा",
+      "services.business.li2": "गोपनीय और पेशेवर ड्राइवर",
+      "services.business.li3": "अनुकूलित यात्रा योजनाएँ",
+
+      // Slider
+      "slider.title": "हमारे गंतव्य खोजें",
+      "slider.subtitle": "हमारे द्वारा दी जाने वाली हर मार्ग की सुंदरता की खोज करें",
+
+      // Routes
+      "routes.title": "मार्ग और कीमतें",
+      "routes.subtitle": "लोकप्रिय गंतव्यों तक सस्ती प्राइवेट ड्राइवर सेवाएँ",
+      "routes.filter.all": "सभी मार्ग",
+      "routes.filter.pilgrimage": "🛕 तीर्थयात्रा",
+      "routes.filter.city": "🏙️ शहर",
+      "routes.filter.local": "📍 स्थानीय",
+      "routes.th.route": "मार्ग",
+      "routes.th.distance": "दूरी",
+      "routes.th.duration": "अवधि",
+      "routes.th.price": "कीमत (अनुमानित)",
+      "routes.th.highlights": "मुख्य आकर्षण",
+      "routes.popular": "लोकप्रिय",
+
+      // Offers
+      "offers.title": "आकर्षक ऑफ़र",
+      "offers.subtitle": "हर प्रकार के यात्री के लिए विशेष पैकेज",
+      "offers.pilgrimage.title": "तीर्थयात्रा कॉम्बो",
+      "offers.pilgrimage.desc": "देवघर → बासुकीनाथ + सुल्तानगंज एक दिन में। विशेष दर्शन सहायता शामिल।",
+      "offers.pilgrimage.price": "₹3,500 से शुरू",
+      "offers.weekend.title": "वीकेंड गेटअवे",
+      "offers.weekend.desc": "देवघर → तारापीठ + नंदन पहाड़ परिवार पैकेज। ताज़गी भरे वीकेंड के लिए एकदम सही।",
+      "offers.weekend.price": "₹2,800 से शुरू",
+      "offers.business.title": "बिज़नेस एक्सप्रेस",
+      "offers.business.desc": "देवघर → रांची / कोलकाता / पटना वाई-फाई इनेबल्ड कार + मुफ़्त पानी की बोतलें।",
+      "offers.business.price": "₹5,000 से शुरू",
+      "offers.family.title": "फैमिली फन डील",
+      "offers.family.desc": "देवघर वॉटरपार्क + तपोवन हिल्स आधे दिन की यात्रा। बच्चों और माता-पिता दोनों के लिए एकदम सही।",
+      "offers.family.price": "₹1,200 से शुरू",
+      "offers.festival.title": "त्योहार विशेष (श्रावणी मेला)",
+      "offers.festival.desc": "बाबा धाम + बासुकीनाथ पैकेज पर ₹500 की छूट। आसानी से त्योहार मनाएँ!",
+      "offers.festival.price": "₹500 छूट",
+
+      // Rentals
+      "rentals.title": "वाहन किराया",
+      "rentals.subtitle": "छोटी या लंबी यात्राओं के लिए अच्छी तरह से रखरखाव वाले वाहन",
+      "rentals.card1.title": "पेशेवर और भरोसेमंद",
+      "rentals.card1.li1": "अच्छी तरह से रखरखाव वाले वाहन",
+      "rentals.card1.li2": "मान्य पहचान पत्र आवश्यक (आधार, डीएल, पासपोर्ट)",
+      "rentals.card1.li3": "वापसी योग्य सिक्योरिटी डिपॉजिट",
+      "rentals.card1.li4": "सरल कागज़ी कार्रवाई, त्वरित अनुमोदन",
+      "rentals.card1.btn": "📞 अभी कॉल करें",
+      "rentals.card2.title": "देवघर में आसान किराया",
+      "rentals.card2.li1": "पहचान पत्र जमा करना (अनिवार्य)",
+      "rentals.card2.li2": "सुरक्षा के लिए सिक्योरिटी डिपॉजिट",
+      "rentals.card2.btn": "📞 आज ही बुक करें",
+      "rentals.card3.title": "काम और पूजा",
+      "rentals.card3.li1": "सिक्योरिटी डिपॉजिट (वापसी योग्य)",
+      "rentals.card3.li2": "मान्य पहचान पत्र और दस्तावेज़",
+      "rentals.card3.li3": "पारदर्शी कीमतें, कोई छिपी लागत नहीं",
+      "rentals.card3.btn": "📞 अभी आरक्षित करें",
+      "rentals.banner.title": "🎉 3+ दिनों के लिए बुक करें और पाएँ 10% छूट!",
+      "rentals.banner.desc": "लंबे किराये पर विशेष छूट। तीर्थयात्राओं और व्यापारिक यात्राओं के लिए एकदम सही।",
+      "rentals.banner.btn": "📞 ऑफ़र का लाभ उठाएँ",
+
+      // Hire Driver
+      "hire-driver.title": "ड्राइवर किराया सेवा",
+      "hire-driver.subtitle": "आपकी सभी यात्रा आवश्यकताओं के लिए पेशेवर और भरोसेमंद ड्राइवर",
+      "hire-driver.intro": "हम आपकी यात्रा आवश्यकताओं को पूरा करने के लिए पेशेवर और भरोसेमंद ड्राइवर प्रदान करते हैं। चाहे आपको स्थानीय क्षेत्र में छोटी यात्राओं के लिए सहायता चाहिए या दूर के गंतव्यों तक लंबी दूरी की यात्राओं के लिए, हमारे ड्राइवर सुरक्षित, समय पर और आरामदायक यात्रा सुनिश्चित करते हैं।",
+      "hire-driver.th.service": "सेवा प्रकार",
+      "hire-driver.th.details": "सेवा विवरण",
+      "hire-driver.th.charge": "प्रति दिन शुल्क",
+      "hire-driver.th.food": "खाना और आवास भत्ता",
+      "hire-driver.th.terms": "अतिरिक्त शुल्क / शर्तें",
+      "hire-driver.service1.name": "📍 स्थानीय क्षेत्र सेवा",
+      "hire-driver.service1.details": "शहर की यात्राएँ, काम और देवघर जिले के भीतर आसपास की यात्राएँ (8-10 घंटे तक)",
+      "hire-driver.service1.food": "शामिल (ग्राहक को भोजन देना होगा या बुनियादी ₹150-₹200 दैनिक भत्ता)",
+      "hire-driver.service1.terms": "ओवरटाइम: मानक शिफ्ट के बाद प्रति अतिरिक्त घंटा ₹100।",
+      "hire-driver.service2.name": "🛣️ दूर की सेवा",
+      "hire-driver.service2.details": "देवघर के बाहर लंबी दूरी की यात्राएँ या बहु-दिवसीय यात्राएँ (जैसे रांची, पटना, या कोलकाता)",
+      "hire-driver.service2.food": "अनिवार्य रात्रि आवास/खाना भत्ता: ग्राहक स्वच्छ आवास और भोजन प्रदान करता है (या अतिरिक्त ₹300/रात भत्ता)।",
+      "hire-driver.service2.terms": "रात्रि ड्राइविंग शुल्क: रात 10:00 बजे से सुबह 5:00 बजे के बीच ड्राइविंग पर ₹200 अतिरिक्त।",
+      "hire-driver.service3.name": "⏱️ घंटे के आधार पर",
+      "hire-driver.service3.details": "छोटे स्थानीय ड्रॉप, आपातकालीन दौड़, या मंदिर यात्राएँ (बैद्यनाथ धाम)",
+      "hire-driver.service3.food": "छोटी अवधि के लिए आवश्यक नहीं।",
+      "hire-driver.service3.terms": "यदि शुरुआती पिकअप स्थान से दूर छोड़ा जाता है तो रिटर्न ट्रांज़िट लागत।",
+      "hire-driver.footer": "हमारे ड्राइवर विनम्र, अच्छी तरह से प्रशिक्षित और स्थानीय और क्षेत्रीय मार्गों से परिचित हैं। वे सुरक्षा प्रथाओं का पालन करते हैं और तनाव-मुक्त यात्रा अनुभव प्रदान करते हैं, चाहे आप एक दिन या कई दिनों के लिए बुकिंग कर रहे हों।",
+      "hire-driver.btn": "📞 ड्राइवर किराया पर लें",
+
+      // Contact
+      "contact.title": "संपर्क करें",
+      "contact.subtitle": "हम आपकी सही यात्रा की योजना बनाने में मदद के लिए यहाँ हैं",
+      "contact.call.title": "हमें कॉल करें",
+      "contact.visit.title": "हमसे मिलें",
+      "contact.whatsapp.title": "व्हाट्सएप",
+      "contact.whatsapp.desc": "व्हाट्सएप के माध्यम से त्वरित बुकिंग",
+      "contact.whatsapp.btn": "💬 व्हाट्सएप पर चैट करें",
+      "contact.cta": "📞 अभी अपनी यात्रा बुक करें",
+
+      // Footer
+      "footer.rights": "© 2026 प्रताप ट्रैवल्स। सर्वाधिकार सुरक्षित।",
+
+      // Booking Modal
+      "modal.title": "🚗 अपनी यात्रा बुक करें",
+      "modal.subtitle": "फ़ॉर्म भरें और हम जल्द ही पुष्टि करेंगे",
+      "modal.name": "पूरा नाम *",
+      "modal.name.placeholder": "अपना पूरा नाम दर्ज करें",
+      "modal.phone": "फ़ोन नंबर *",
+      "modal.phone.placeholder": "जैसे 7991182086",
+      "modal.email": "ईमेल पता",
+      "modal.email.placeholder": "जैसे you@example.com",
+      "modal.route": "मार्ग *",
+      "modal.route.default": "अपना गंतव्य चुनें",
+      "modal.date": "यात्रा की तिथि *",
+      "modal.time": "पसंदीदा समय",
+      "modal.passengers": "यात्रियों की संख्या",
+      "modal.type": "यात्रा प्रकार *",
+      "modal.type.default": "यात्रा प्रकार चुनें",
+      "modal.type.one-way": "एक तरफ़ा",
+      "modal.type.round-trip": "राउंड ट्रिप",
+      "modal.type.full-day": "पूरा दिन / बहु-दिवसीय",
+      "modal.type.rental": "वाहन किराया",
+      "modal.remarks": "विशेष अनुरोध / टिप्पणियाँ",
+      "modal.remarks.placeholder": "कोई विशेष आवश्यकताएँ... (हवाई अड्डा पिकअप, कई स्टॉप आदि)",
+      "modal.submit": "🚗 बुकिंग अनुरोध जमा करें",
+      "modal.note": "हम 30 मिनट के भीतर व्हाट्सएप या फ़ोन के माध्यम से आपकी बुकिंग की पुष्टि करेंगे।",
+      "modal.success.title": "बुकिंग अनुरोध भेजा गया!",
+      "modal.success.desc": "हमें आपका बुकिंग अनुरोध मिल गया है। हम जल्द ही पुष्टि के लिए आपसे संपर्क करेंगे।",
+      "modal.success.btn": "एक और यात्रा बुक करें",
+
+      // Floating Button
+      "floating.btn": "बुक करें",
+
+      // Error messages
+      // Visitors page
+      "nav.home": "होम",
+      "visitors.hero.title": "📊 आगंतुक विश्लेषण",
+      "visitors.hero.desc": "ट्रैक करें कि आपकी वेबसाइट पर कौन आया — स्थान, डिवाइस, पृष्ठ और बहुत कुछ",
+      "visitors.auth.title": "🔒 एडमिन एक्सेस आवश्यक",
+      "visitors.auth.desc": "आगंतुक विश्लेषण देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "visitors.auth.google": "Google से साइन इन करें",
+      "visitors.auth.or": "या",
+      "visitors.auth.note": "केवल एडमिन खाते। एक्सेस के लिए साइट मालिक से संपर्क करें।",
+      "visitors.btn.refresh": "रिफ़्रेश",
+      "visitors.btn.signout": "साइन आउट",
+      "visitors.kpi.total": "कुल आगंतुक",
+      "visitors.kpi.newToday": "आज नए",
+      "visitors.kpi.returning": "वापस आने वाले",
+      "visitors.kpi.active": "सक्रिय (पिछले 30 मिनट)",
+      "visitors.kpi.countries": "देश",
+      "visitors.kpi.pages": "देखे गए पृष्ठ",
+      "visitors.table.title": "📋 आगंतुक रिकॉर्ड",
+      "visitors.table.search": "🔍 स्थान, डिवाइस, पथ से खोजें...",
+      "visitors.btn.clearLog": "लॉग साफ़ करें",
+      "visitors.empty": "अभी तक कोई आगंतुक डेटा नहीं। पृष्ठ लोड होने पर ट्रैकिंग स्वचालित रूप से शुरू हो जाती है।",
+
+      "error.name": "कृपया अपना नाम दर्ज करें",
+      "error.phone": "एक मान्य 10 अंकों का फ़ोन नंबर दर्ज करें",
+      "error.email": "एक मान्य ईमेल पता दर्ज करें",
+      "error.route": "कृपया गंतव्य चुनें",
+      "error.date": "कृपया यात्रा की तिथि चुनें",
+      "error.type": "कृपया यात्रा प्रकार चुनें",
+      "sending": "⏳ भेजा जा रहा है...",
+      "submit.booking": "🚗 बुकिंग अनुरोध जमा करें",
+    },
+
+    en: {
+      // Navbar
+      "nav.services": "Services",
+      "nav.routes": "Routes",
+      "nav.offers": "Offers",
+      "nav.rentals": "Rentals",
+      "nav.hire-driver": "Hire Driver",
+      "nav.contact": "Contact",
+      "nav.visitors": "Visitors",
+
+      // Hero
+      "hero.badge": "🌟 Trusted Since Generations",
+      "hero.title1": "Your Journey,",
+      "hero.title2": "Our Priority",
+      "hero.desc": "Experience the comfort of a private driver with PRATAP TRAVELS. Whether it's airport transfers, business trips, or leisure tours, we deliver safe, reliable, and stylish travel every time.",
+      "hero.book-now": "📞 Book Now",
+      "hero.view-packages": "🗺 View Packages",
+
+      // Services
+      "services.title": "Our Services",
+      "services.subtitle": "Travel Made Simple with PRATAP TRAVELS",
+      "services.airport.title": "Airport Transfers",
+      "services.airport.desc": "On-time pickups and hassle-free transfers to any airport. Professional drivers with luxury vehicles.",
+      "services.airport.li1": "On-time pickups guaranteed",
+      "services.airport.li2": "Meet & greet service",
+      "services.airport.li3": "Flight tracking included",
+      "services.tourism.title": "Tourism & Pilgrimage",
+      "services.tourism.desc": "From quick deliveries to long scenic drives, we make every trip smooth and enjoyable for families and groups.",
+      "services.tourism.li1": "Baba Dham & temple circuits",
+      "services.tourism.li2": "Family-friendly packages",
+      "services.tourism.li3": "Customized itineraries",
+      "services.business.title": "Business Travel",
+      "services.business.desc": "Smart travel solutions for professionals. Seamless travel for business meetings, corporate events, and more.",
+      "services.business.li1": "Reliable executive service",
+      "services.business.li2": "Discreet & professional drivers",
+      "services.business.li3": "Customized travel plans",
+
+      // Slider
+      "slider.title": "Explore Our Destinations",
+      "slider.subtitle": "Discover the beauty of every route we offer",
+
+      // Routes
+      "routes.title": "Routes & Pricing",
+      "routes.subtitle": "Affordable private driver services to popular destinations",
+      "routes.filter.all": "All Routes",
+      "routes.filter.pilgrimage": "🛕 Pilgrimage",
+      "routes.filter.city": "🏙️ City",
+      "routes.filter.local": "📍 Local",
+      "routes.th.route": "Route",
+      "routes.th.distance": "Distance",
+      "routes.th.duration": "Duration",
+      "routes.th.price": "Price (Approx.)",
+      "routes.th.highlights": "Highlights",
+      "routes.popular": "POPULAR",
+
+      // Offers
+      "offers.title": "Attractive Offers",
+      "offers.subtitle": "Special packages for every type of traveller",
+      "offers.pilgrimage.title": "Pilgrimage Combo",
+      "offers.pilgrimage.desc": "Deoghar → Basukinath + Sultanganj in one day. Special darshan assistance included.",
+      "offers.pilgrimage.price": "Starting ₹3,500",
+      "offers.weekend.title": "Weekend Getaway",
+      "offers.weekend.desc": "Deoghar → Tarapith + Nandan Pahar family package. Perfect for a refreshing weekend.",
+      "offers.weekend.price": "Starting ₹2,800",
+      "offers.business.title": "Business Express",
+      "offers.business.desc": "Deoghar → Ranchi / Kolkata / Patna with Wi-Fi enabled car + complimentary water bottles.",
+      "offers.business.price": "Starting ₹5,000",
+      "offers.family.title": "Family Fun Deal",
+      "offers.family.desc": "Deoghar Waterpark + Tapovan Hills half-day trip. Perfect for kids and parents alike.",
+      "offers.family.price": "Starting ₹1,200",
+      "offers.festival.title": "Festival Special (Shravani Mela)",
+      "offers.festival.desc": "Flat ₹500 off on Baba Dham + Basukinath packages. Celebrate the festival with ease!",
+      "offers.festival.price": "₹500 OFF",
+
+      // Rentals
+      "rentals.title": "Vehicle Rentals",
+      "rentals.subtitle": "Well-maintained vehicles for short or long trips",
+      "rentals.card1.title": "Professional & Trustworthy",
+      "rentals.card1.li1": "Well-maintained vehicles",
+      "rentals.card1.li2": "Valid ID proof required (Aadhaar, DL, Passport)",
+      "rentals.card1.li3": "Refundable security deposit",
+      "rentals.card1.li4": "Simple paperwork, quick approval",
+      "rentals.card1.btn": "📞 Call Now",
+      "rentals.card2.title": "Easy Rentals in Deoghar",
+      "rentals.card2.li1": "ID proof submission (mandatory)",
+      "rentals.card2.li2": "Security deposit for safety",
+      "rentals.card2.btn": "📞 Book Today",
+      "rentals.card3.title": "Work & Worship",
+      "rentals.card3.li1": "Security deposit (refundable)",
+      "rentals.card3.li2": "Valid ID proof & documents",
+      "rentals.card3.li3": "Transparent pricing, no hidden charges",
+      "rentals.card3.btn": "📞 Reserve Now",
+      "rentals.banner.title": "🎉 Book for 3+ Days and Get 10% OFF!",
+      "rentals.banner.desc": "Special discount on extended rentals. Perfect for pilgrimages and business trips.",
+      "rentals.banner.btn": "📞 Claim Offer",
+
+      // Hire Driver
+      "hire-driver.title": "Hire Driver Service",
+      "hire-driver.subtitle": "Professional and reliable drivers for all your travel needs",
+      "hire-driver.intro": "We provide professional and reliable drivers to support your travel needs. Whether you require assistance for short trips within the local area or long-distance journeys to far destinations, our drivers ensure safe, punctual, and comfortable travel.",
+      "hire-driver.th.service": "Service Type",
+      "hire-driver.th.details": "Service Details",
+      "hire-driver.th.charge": "Per Day Charge",
+      "hire-driver.th.food": "Food & Lodging Allowance",
+      "hire-driver.th.terms": "Additional Charges / Terms",
+      "hire-driver.service1.name": "📍 Local Area Service",
+      "hire-driver.service1.details": "City commutes, errands, and nearby travel within Deoghar district (Up to 8–10 Hours)",
+      "hire-driver.service1.food": "Included (Client to provide meals or a basic ₹150–₹200 daily stipend)",
+      "hire-driver.service1.terms": "Overtime: ₹100 per additional hour after the standard shift.",
+      "hire-driver.service2.name": "🛣️ Far Location Service",
+      "hire-driver.service2.details": "Long-distance journeys or multi-day trips outside Deoghar (e.g., to Ranchi, Patna, or Kolkata)",
+      "hire-driver.service2.food": "Mandatory Night Stay/Food Allowance: Client provides clean accommodation and meals (or an additional ₹300/night stipend).",
+      "hire-driver.service2.terms": "Night Driving Charge: ₹200 extra if driving between 10:00 PM and 5:00 AM.",
+      "hire-driver.service3.name": "⏱️ Hourly Basis",
+      "hire-driver.service3.details": "Short local drops, emergency runs, or temple visits (Baidyanath Dham)",
+      "hire-driver.service3.food": "Not required for short spans.",
+      "hire-driver.service3.terms": "Return transit costs if dropped off far from the initial pickup location.",
+      "hire-driver.footer": "Our drivers are courteous, well-trained, and familiar with both local and regional routes. They follow safety practices and provide a stress-free travel experience, whether you're booking for a single day or multiple days.",
+      "hire-driver.btn": "📞 Hire a Driver",
+
+      // Contact
+      "contact.title": "Contact Us",
+      "contact.subtitle": "We're here to help you plan the perfect trip",
+      "contact.call.title": "Call Us",
+      "contact.visit.title": "Visit Us",
+      "contact.whatsapp.title": "WhatsApp",
+      "contact.whatsapp.desc": "Quick booking via WhatsApp",
+      "contact.whatsapp.btn": "💬 Chat on WhatsApp",
+      "contact.cta": "📞 Book Your Ride Now",
+
+      // Footer
+      "footer.rights": "© 2026 Pratap Travels. All rights reserved.",
+
+      // Booking Modal
+      "modal.title": "🚗 Book Your Ride",
+      "modal.subtitle": "Fill out the form and we'll confirm shortly",
+      "modal.name": "Full Name *",
+      "modal.name.placeholder": "Enter your full name",
+      "modal.phone": "Phone Number *",
+      "modal.phone.placeholder": "e.g. 7991182086",
+      "modal.email": "Email Address",
+      "modal.email.placeholder": "e.g. you@example.com",
+      "modal.route": "Route *",
+      "modal.route.default": "Select your destination",
+      "modal.date": "Travel Date *",
+      "modal.time": "Preferred Time",
+      "modal.passengers": "No. of Passengers",
+      "modal.type": "Trip Type *",
+      "modal.type.default": "Select trip type",
+      "modal.type.one-way": "One Way",
+      "modal.type.round-trip": "Round Trip",
+      "modal.type.full-day": "Full Day / Multi-day",
+      "modal.type.rental": "Vehicle Rental",
+      "modal.remarks": "Special Requests / Remarks",
+      "modal.remarks.placeholder": "Any special requirements... (airport pickup, multiple stops, etc.)",
+      "modal.submit": "🚗 Submit Booking Request",
+      "modal.note": "We'll confirm your booking via WhatsApp or phone within 30 minutes.",
+      "modal.success.title": "Booking Request Sent!",
+      "modal.success.desc": "We've received your booking request. We'll contact you shortly to confirm.",
+      "modal.success.btn": "Book Another Ride",
+
+      // Floating Button
+      "floating.btn": "Book Now",
+
+      // Error messages
+      // Visitors page
+      "nav.home": "Home",
+      "visitors.hero.title": "📊 Visitor Analytics",
+      "visitors.hero.desc": "Track who visited your website — location, device, pages, and more",
+      "visitors.auth.title": "🔒 Admin Access Required",
+      "visitors.auth.desc": "Sign in with an authorized Google account to view visitor analytics",
+      "visitors.auth.google": "Sign in with Google",
+      "visitors.auth.or": "or",
+      "visitors.auth.note": "Admin accounts only. Contact the site owner for access.",
+      "visitors.btn.refresh": "Refresh",
+      "visitors.btn.signout": "Sign Out",
+      "visitors.kpi.total": "Total Visitors",
+      "visitors.kpi.newToday": "New Today",
+      "visitors.kpi.returning": "Returning",
+      "visitors.kpi.active": "Active (Last 30 min)",
+      "visitors.kpi.countries": "Countries",
+      "visitors.kpi.pages": "Pages Visited",
+      "visitors.table.title": "📋 Visitor Records",
+      "visitors.table.search": "🔍 Search by location, device, path...",
+      "visitors.btn.clearLog": "Clear Log",
+      "visitors.empty": "No visitor data yet. Tracking starts automatically when pages are loaded.",
+
+      "error.name": "Please enter your name",
+      "error.phone": "Enter a valid 10-digit phone number",
+      "error.email": "Enter a valid email address",
+      "error.route": "Please select a destination",
+      "error.date": "Please select a travel date",
+      "error.type": "Please select a trip type",
+      "sending": "⏳ Sending...",
+      "submit.booking": "🚗 Submit Booking Request",
+    },
+  };
+
+  // ---------- Get translation by key ----------
+  function t(key) {
+    var lang = currentLang || "hi";
+    return (translations[lang] && translations[lang][key]) || key;
+  }
+
+  // ---------- Apply translations to all [data-i18n] elements ----------
+  function applyTranslations() {
+    var elements = document.querySelectorAll("[data-i18n]");
+    elements.forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      var text = t(key);
+      if (text) el.textContent = text;
+    });
+
+    // Apply placeholders
+    var placeholders = document.querySelectorAll("[data-i18n-placeholder]");
+    placeholders.forEach(function (el) {
+      var key = el.getAttribute("data-i18n-placeholder");
+      var text = t(key);
+      if (text) el.setAttribute("placeholder", text);
+    });
+
+    // Update HTML lang attribute
+    document.documentElement.lang = currentLang === "hi" ? "hi" : "en";
+
+    // Update page title
+    document.title =
+      currentLang === "hi"
+        ? "प्रताप ट्रैवल्स – आपकी यात्रा, हमारी प्राथमिकता"
+        : "Pratap Travels – Your Journey, Our Priority";
+  }
+
+  // ---------- Set language ----------
+  function setLanguage(lang) {
+    if (lang !== "hi" && lang !== "en") return;
+    currentLang = lang;
+    localStorage.setItem(STORAGE_KEY, lang);
+    applyTranslations();
+
+    // Update toggle UI
+    var btnHi = document.getElementById("langBtnHi");
+    var btnEn = document.getElementById("langBtnEn");
+    if (btnHi && btnEn) {
+      btnHi.classList.toggle("active", lang === "hi");
+      btnEn.classList.toggle("active", lang === "en");
+    }
+
+    // Dispatch custom event for other scripts
+    window.dispatchEvent(
+      new CustomEvent("languageChanged", { detail: { lang: lang } }),
+    );
+  }
+
+  // ---------- Initialize ----------
+  function init() {
+    applyTranslations();
+
+    var btnHi = document.getElementById("langBtnHi");
+    var btnEn = document.getElementById("langBtnEn");
+    if (btnHi) {
+      btnHi.addEventListener("click", function () {
+        setLanguage("hi");
+      });
+    }
+    if (btnEn) {
+      btnEn.addEventListener("click", function () {
+        setLanguage("en");
+      });
+    }
+
+    // Set initial active state
+    if (btnHi && btnEn) {
+      btnHi.classList.toggle("active", currentLang === "hi");
+      btnEn.classList.toggle("active", currentLang === "en");
+    }
+  }
+
+  // Public API
+  return {
+    t: t,
+    setLanguage: setLanguage,
+    getLanguage: function () {
+      return currentLang;
+    },
+    init: init,
+    applyTranslations: applyTranslations,
+  };
+})();
