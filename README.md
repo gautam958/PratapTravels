@@ -16,7 +16,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup & Usage](#setup--usage)
-- [Email Integration (EmailJS)](#email-integration-emailjs)
+- [Booking Email (Azure Function)](#booking-email-azure-function)
 - [Google OAuth (Admin Dashboard)](#google-oauth-admin-dashboard)
 - [Deployment](#deployment)
 - [Responsive Design](#responsive-design)
@@ -45,7 +45,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Social Media Links** — Facebook, Instagram, WhatsApp icons (SVG) in contact section and footer
 - **Floating "Book Now" Button** — Fixed bottom-left with pulse animation, opens booking modal
 - **Booking Modal** — Full booking form with validation (name, phone, email, route, date, time, passengers, trip type, remarks)
-- **EmailJS Integration** — Sends booking form data via email (with WhatsApp fallback)
+- **Booking Email** — Sends booking form data via Azure Function API (with WhatsApp fallback)
 - **Back-to-Top Button** — Appears on scroll, smooth scrolls to top
 - **Favicon** — Custom logo (`prataplog.jpeg`)
 - **Visitor Tracking** — Automatically tracks page views and sends data to Azure Function API
@@ -678,7 +678,7 @@ private static IActionResult HandleGetAll(List<dynamic> referralsList, ILogger l
 | **Icons**           | Emoji + Inline SVGs                                                        |
 | **Backend API**     | Azure Functions (Visitor Tracking)                                         |
 | **Auth**            | Google Identity Services (OAuth 2.0)                                       |
-| **Email**           | EmailJS Browser SDK                                                        |
+| **Email**           | Azure Function (SMTP via Gmail)                                             |
 | **Hosting**         | Azure Static Web Apps                                                      |
 | **CI/CD**           | GitHub Actions                                                             |
 | **Version Control** | Git & GitHub                                                               |
@@ -780,17 +780,124 @@ var PT_CONFIG = {
 
 ---
 
-## Email Integration (EmailJS)
+## Booking Email (via Visitors Azure Function)
 
-The booking form uses [EmailJS](https://www.emailjs.com/) to send emails directly from the browser (no backend needed).
+The booking form sends data to the **same visitors Azure Function** that already handles visitor tracking and email notifications. The function detects booking requests via a `type: "booking"` field and sends a formatted booking email instead of a visitor notification.
 
-### Current Configuration
+### How It Works
 
-- **Recipient:** `prempratap7455@gmail.com`
-- **WhatsApp Fallback Number:** `+91 79911 82806`
-- **Service ID:** `service_jhqm31f`
-- **Template ID:** `template_jhcl557`
-- **Public Key:** `ApfbQ_yIjOVtMlf7L`
+1. User fills booking form and submits
+2. Frontend POSTs booking data to the `visitors` Azure Function with `type: "booking"` in the payload
+3. Azure Function detects the `type` field, sends a formatted HTML booking email to `prempratap7455@gmail.com`
+4. If the API fails, opens WhatsApp with the booking details as fallback
+
+### Request Body
+
+```json
+{
+  "type": "booking",
+  "name": "Customer Name",
+  "phone": "7991182086",
+  "email": "customer@example.com",
+  "route": "Deoghar → Basukinath",
+  "date": "2026-07-01",
+  "time": "08:00",
+  "passengers": "4",
+  "trip_type": "One-Way",
+  "remarks": "Airport pickup needed",
+  "referral_code": "PTABC1234"
+}
+```
+
+### Azure Function Modification
+
+The existing `visitors` Azure Function (`run.csx`) needs a small modification to handle booking data. Add this check after parsing the request body:
+
+```csharp
+// --- Add this block after reading requestBody, before visitor processing ---
+string requestType = data?.type?.ToString() ?? "";
+
+if (requestType == "booking")
+{
+    return HandleBookingEmail(data, origin, log);
+}
+// --- End of booking check ---
+```
+
+And add this handler function:
+
+```csharp
+private static IActionResult HandleBookingEmail(dynamic data, string originUrl, ILogger log)
+{
+    try
+    {
+        string smtpUser = Environment.GetEnvironmentVariable("EMAIL_USER_PRATAP");
+        string smtpPass = Environment.GetEnvironmentVariable("EMAIL_PASS_PRATAP");
+        string recipientAddress = Environment.GetEnvironmentVariable("EMAIL_RECIPIENT_PRATAP") ?? "prempratap7455@gmail.com";
+
+        string name = data?.name ?? "Unknown";
+        string phone = data?.phone ?? "Unknown";
+        string email = data?.email?.ToString() ?? "";
+        string route = data?.route ?? "Unknown";
+        string date = data?.date ?? "Unknown";
+        string time = data?.time?.ToString() ?? "Not specified";
+        string passengers = data?.passengers?.ToString() ?? "1";
+        string tripType = data?.trip_type ?? data?.type ?? "Unknown";
+        string remarks = data?.remarks?.ToString() ?? "";
+        string referralCode = data?.referral_code?.ToString() ?? "";
+
+        var smtpClient = new SmtpClient("smtp.gmail.com", 587)
+        {
+            Credentials = new NetworkCredential(smtpUser, smtpPass),
+            EnableSsl = true
+        };
+
+        string subjectLine = $"🚗 New Booking Request from {name} [{route}]";
+
+        string referralSection = !string.IsNullOrEmpty(referralCode)
+            ? $"<p><b>🎁 Referral Code:</b> {referralCode}</p>"
+            : "";
+
+        string remarksSection = !string.IsNullOrEmpty(remarks)
+            ? $"<p><b>📝 Remarks:</b> {remarks}</p>"
+            : "";
+
+        var message = new MailMessage();
+        message.From = new MailAddress(smtpUser, "Pratap Travels Booking");
+        message.To.Add(recipientAddress);
+        message.Subject = subjectLine;
+        message.IsBodyHtml = true;
+        message.Priority = MailPriority.High;
+
+        message.Body = $@"
+            <h2>🚔 Pratap Travels - New Booking Request</h2>
+            <hr/>
+            <p><b>👤 Customer Name:</b> {name}</p>
+            <p><b>📞 Phone:</b> {phone}</p>
+            <p><b>📧 Email:</b> {(string.IsNullOrEmpty(email) ? "Not provided" : email)}</p>
+            <p><b>🗺 Route:</b> {route}</p>
+            <p><b>📅 Travel Date:</b> {date}</p>
+            <p><b>⏰ Time:</b> {time}</p>
+            <p><b>👥 Passengers:</b> {passengers}</p>
+            <p><b>🏷 Trip Type:</b> {tripType}</p>
+            {referralSection}
+            {remarksSection}
+            <br/>
+            <p><i>Submitted via Pratap Travels website</i></p>
+        ;
+
+        smtpClient.Send(message);
+        log.LogInformation($"Booking email sent for: {name} ({phone}) via {originUrl}");
+
+        return new OkObjectResult(new { success = true, message = "Booking email sent" });
+    }
+    catch (Exception ex)
+    {
+        log.LogError($"Booking email failed: {ex.Message}");
+        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+    }
+}
+```
 
 ---
 

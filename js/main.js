@@ -111,11 +111,6 @@ document.addEventListener("DOMContentLoaded", function () {
     );
   }
 
-  // ---------- EmailJS Initialization ----------
-  if (typeof emailjs !== "undefined") {
-    emailjs.init("ApfbQ_yIjOVtMlf7L");
-  }
-
   // ---------- Floating Book Button & Modal ----------
   var floatingBookBtn = document.getElementById("floatingBookBtn");
   var bookingModal = document.getElementById("bookingModal");
@@ -149,7 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  // ---------- Booking Form with EmailJS ----------
+  // ---------- Booking Form ----------
   var bookingForm = document.getElementById("bookingForm");
   if (bookingForm) {
     // Set minimum date to today
@@ -266,51 +261,85 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      // Send email via EmailJS
-      var templateParams = {
-        to_email: "prempratap7455@gmail.com",
-        from_name: nameVal,
-        from_phone: phoneVal,
-        from_email: emailVal || "Not provided",
+      // Send booking to Azure Function API (same visitors endpoint)
+      var bookingPayload = {
+        type: "booking",
+        name: nameVal,
+        phone: phoneVal,
+        email: emailVal || "",
         route: routeVal,
-        travel_date: dateVal,
-        travel_time: timeVal,
+        date: dateVal,
+        time: timeVal,
         passengers: passengersVal,
         trip_type: typeVal,
-        remarks: remarksVal || "None",
-        referral_code: referralVal || "None",
+        remarks: remarksVal || "",
+        referral_code: referralVal || "",
       };
 
-      if (typeof emailjs !== "undefined") {
-        emailjs
-          .send("service_jhqm31f", "template_jhcl557", templateParams)
+      // Helper: build WhatsApp fallback message
+      function buildWhatsAppMsg() {
+        var msg = "🚗 *PRATAP TRAVELS - Booking Request*\n\n";
+        msg += "👤 *Name:* " + nameVal + "\n";
+        msg += "📞 *Phone:* " + phoneVal + "\n";
+        if (emailVal) msg += "📧 *Email:* " + emailVal + "\n";
+        msg += "🗺 *Route:* " + routeVal + "\n";
+        msg += "📅 *Date:* " + dateVal + "\n";
+        msg += "⏰ *Time:* " + timeVal + "\n";
+        msg += "👥 *Passengers:* " + passengersVal + "\n";
+        msg += "🏷 *Trip Type:* " + typeVal + "\n";
+        if (referralVal) msg += "🎁 *Referral Code:* " + referralVal + "\n";
+        if (remarksVal) msg += "📝 *Remarks:* " + remarksVal + "\n";
+        return msg;
+      }
+
+      // Helper: show success UI
+      function showBookingSuccess(openWhatsApp) {
+        bookingForm.classList.add("hidden");
+        document.getElementById("bookingSuccess").classList.remove("hidden");
+        if (openWhatsApp) {
+          var whatsappUrl =
+            "https://wa.me/917991182806?text=" + encodeURIComponent(buildWhatsAppMsg());
+          window.open(whatsappUrl, "_blank");
+        }
+      }
+
+      // Helper: record referral redemption
+      function handleReferralRedemption(bookingId) {
+        if (referralVal) {
+          recordReferralRedemption(referralVal, bookingId, phoneVal);
+          storeLocalRedemption({
+            referralCode: referralVal,
+            bookingId: bookingId,
+            newCustomerPhone: phoneVal,
+            rewardAmount: 50,
+            createdAt: new Date().toISOString(),
+            status: "completed"
+          });
+        }
+      }
+
+      var bookingId = "BK" + Date.now() + phoneVal.slice(-4);
+      var visitorApiUrl = getVisitorApiUrl();
+
+      if (visitorApiUrl) {
+        fetch(visitorApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          mode: "cors",
+          body: JSON.stringify(bookingPayload),
+        })
+          .then(function (resp) {
+            if (!resp.ok) throw new Error("HTTP " + resp.status);
+            return resp.json();
+          })
           .then(function () {
-            bookingForm.classList.add("hidden");
-            document
-              .getElementById("bookingSuccess")
-              .classList.remove("hidden");
+            showBookingSuccess(false);
+            handleReferralRedemption(bookingId);
           })
           .catch(function (error) {
-            console.error("EmailJS send failed:", error);
-            // Fallback: open WhatsApp
-            var msg = "🚗 *PRATAP TRAVELS - Booking Request*\n\n";
-            msg += "👤 *Name:* " + nameVal + "\n";
-            msg += "📞 *Phone:* " + phoneVal + "\n";
-            if (emailVal) msg += "📧 *Email:* " + emailVal + "\n";
-            msg += "🗺 *Route:* " + routeVal + "\n";
-            msg += "📅 *Date:* " + dateVal + "\n";
-            msg += "⏰ *Time:* " + timeVal + "\n";
-            msg += "👥 *Passengers:* " + passengersVal + "\n";
-            msg += "🏷 *Trip Type:* " + typeVal + "\n";
-            if (referralVal) msg += "🎁 *Referral Code:* " + referralVal + "\n";
-            if (remarksVal) msg += "📝 *Remarks:* " + remarksVal + "\n";
-            var whatsappUrl =
-              "https://wa.me/917991182806?text=" + encodeURIComponent(msg);
-            bookingForm.classList.add("hidden");
-            document
-              .getElementById("bookingSuccess")
-              .classList.remove("hidden");
-            window.open(whatsappUrl, "_blank");
+            console.error("Booking API failed:", error);
+            showBookingSuccess(true);
+            handleReferralRedemption(bookingId);
           })
           .finally(function () {
             if (submitBtn) {
@@ -319,26 +348,9 @@ document.addEventListener("DOMContentLoaded", function () {
             }
           });
       } else {
-        console.error(
-          "EmailJS library not loaded. If you opened this file directly (file://), serve it via HTTP instead.",
-        );
-        // EmailJS not loaded: fallback to WhatsApp
-        var fallbackMsg = "🚗 *PRATAP TRAVELS - Booking Request*\n\n";
-        fallbackMsg += "👤 *Name:* " + nameVal + "\n";
-        fallbackMsg += "📞 *Phone:* " + phoneVal + "\n";
-        if (emailVal) fallbackMsg += "📧 *Email:* " + emailVal + "\n";
-        fallbackMsg += "🗺 *Route:* " + routeVal + "\n";
-        fallbackMsg += "📅 *Date:* " + dateVal + "\n";
-        fallbackMsg += "⏰ *Time:* " + timeVal + "\n";
-        fallbackMsg += "👥 *Passengers:* " + passengersVal + "\n";
-        fallbackMsg += "🏷 *Trip Type:* " + typeVal + "\n";
-        if (referralVal) fallbackMsg += "🎁 *Referral Code:* " + referralVal + "\n";
-        if (remarksVal) fallbackMsg += "📝 *Remarks:* " + remarksVal + "\n";
-        var fallbackUrl =
-          "https://wa.me/917991182806?text=" + encodeURIComponent(fallbackMsg);
-        bookingForm.classList.add("hidden");
-        document.getElementById("bookingSuccess").classList.remove("hidden");
-        window.open(fallbackUrl, "_blank");
+        // No API configured: fallback to WhatsApp directly
+        showBookingSuccess(true);
+        handleReferralRedemption(bookingId);
         if (submitBtn) {
           submitBtn.textContent = "🚗 Submit Booking Request";
           submitBtn.disabled = false;
@@ -538,6 +550,7 @@ function openBookingModal() {
 
 var PT_REFER_KEY = "pt_referral";
 var PT_REFER_STATS_KEY = "pt_referral_stats";
+var PT_LOCAL_REDEMPTIONS_KEY = "pt_local_redemptions";
 
 // ---------- Get Referral API URL ----------
 function getReferralApiUrl() {
@@ -738,6 +751,21 @@ function validateReferralCode(code) {
   return code.toUpperCase();
 }
 
+// ---------- Local Redemption Storage (localStorage fallback) ----------
+function getLocalRedemptions() {
+  try {
+    return JSON.parse(localStorage.getItem(PT_LOCAL_REDEMPTIONS_KEY) || "[]");
+  } catch (e) {
+    return [];
+  }
+}
+
+function storeLocalRedemption(redemption) {
+  var redemptions = getLocalRedemptions();
+  redemptions.push(redemption);
+  localStorage.setItem(PT_LOCAL_REDEMPTIONS_KEY, JSON.stringify(redemptions));
+}
+
 // ---------- Validate referral code against backend ----------
 async function validateReferralCodeServer(code) {
   var apiUrl = getReferralApiUrl();
@@ -811,6 +839,7 @@ async function fetchReferralStats() {
     if (resp.ok) {
       var stats = await resp.json();
       refData.totalReferrals = stats.totalReferrals || 0;
+      refData.totalRedemptions = stats.totalRedemptions || 0;
       refData.totalRewards = stats.totalRewards || 0;
       refData.rewardBalance = stats.rewardBalance || 0;
       localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
@@ -1390,10 +1419,36 @@ function clearVisitorLog() {
 
 var REFERRAL_ALL_KEY = "pt_referral_all";
 
+// ---------- Merge local redemptions into referral records ----------
+function mergeLocalRedemptions(referrals) {
+  var localRedemptions = getLocalRedemptions();
+  if (localRedemptions.length === 0) return referrals;
+
+  var localByCode = {};
+  for (var i = 0; i < localRedemptions.length; i++) {
+    var code = localRedemptions[i].referralCode;
+    if (!localByCode[code]) localByCode[code] = { count: 0, rewards: 0 };
+    localByCode[code].count++;
+    localByCode[code].rewards += localRedemptions[i].rewardAmount || 50;
+  }
+
+  for (var i = 0; i < referrals.length; i++) {
+    var local = localByCode[referrals[i].code];
+    if (local) {
+      referrals[i].totalRedemptions = (referrals[i].totalRedemptions || referrals[i].redeemedCount || 0) + local.count;
+      referrals[i].totalReferrals = (referrals[i].totalReferrals || 0) + local.count;
+      referrals[i].totalRewards = (referrals[i].totalRewards || 0) + local.rewards;
+      referrals[i].rewardBalance = (referrals[i].rewardBalance || 0) + local.rewards;
+    }
+  }
+
+  return referrals;
+}
+
 // ---------- Fetch all referrals from backend (admin) ----------
 async function fetchAllReferrals() {
   var apiUrl = getReferralApiUrl();
-  if (!apiUrl) return null;
+  if (!apiUrl) return { data: mergeLocalRedemptions(getAllReferralRecords()), fromServer: false };
 
   try {
     var resp = await fetch(apiUrl, {
@@ -1408,10 +1463,10 @@ async function fetchAllReferrals() {
     // Handle both array and object responses
     var referrals = Array.isArray(data) ? data : (data.referrals || []);
     localStorage.setItem(REFERRAL_ALL_KEY, JSON.stringify(referrals));
-    return referrals;
+    return { data: mergeLocalRedemptions(referrals), fromServer: true };
   } catch (e) {
     console.warn("Referral admin API failed, using cached data:", e.message);
-    return null;
+    return { data: mergeLocalRedemptions(getAllReferralRecords()), fromServer: false };
   }
 }
 
@@ -1525,7 +1580,7 @@ function renderReferralTable() {
       totalReferrals +
       "</td>" +
       "<td>" +
-      (r.redeemedCount || 0) +
+      (r.totalRedemptions || r.redeemedCount || 0) +
       "</td>" +
       "<td>₹" +
       rewardsPaid +
@@ -1548,14 +1603,14 @@ function renderReferralTable() {
 
 // ---------- Refresh Referral Data ----------
 async function refreshReferralData() {
-  var apiData = await fetchAllReferrals();  if (apiData) {
+  var result = await fetchAllReferrals();
+  if (result.fromServer) {
     showToast("Referral data refreshed from server.", "success");
+  } else {
+    showToast("Using cached referral data (API unavailable).", "info");
   }
   renderReferralTable();
   updateReferralKPIs();
-  if (!apiData) {
-    showToast("Using cached referral data (API unavailable).", "info");
-  }
 }
 
 /* ============================================
@@ -1622,8 +1677,27 @@ async function openRedemptionHistory(code) {
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light);">⏳ Loading redemption history...</td></tr>';
   if (emptyState) emptyState.classList.add("hidden");
 
-  // Fetch redemption data
+  // Fetch redemption data from API/cache
   var redemptions = await fetchRedemptionsForCode(code);
+  if (!redemptions) redemptions = [];
+
+  // Also include locally recorded redemptions for this code
+  var localRedemptions = getLocalRedemptions();
+  for (var i = 0; i < localRedemptions.length; i++) {
+    if (localRedemptions[i].referralCode === code) {
+      // Avoid duplicates by checking bookingId
+      var isDuplicate = false;
+      for (var j = 0; j < redemptions.length; j++) {
+        if (redemptions[j].bookingId === localRedemptions[i].bookingId) {
+          isDuplicate = true;
+          break;
+        }
+      }
+      if (!isDuplicate) {
+        redemptions.push(localRedemptions[i]);
+      }
+    }
+  }
 
   // Get cached stats for the summary
   var cachedStats = null;
@@ -1717,19 +1791,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // ---------- Init Visitor Dashboard ----------
 document.addEventListener("DOMContentLoaded", async function () {
-  // Only init dashboard if we're on the visitors page
+  // Init visitor dashboard if on visitors page
   if (document.getElementById("visitorTableBody")) {
-    // Try fetching fresh data from Azure Function API
     await fetchVisitorRecordsFromApi();
     renderVisitorTable();
     updateKPIs();
+  }
 
-    // Also init referral dashboard if panel exists
-    if (document.getElementById("referralDashboardPanel")) {
-      await fetchAllReferrals();
-      renderReferralTable();
-      updateReferralKPIs();
-    }
+  // Init referral dashboard independently (works on referral.html too)
+  if (document.getElementById("referralDashboardPanel")) {
+    await fetchAllReferrals();
+    renderReferralTable();
+    updateReferralKPIs();
+  }
+  // Also update user's own referral stats if on index page
+  if (document.getElementById("referStats")) {
+    await fetchReferralStats();
+    updateReferralStatsDisplay();
   }
 
   // Auto-track this page visit (fires on every page that loads main.js)
