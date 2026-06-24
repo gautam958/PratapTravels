@@ -256,6 +256,16 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.disabled = true;
       }
 
+      // Get referral code if provided
+      var referralVal = "";
+      var referralInput = document.getElementById("bookReferral");
+      if (referralInput && referralInput.value.trim()) {
+        var validated = validateReferralCode(referralInput.value.trim());
+        if (validated) {
+          referralVal = validated;
+        }
+      }
+
       // Send email via EmailJS
       var templateParams = {
         to_email: "prempratap7455@gmail.com",
@@ -268,6 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
         passengers: passengersVal,
         trip_type: typeVal,
         remarks: remarksVal || "None",
+        referral_code: referralVal || "None",
       };
 
       if (typeof emailjs !== "undefined") {
@@ -291,6 +302,7 @@ document.addEventListener("DOMContentLoaded", function () {
             msg += "⏰ *Time:* " + timeVal + "\n";
             msg += "👥 *Passengers:* " + passengersVal + "\n";
             msg += "🏷 *Trip Type:* " + typeVal + "\n";
+            if (referralVal) msg += "🎁 *Referral Code:* " + referralVal + "\n";
             if (remarksVal) msg += "📝 *Remarks:* " + remarksVal + "\n";
             var whatsappUrl =
               "https://wa.me/917991182806?text=" + encodeURIComponent(msg);
@@ -320,6 +332,7 @@ document.addEventListener("DOMContentLoaded", function () {
         fallbackMsg += "⏰ *Time:* " + timeVal + "\n";
         fallbackMsg += "👥 *Passengers:* " + passengersVal + "\n";
         fallbackMsg += "🏷 *Trip Type:* " + typeVal + "\n";
+        if (referralVal) fallbackMsg += "🎁 *Referral Code:* " + referralVal + "\n";
         if (remarksVal) fallbackMsg += "📝 *Remarks:* " + remarksVal + "\n";
         var fallbackUrl =
           "https://wa.me/917991182806?text=" + encodeURIComponent(fallbackMsg);
@@ -508,6 +521,302 @@ function openBookingModal() {
   if (modal) {
     modal.classList.remove("hidden");
     document.body.style.overflow = "hidden";
+    // Pre-fill referral code from URL if present
+    var urlParams = new URLSearchParams(window.location.search);
+    var refCode = urlParams.get("ref");
+    if (refCode) {
+      var refInput = document.getElementById("bookReferral");
+      if (refInput) refInput.value = refCode;
+    }
+  }
+}
+
+/* ============================================
+   REFERRAL SYSTEM
+   Generate, share, and track referral codes
+   ============================================ */
+
+var PT_REFER_KEY = "pt_referral";
+var PT_REFER_STATS_KEY = "pt_referral_stats";
+
+// ---------- Get Referral API URL ----------
+function getReferralApiUrl() {
+  if (typeof PT_CONFIG !== "undefined" && PT_CONFIG.REFERRAL_API_URL) {
+    var url = PT_CONFIG.REFERRAL_API_URL;
+    if (
+      PT_CONFIG.REFERRAL_API_KEY &&
+      PT_CONFIG.REFERRAL_API_KEY !== "YOUR_FUNCTION_KEY_HERE"
+    ) {
+      url += "?code=" + encodeURIComponent(PT_CONFIG.REFERRAL_API_KEY);
+    }
+    return url;
+  }
+  return null;
+}
+
+// ---------- Generate a unique referral code from name ----------
+async function generateReferralCode() {
+  var nameInput = document.getElementById("referNameInput");
+  var outputDiv = document.getElementById("referCodeOutput");
+  var codeDisplay = document.getElementById("referCodeDisplay");
+
+  if (!nameInput || !outputDiv || !codeDisplay) return;
+
+  var name = nameInput.value.trim();
+  if (!name) {
+    nameInput.style.borderColor = "var(--danger)";
+    nameInput.focus();
+    return;
+  }
+  nameInput.style.borderColor = "";
+
+  // Check if code already exists in localStorage
+  var existing = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var code;
+  if (existing && existing.name === name) {
+    code = existing.code;
+  } else {
+    var prefix = name.replace(/\s+/g, "").substring(0, 3).toUpperCase();
+    var suffix = Math.floor(1000 + Math.random() * 9000);
+    code = "PT" + prefix + suffix;
+  }
+
+  // Try to register with backend API (PratapTravels-Referral)
+  var apiUrl = getReferralApiUrl();
+  if (apiUrl) {
+    try {
+      var resp = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify({ name: name, code: code }),
+      });
+
+      if (resp.ok) {
+        var data = await resp.json();
+        if (data.success) {
+          code = data.code;
+          // Store locally with backend data
+          var refData = {
+            name: name,
+            code: code,
+            createdAt: new Date().toISOString(),
+            totalReferrals: data.totalReferrals || 0,
+            totalRewards: data.totalRewards || 0,
+            rewardBalance: data.rewardBalance || 0,
+          };
+          localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+        }
+      }
+    } catch (e) {
+      console.warn("Referral API failed, using local generation:", e.message);
+    }
+  }
+
+  // Fallback: store locally if backend failed
+  if (!localStorage.getItem(PT_REFER_KEY)) {
+    var refData = {
+      name: name,
+      code: code,
+      createdAt: new Date().toISOString(),
+      totalReferrals: 0,
+      totalRewards: 0,
+      rewardBalance: 0,
+    };
+    localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+  }
+
+  codeDisplay.textContent = code;
+  outputDiv.classList.remove("hidden");
+  showToast("Referral code generated!", "success");
+}
+
+// ---------- Copy referral code to clipboard ----------
+function copyReferralCode() {
+  var codeDisplay = document.getElementById("referCodeDisplay");
+  if (!codeDisplay) return;
+
+  var code = codeDisplay.textContent;
+  if (!code) return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(code).then(function () {
+      showToast("Referral code copied!", "success");
+    });
+  } else {
+    // Fallback for older browsers
+    var textArea = document.createElement("textarea");
+    textArea.value = code;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+      document.execCommand("copy");
+      showToast("Referral code copied!", "success");
+    } catch (err) {
+      showToast("Failed to copy. Please copy manually.", "error");
+    }
+    document.body.removeChild(textArea);
+  }
+}
+
+// ---------- Share referral on WhatsApp ----------
+function shareReferralWhatsApp() {
+  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  if (!refData || !refData.code) {
+    showToast("Please generate a code first.", "error");
+    return;
+  }
+
+  var lang = (typeof I18N !== "undefined") ? I18N.getLanguage() : "hi";
+  var bookLink = window.location.origin + "?ref=" + encodeURIComponent(refData.code);
+  var msg;
+  if (lang === "hi") {
+    msg = "🚔 *PRATAP TRAVELS - रेफ़रल*\n\n";
+    msg += "नमस्ते! मैंने PRATAP TRAVELS की सेवाओं का उपयोग किया है और बहुत अच्छा अनुभव रहा।\n\n";
+    msg += "🎁 मेरा रेफ़रल कोड: *" + refData.code + "*\n\n";
+    msg += "इस कोड का उपयोग करके अपनी पहली यात्रा बुक करें और ₹50 की छूट पाएँ!\n\n";
+    msg += "📞 अभी बुक करें: " + bookLink;
+  } else {
+    msg = "🚔 *PRATAP TRAVELS - Referral*\n\n";
+    msg += "Hi! I've used PRATAP TRAVELS services and had a great experience.\n\n";
+    msg += "🎁 My referral code: *" + refData.code + "*\n\n";
+    msg += "Use this code on your first booking and get ₹50 off!\n\n";
+    msg += "📞 Book now: " + bookLink;
+  }
+
+  var whatsappUrl = "https://wa.me/?text=" + encodeURIComponent(msg);
+  window.open(whatsappUrl, "_blank");
+  showToast("Opening WhatsApp...", "success");
+}
+
+// ---------- Load existing referral code on page ----------
+document.addEventListener("DOMContentLoaded", async function () {
+  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  if (refData && refData.code) {
+    var nameInput = document.getElementById("referNameInput");
+    var outputDiv = document.getElementById("referCodeOutput");
+    var codeDisplay = document.getElementById("referCodeDisplay");
+    if (nameInput) nameInput.value = refData.name;
+    if (codeDisplay) codeDisplay.textContent = refData.code;
+    if (outputDiv) outputDiv.classList.remove("hidden");
+
+    // Fetch latest stats from backend
+    await fetchReferralStats();
+
+    // Update stats display if elements exist
+    updateReferralStatsDisplay();
+  }
+});
+
+// ---------- Update referral stats display ----------
+function updateReferralStatsDisplay() {
+  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  if (!refData) return;
+
+  var statsEl = document.getElementById("referStats");
+  if (statsEl) {
+    var totalReferrals = refData.totalReferrals || 0;
+    var totalRewards = refData.totalRewards || 0;
+    var rewardBalance = refData.rewardBalance || 0;
+
+    statsEl.innerHTML =
+      '<div class="refer-stat"><span class="refer-stat-num">' + totalReferrals + '</span><span class="refer-stat-label">Total Referrals</span></div>' +
+      '<div class="refer-stat"><span class="refer-stat-num">₹' + totalRewards + '</span><span class="refer-stat-label">Total Earned</span></div>' +
+      '<div class="refer-stat"><span class="refer-stat-num">₹' + rewardBalance + '</span><span class="refer-stat-label">Balance</span></div>';
+    statsEl.classList.remove("hidden");
+  }
+}
+
+// ---------- Validate referral code ----------
+function validateReferralCode(code) {
+  if (!code || code.trim() === "") return null;
+  // Basic format check: PT + 3 letters + 4 digits
+  var regex = /^PT[A-Z]{3}\d{4}$/;
+  if (!regex.test(code.toUpperCase())) return null;
+  return code.toUpperCase();
+}
+
+// ---------- Validate referral code against backend ----------
+async function validateReferralCodeServer(code) {
+  var apiUrl = getReferralApiUrl();
+  if (!apiUrl) return { valid: false };
+
+  try {
+    var resp = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ _action: "validate", code: code }),
+    });
+
+    if (resp.ok) {
+      return await resp.json();
+    }
+  } catch (e) {
+    console.warn("Referral validate API failed:", e.message);
+  }
+
+  return { valid: false };
+}
+
+// ---------- Record referral redemption against backend ----------
+async function recordReferralRedemption(code, bookingId, customerPhone) {
+  var apiUrl = getReferralApiUrl();
+  if (!apiUrl) return null;
+
+  try {
+    var resp = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({
+        _action: "redeem",
+        code: code,
+        bookingId: bookingId,
+        newCustomerPhone: customerPhone,
+      }),
+    });
+
+    if (resp.ok) {
+      return await resp.json();
+    }
+  } catch (e) {
+    console.warn("Referral redeem API failed:", e.message);
+  }
+
+  return null;
+}
+
+// ---------- Fetch referral stats for current user ----------
+async function fetchReferralStats() {
+  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  if (!refData || !refData.code) return;
+
+  var apiUrl = getReferralApiUrl();
+  if (!apiUrl) return;
+
+  // Append referral code param - use ? or & depending on existing query
+  var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
+  var statsUrl = apiUrl + separator + "referral_code=" + encodeURIComponent(refData.code);
+
+  try {
+    var resp = await fetch(statsUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+
+    if (resp.ok) {
+      var stats = await resp.json();
+      refData.totalReferrals = stats.totalReferrals || 0;
+      refData.totalRewards = stats.totalRewards || 0;
+      refData.rewardBalance = stats.rewardBalance || 0;
+      localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+    }
+  } catch (e) {
+    console.warn("Referral stats API failed:", e.message);
   }
 }
 
@@ -1074,6 +1383,338 @@ function clearVisitorLog() {
   }
 }
 
+/* ============================================
+   REFERRAL ADMIN DASHBOARD
+   View all referral codes, redemptions, and rewards
+   ============================================ */
+
+var REFERRAL_ALL_KEY = "pt_referral_all";
+
+// ---------- Fetch all referrals from backend (admin) ----------
+async function fetchAllReferrals() {
+  var apiUrl = getReferralApiUrl();
+  if (!apiUrl) return null;
+
+  try {
+    var resp = await fetch(apiUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var data = await resp.json();
+
+    // Handle both array and object responses
+    var referrals = Array.isArray(data) ? data : (data.referrals || []);
+    localStorage.setItem(REFERRAL_ALL_KEY, JSON.stringify(referrals));
+    return referrals;
+  } catch (e) {
+    console.warn("Referral admin API failed, using cached data:", e.message);
+    return null;
+  }
+}
+
+// ---------- Get cached referral data ----------
+function getAllReferralRecords() {
+  try {
+    var data = localStorage.getItem(REFERRAL_ALL_KEY);
+    return data ? JSON.parse(data) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+// ---------- Update Referral KPI Cards ----------
+function updateReferralKPIs() {
+  var records = getAllReferralRecords();
+  var totalCodes = records.length;
+  var totalRedemptions = 0;
+  var totalRewardsPaid = 0;
+  var pendingRewards = 0;
+
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    totalRedemptions += r.totalReferrals || 0;
+    totalRewardsPaid += r.totalRewards || 0;
+    pendingRewards += r.rewardBalance || 0;
+  }
+
+  var elTotalCodes = document.getElementById("refKpiTotalCodes");
+  var elRedemptions = document.getElementById("refKpiRedemptions");
+  var elTotalRewards = document.getElementById("refKpiTotalRewards");
+  var elPending = document.getElementById("refKpiPending");
+
+  if (elTotalCodes) elTotalCodes.textContent = totalCodes;
+  if (elRedemptions) elRedemptions.textContent = totalRedemptions;
+  if (elTotalRewards) elTotalRewards.textContent = "₹" + totalRewardsPaid;
+  if (elPending) elPending.textContent = "₹" + pendingRewards;
+}
+
+// ---------- Render Referral Table ----------
+function renderReferralTable() {
+  var tbody = document.getElementById("referralTableBody");
+  var emptyState = document.getElementById("emptyReferralState");
+  if (!tbody) return;
+
+  var records = getAllReferralRecords();
+  var searchInput = document.getElementById("referralSearch");
+  var query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+  tbody.innerHTML = "";
+
+  var filtered = records;
+  if (query) {
+    filtered = records.filter(function (r) {
+      var haystack = [r.code, r.name, r.email, r.phone]
+        .join(" ")
+        .toLowerCase();
+      return haystack.indexOf(query) !== -1;
+    });
+  }
+
+  if (filtered.length === 0) {
+    if (emptyState) {
+      var emptyMsg = emptyState.querySelector("p");
+      if (records.length === 0) {
+        emptyMsg.textContent = "No referral codes yet. Codes will appear here as users generate them.";
+      } else {
+        emptyMsg.textContent = "No results found for '" + escapeHtml(query) + "'";
+      }
+      emptyState.classList.remove("hidden");
+    }
+    return;
+  }
+
+  if (emptyState) emptyState.classList.add("hidden");
+
+  filtered.forEach(function (r) {
+    var tr = document.createElement("tr");
+    var totalReferrals = r.totalReferrals || 0;
+    var rewardsPaid = r.totalRewards || 0;
+    var balance = r.rewardBalance || 0;
+    var statusClass, statusText;
+    if (totalReferrals > 0 && balance > 0) {
+      statusClass = "active";
+      statusText = "Active";
+    } else if (totalReferrals > 0 && balance === 0) {
+      statusClass = "pending";
+      statusText = "Completed";
+    } else {
+      statusClass = "inactive";
+      statusText = "New";
+    }
+
+    tr.className = "clickable-row";
+    tr.setAttribute("data-code", r.code);
+    tr.style.cursor = "pointer";
+    tr.addEventListener("click", function () {
+      openRedemptionHistory(r.code);
+    });
+
+    tr.innerHTML =
+      '<td><code class="vid-code" title="' +
+      escapeHtml(r.code) +
+      '">' +
+      escapeHtml(r.code) +
+      "</code></td>" +
+      "<td>" +
+      escapeHtml(r.name || "-") +
+      "</td>" +
+      "<td>" +
+      totalReferrals +
+      "</td>" +
+      "<td>" +
+      (r.redeemedCount || 0) +
+      "</td>" +
+      "<td>₹" +
+      rewardsPaid +
+      "</td>" +
+      "<td>₹" +
+      balance +
+      "</td>" +
+      "<td><small>" +
+      formatDate(r.createdAt) +
+      "</small></td>" +
+      '<td><span class="referral-status-badge ' +
+      statusClass +
+      '">' +
+      statusText +
+      "</span></td>";
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- Refresh Referral Data ----------
+async function refreshReferralData() {
+  var apiData = await fetchAllReferrals();  if (apiData) {
+    showToast("Referral data refreshed from server.", "success");
+  }
+  renderReferralTable();
+  updateReferralKPIs();
+  if (!apiData) {
+    showToast("Using cached referral data (API unavailable).", "info");
+  }
+}
+
+/* ============================================
+   REDEMPTION HISTORY
+   Individual redemption events per referral code
+   ============================================ */
+
+var REDEMPTION_CACHE_KEY = "pt_redemptions_";
+
+// ---------- Fetch redemptions for a specific referral code ----------
+async function fetchRedemptionsForCode(code) {
+  var apiUrl = getReferralApiUrl();
+  if (!apiUrl) return null;
+
+  var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
+  var url = apiUrl + separator + "referral_code=" + encodeURIComponent(code);
+
+  try {
+    var resp = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var data = await resp.json();
+
+    // Extract redemptions array from response
+    var redemptions = data.redemptions || data.events || [];
+    if (!Array.isArray(redemptions)) redemptions = [];
+
+    // Cache in localStorage
+    localStorage.setItem(REDEMPTION_CACHE_KEY + code, JSON.stringify({
+      redemptions: redemptions,
+      totalReferrals: data.totalReferrals || 0,
+      totalRewards: data.totalRewards || 0,
+      rewardBalance: data.rewardBalance || 0,
+      fetchedAt: new Date().toISOString(),
+    }));
+
+    return redemptions;
+  } catch (e) {
+    console.warn("Redemption fetch failed for code " + code + ":", e.message);
+    // Try cache
+    var cached = JSON.parse(localStorage.getItem(REDEMPTION_CACHE_KEY + code) || "null");
+    return cached ? cached.redemptions : null;
+  }
+}
+
+// ---------- Open Redemption History Modal ----------
+async function openRedemptionHistory(code) {
+  var modal = document.getElementById("redemptionModal");
+  var subtitle = document.getElementById("redemptionModalSubtitle");
+  var tbody = document.getElementById("redemptionTableBody");
+  var emptyState = document.getElementById("emptyRedemptionState");
+  if (!modal || !tbody) return;
+
+  // Set subtitle with code
+  if (subtitle) subtitle.textContent = "Referral code: " + code;
+
+  // Show modal immediately with loading state
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light);">⏳ Loading redemption history...</td></tr>';
+  if (emptyState) emptyState.classList.add("hidden");
+
+  // Fetch redemption data
+  var redemptions = await fetchRedemptionsForCode(code);
+
+  // Get cached stats for the summary
+  var cachedStats = null;
+  try {
+    cachedStats = JSON.parse(localStorage.getItem(REDEMPTION_CACHE_KEY + code) || "null");
+  } catch (e) { /* ignore */ }
+
+  // Update summary stats
+  var allRecords = getAllReferralRecords();
+  var refRecord = null;
+  for (var i = 0; i < allRecords.length; i++) {
+    if (allRecords[i].code === code) {
+      refRecord = allRecords[i];
+      break;
+    }
+  }
+
+  var totalRedemptions = (cachedStats && cachedStats.totalReferrals) || (refRecord ? refRecord.totalReferrals : 0) || 0;
+  var totalRewards = (cachedStats && cachedStats.totalRewards) || (refRecord ? refRecord.totalRewards : 0) || 0;
+  var pendingBalance = (cachedStats && cachedStats.rewardBalance) || (refRecord ? refRecord.rewardBalance : 0) || 0;
+
+  var elTotal = document.getElementById("redTotalRedemptions");
+  var elRewards = document.getElementById("redTotalRewards");
+  var elPending = document.getElementById("redPendingRewards");
+  if (elTotal) elTotal.textContent = totalRedemptions;
+  if (elRewards) elRewards.textContent = "₹" + totalRewards;
+  if (elPending) elPending.textContent = "₹" + pendingBalance;
+
+  // Render redemption events
+  tbody.innerHTML = "";
+
+  if (!redemptions || redemptions.length === 0) {
+    if (emptyState) emptyState.classList.remove("hidden");
+    return;
+  }
+
+  if (emptyState) emptyState.classList.add("hidden");
+
+  redemptions.forEach(function (red, idx) {
+    var tr = document.createElement("tr");
+    var phone = red.newCustomerPhone || red.customerPhone || red.phone || "-";
+    var bookingId = red.bookingId || red.booking_id || "-";
+    var amount = red.rewardAmount || red.amount || 50;
+    var redeemedAt = red.redeemedAt || red.timestamp || red.date || null;
+    var status = red.status || (redeemedAt ? "completed" : "pending");
+
+    var statusClass = "completed";
+    if (status === "pending") statusClass = "pending";
+    else if (status === "failed") statusClass = "failed";
+
+    tr.innerHTML =
+      '<td>' + (idx + 1) + '</td>' +
+      '<td>' + escapeHtml(phone) + '</td>' +
+      '<td><code class="vid-code">' + escapeHtml(shortId(bookingId)) + '</code></td>' +
+      '<td>₹' + amount + '</td>' +
+      '<td><small>' + formatDate(redeemedAt) + '</small></td>' +
+      '<td><span class="redemption-status-badge ' + statusClass + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span></td>';
+
+    tbody.appendChild(tr);
+  });
+}
+
+// ---------- Close Redemption Modal ----------
+function closeRedemptionModal() {
+  var modal = document.getElementById("redemptionModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+}
+
+// ---------- Init Redemption Modal event listeners ----------
+document.addEventListener("DOMContentLoaded", function () {
+  var closeBtn = document.getElementById("redemptionModalClose");
+  var overlay = document.getElementById("redemptionModal");
+
+  if (closeBtn) closeBtn.addEventListener("click", closeRedemptionModal);
+
+  if (overlay) {
+    overlay.addEventListener("click", function (e) {
+      if (e.target === overlay) closeRedemptionModal();
+    });
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && overlay && !overlay.classList.contains("hidden")) {
+      closeRedemptionModal();
+    }
+  });
+});
+
 // ---------- Init Visitor Dashboard ----------
 document.addEventListener("DOMContentLoaded", async function () {
   // Only init dashboard if we're on the visitors page
@@ -1082,6 +1723,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     await fetchVisitorRecordsFromApi();
     renderVisitorTable();
     updateKPIs();
+
+    // Also init referral dashboard if panel exists
+    if (document.getElementById("referralDashboardPanel")) {
+      await fetchAllReferrals();
+      renderReferralTable();
+      updateReferralKPIs();
+    }
   }
 
   // Auto-track this page visit (fires on every page that loads main.js)

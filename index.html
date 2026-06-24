@@ -25,8 +25,9 @@
           <a href="#offers" data-i18n="nav.offers">ऑफ़र</a>
           <a href="#rentals" data-i18n="nav.rentals">किराया</a>
           <a href="#hire-driver" data-i18n="nav.hire-driver">ड्राइवर किराया</a>
+          <a href="#refer" data-i18n="nav.refer">रेफ़र करें</a>
           <a href="#contact" data-i18n="nav.contact">संपर्क</a>
-          <a href="visitors.html" data-i18n="nav.visitors">आगंतुक</a>
+          <a href="admin.html">🔒 Admin</a>
           <div class="lang-toggle">
             <button class="lang-toggle-btn active" id="langBtnHi">HI</button>
             <button class="lang-toggle-btn" id="langBtnEn">EN</button>
@@ -773,6 +774,106 @@
       </div>
     </section>
 
+    <!-- ===== Refer & Win Section ===== -->
+    <section class="section refer-section" id="refer">
+      <div class="container">
+        <div class="section-header">
+          <h2 data-i18n="refer.title">🎁 रेफ़र करें, जीतें!</h2>
+          <p data-i18n="refer.subtitle">दोस्तों को रेफ़र करें और दोनों को ₹50 का इनाम पाएँ</p>
+          <div class="line"></div>
+        </div>
+        <div class="refer-content">
+          <div class="refer-how-it-works">
+            <div class="refer-step">
+              <div class="refer-step-number">1</div>
+              <div class="refer-step-icon">📤</div>
+              <h3 data-i18n="refer.step1.title">अपना रेफ़रल कोड शेयर करें</h3>
+              <p data-i18n="refer.step1.desc">अपना यूनीक रेफ़रल कोड या लिंक दोस्तों और परिवार के साथ शेयर करें</p>
+            </div>
+            <div class="refer-step-arrow">→</div>
+            <div class="refer-step">
+              <div class="refer-step-number">2</div>
+              <div class="refer-step-icon">🚗</div>
+              <h3 data-i18n="refer.step2.title">दोस्ता बुकिंग करें</h3>
+              <p data-i18n="refer.step2.desc">आपका दोस्त अपनी पहली यात्रा बुक करते समय रेफ़रल कोड का उपयोग करता है</p>
+            </div>
+            <div class="refer-step-arrow">→</div>
+            <div class="refer-step">
+              <div class="refer-step-number">3</div>
+              <div class="refer-step-icon">🎉</div>
+              <h3 data-i18n="refer.step3.title">दोनों जीतें!</h3>
+              <p data-i18n="refer.step3.desc">आपको ₹50 और आपके दोस्त को पहली बुकिंग पर ₹50 की छूट मिलती है</p>
+            </div>
+          </div>
+
+          <div class="refer-cards">
+            <div class="refer-card refer-card-referrer">
+              <div class="refer-card-emoji">👤</div>
+              <h3 data-i18n="refer.card.referrer.title">आपके लिए (रेफ़रर)</h3>
+              <div class="refer-reward-badge">₹50</div>
+              <p data-i18n="refer.card.referrer.desc">हर सफल रेफ़रल पर ₹50 का तुरंत इनाम</p>
+              <ul>
+                <li data-i18n="refer.card.referrer.li1">कोई सीमा नहीं - जितना चाहें उतना शेयर करें</li>
+                <li data-i18n="refer.card.referrer.li2">तुरंत इनाम - दोस्त की बुकिंग के बाद</li>
+                <li data-i18n="refer.card.referrer.li3">अगली यात्रा में छूट के रूप में उपयोग</li>
+              </ul>
+            </div>
+            <div class="refer-card refer-card-friend">
+              <div class="refer-card-emoji">👫</div>
+              <h3 data-i18n="refer.card.friend.title">आपके दोस्त के लिए (नए ग्राहक)</h3>
+              <div class="refer-reward-badge">₹50 OFF</div>
+              <p data-i18n="refer.card.friend.desc">पहली बुकिंग पर ₹50 की छूट</p>
+              <ul>
+                <li data-i18n="refer.card.friend.li1">पहली यात्रा पर तुरंत छूट</li>
+                <li data-i18n="refer.card.friend.li2">बस रेफ़रल कोड दर्ज करें</li>
+                <li data-i18n="refer.card.friend.li3">कोई न्यूनतम राशि आवश्यक नहीं</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="refer-generate-section">
+            <h3 data-i18n="refer.generate.title">अपना रेफ़रल कोड बनाएँ</h3>
+            <p data-i18n="refer.generate.desc">नीचे अपना नाम दर्ज करें और अपना यूनीक रेफ़रल कोड प्राप्त करें</p>
+            <div class="refer-generate-form">
+              <input type="text" id="referNameInput" placeholder="अपना नाम दर्ज करें" data-i18n-placeholder="refer.generate.placeholder" />
+              <button class="btn btn-primary" id="generateReferBtn" onclick="generateReferralCode()">
+                <span data-i18n="refer.generate.btn">🎁 मेरा कोड बनाएँ</span>
+              </button>
+            </div>
+            <div class="refer-code-output hidden" id="referCodeOutput">
+              <p data-i18n="refer.output.yourCode">आपका यूनीक रेफ़रल कोड:</p>
+              <div class="refer-code-display" id="referCodeDisplay"></div>
+              <div class="refer-stats hidden" id="referStats"></div>
+              <div class="refer-share-buttons">
+                <button class="btn btn-whatsapp" onclick="shareReferralWhatsApp()">
+                  💬 <span data-i18n="refer.share.whatsapp">व्हाट्सएप पर शेयर करें</span>
+                </button>
+                <button class="btn btn-secondary" onclick="copyReferralCode()">
+                  📋 <span data-i18n="refer.share.copy">कोड कॉपी करें</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="refer-faq">
+            <h3 data-i18n="refer.faq.title">अक्सर पूछे जाने वाले सवाल</h3>
+            <div class="refer-faq-item">
+              <h4 data-i18n="refer.faq.q1">रेफ़रल इनाम कैसे काम करता है?</h4>
+              <p data-i18n="refer.faq.a1">जब आपका दोस्त आपके रेफ़रल कोड का उपयोग करके अपनी पहली बुकिंग करता है और यात्रा पूरी हो जाती है, तो आपको ₹50 का इनाम और आपके दोस्त को बुकिंग में ₹50 की छूट मिलती है।</p>
+            </div>
+            <div class="refer-faq-item">
+              <h4 data-i18n="refer.faq.q2">क्या रेफ़रल की कोई सीमा है?</h4>
+              <p data-i18n="refer.faq.a2">नहीं! आप जितने चाहें उतने दोस्तों को रेफ़र कर सकते हैं। हर सफल रेफ़रल पर आपको ₹50 मिलते हैं।</p>
+            </div>
+            <div class="refer-faq-item">
+              <h4 data-i18n="refer.faq.q3">इनाम कैसे मिलेगा?</h4>
+              <p data-i18n="refer.faq.a3">आपका इनाम आपके अकाउंट में क्रेडिट किया जाएगा जिसे आप अपनी अगली यात्रा में उपयोग कर सकते हैं।</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ===== Contact Section ===== -->
     <section class="section contact-section" id="contact">
       <div class="container">          <div class="section-header">
@@ -1062,7 +1163,20 @@
                   aria-live="polite"
                 ></span>
               </div>
-            </div>              <div class="form-group form-full">
+            </div>              <div class="form-row">
+              <div class="form-group">
+                <label for="bookReferral" data-i18n="modal.referral">रेफ़रल कोड</label>
+                <input
+                  type="text"
+                  id="bookReferral"
+                  name="referral"
+                  data-i18n-placeholder="modal.referral.placeholder"
+                  placeholder="यदि है तो रेफ़रल कोड दर्ज करें"
+                />
+              </div>
+              <div class="form-group"></div>
+            </div>
+              <div class="form-group form-full">
                 <label for="bookRemarks" data-i18n="modal.remarks">विशेष अनुरोध / टिप्पणियाँ</label>
                 <textarea
                   id="bookRemarks"
