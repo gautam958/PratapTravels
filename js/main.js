@@ -1811,9 +1811,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   }
 
   // Auto-track this page visit (fires on every page that loads main.js)
+  // Skip tracking on admin-only pages (admin.html, visitors.html, referral.html)
   if (typeof trackVisit === "function") {
-    trackVisit().catch(function () {
-      /* fire-and-forget tracking */
-    });
+    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    var adminPages = ['admin.html', 'visitors.html', 'referral.html'];
+    if (adminPages.indexOf(currentPage) === -1) {
+      trackVisit().catch(function () {
+        /* fire-and-forget tracking */
+      });
+    }
   }
 });
