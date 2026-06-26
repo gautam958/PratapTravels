@@ -2430,6 +2430,12 @@ img {
 
 
 
+/* Email confirmation modal body textarea */
+#emailConfirmBody {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
 /* ---------- Empty State ---------- */
 .empty-state {
   text-align: center;

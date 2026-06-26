@@ -205,6 +205,45 @@
       </div>
     </div>
 
+    <!-- ===== Email Confirmation Modal ===== -->
+    <div class="redemption-modal-overlay hidden" id="emailConfirmModal">
+      <div class="redemption-modal" style="max-width:650px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:2px solid #eef2f7;">
+          <h3 data-i18n="booking.emailModal.title">✉️ Send Confirmation Email</h3>
+          <button id="emailConfirmModalClose" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-light);" onclick="closeEmailConfirmModal()">✕</button>
+        </div>
+        <div style="padding:20px 24px;">
+          <input type="hidden" id="emailConfirmBookingId" value="" />
+          <div class="form-group" id="emailConfirmToRow">
+            <label data-i18n="booking.emailModal.to">To (Customer Email) *</label>
+            <input type="email" id="emailConfirmTo" placeholder="customer@example.com" style="padding:10px 14px;border:2px solid #e0e6ed;border-radius:8px;font-size:0.9rem;" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+            <div class="form-group">
+              <label data-i18n="booking.emailModal.cc1">CC 1</label>
+              <input type="email" id="emailConfirmCc1" data-i18n-placeholder="booking.emailModal.cc1.placeholder" placeholder="gautam958@gmail.com" style="padding:10px 14px;border:2px solid #e0e6ed;border-radius:8px;font-size:0.9rem;" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="booking.emailModal.cc2">CC 2</label>
+              <input type="email" id="emailConfirmCc2" data-i18n-placeholder="booking.emailModal.cc2.placeholder" placeholder="krishnakumar958@gmail.com" style="padding:10px 14px;border:2px solid #e0e6ed;border-radius:8px;font-size:0.9rem;" />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:12px;">
+            <label data-i18n="booking.emailModal.subject">Subject</label>
+            <input type="text" id="emailConfirmSubject" style="padding:10px 14px;border:2px solid #e0e6ed;border-radius:8px;font-size:0.9rem;font-weight:600;" />
+          </div>
+          <div class="form-group" style="margin-top:12px;">
+            <label data-i18n="booking.emailModal.body">Email Body</label>
+            <textarea id="emailConfirmBody" rows="10" style="padding:10px 14px;border:2px solid #e0e6ed;border-radius:8px;font-size:0.85rem;font-family:inherit;line-height:1.6;resize:vertical;width:100%;box-sizing:border-box;"></textarea>
+          </div>
+          <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+            <button type="button" class="btn-refresh" onclick="closeEmailConfirmModal()" data-i18n="booking.confirm.cancel">रद्द करें</button>
+            <button type="button" id="emailConfirmSendBtn" class="btn-primary" style="padding:8px 24px;font-size:0.9rem;border-radius:50px;" onclick="sendEmailConfirmation()">\u2709\ufe0f <span data-i18n="booking.emailModal.send">Send Confirmation</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== Toast ===== -->
     <div class="toast-container" id="toastContainer"></div>
 

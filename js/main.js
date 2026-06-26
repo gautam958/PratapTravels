@@ -2224,9 +2224,11 @@ function renderBookingTable() {
       '<td>' + (b.referral_code ? '<code class="vid-code">' + escapeHtml(b.referral_code) + '</code>' : '<span style="color:#999">-</span>') + '</td>' +
       '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>' +
       '<td>' + (function() {
-      if (b.notification_sent) {
-        var nType = b.notification_type === 'email' ? I18N.t('booking.action.sendEmail') : I18N.t('booking.action.sendWhatsApp');
-        return '<span class="notified-badge notified-sent" title="' + (b.notified_at || '') + '">' + nType + ' \u2713</span>';
+      if (b.email_sent) {
+        var ccInfo = b.email_sent_cc && b.email_sent_cc.length > 0 ? ' | CC: ' + b.email_sent_cc.join(', ') : '';
+        return '<span class="notified-badge notified-sent" title="Sent to ' + (b.email_sent_to || b.email || '') + ccInfo + ' | ' + (b.notified_at || '') + '">&#9993; Sent ✓</span>';
+      } else if (b.notification_sent && b.notification_type === 'whatsapp') {
+        return '<span class="notified-badge notified-sent" title="' + (b.notified_at || '') + '">WhatsApp ✓</span>';
       } else if (b.needs_notification) {
         return '<span class="notified-badge notified-flagged">' + I18N.t('booking.notified.needsAction') + '</span>';
       } else {
@@ -2449,8 +2451,23 @@ function getVehicleById(id) {
   return null;
 }
 
-function getAvailableVehicles() {
-  return getVehicles().filter(function (v) { return v.status === "available"; });
+function getAvailableVehicles(date, time) {
+  var allVehicles = getVehicles().filter(function (v) { return v.status !== "maintenance"; });
+  if (!date) return allVehicles.filter(function (v) { return v.status === "available"; });
+  // Check which vehicles are already booked for this date/time slot
+  var bookings = getBookings();
+  var bookedVehicleIds = {};
+  for (var i = 0; i < bookings.length; i++) {
+    var b = bookings[i];
+    if (b.status === "cancelled" || b.status === "completed") continue;
+    if (b.bookingId && _confirmBookingData && b.bookingId === _confirmBookingData.bookingId) continue;
+    var bDate = b.pickup_date || b.date;
+    var bTime = b.pickup_time || b.time;
+    if (bDate === date) {
+      if (b.vehicleId) bookedVehicleIds[b.vehicleId] = true;
+    }
+  }
+  return allVehicles.filter(function (v) { return !bookedVehicleIds[v.id]; });
 }
 
 function renderVehicleTable() {
@@ -2643,9 +2660,9 @@ function exportVehiclesCSV() {
 }
 
 // ---------- Vehicle dropdown for booking confirmation ----------
-function updateVehicleDropdowns() {
+function updateVehicleDropdowns(filterDate, filterTime) {
   var selects = document.querySelectorAll(".vehicle-select-dropdown");
-  var available = getAvailableVehicles();
+  var available = getAvailableVehicles(filterDate || null, filterTime || null);
   // Also include the currently assigned vehicle (if any) so it appears in dropdown
   var allVehicles = getVehicles();
   selects.forEach(function (sel) {
@@ -2999,8 +3016,12 @@ function openConfirmBooking(bookingId) {
   document.getElementById("confirmPickupAddress").value = booking.pickup_address || "";
   document.getElementById("confirmAdminNotes").value = booking.admin_notes || "";
 
-  // Populate vehicle dropdown
-  updateVehicleDropdowns();
+  // Populate vehicle dropdown with date/time filtering
+  var selPickupDate = document.getElementById("confirmPickupDate");
+  var selPickupTime = document.getElementById("confirmPickupTime");
+  var filterDate = selPickupDate ? selPickupDate.value : booking.date;
+  var filterTime = selPickupTime ? selPickupTime.value : booking.time;
+  updateVehicleDropdowns(filterDate, filterTime);
   if (booking.vehicleId) {
     var sel = document.getElementById("vehicleSelect");
     if (sel) sel.value = booking.vehicleId;
@@ -3008,6 +3029,35 @@ function openConfirmBooking(bookingId) {
 
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+
+  // Refresh vehicle dropdown when pickup date/time changes
+  var pickupDateEl = document.getElementById("confirmPickupDate");
+  var pickupTimeEl = document.getElementById("confirmPickupTime");
+  function refreshVehicleList() {
+    var d = pickupDateEl ? pickupDateEl.value : null;
+    var t = pickupTimeEl ? pickupTimeEl.value : null;
+    var curBookingId = document.getElementById("confirmBookingId") ? document.getElementById("confirmBookingId").value : null;
+    updateVehicleDropdowns(d, t);
+    // Re-select current vehicle if still available
+    var currentVehicleId = null;
+    if (curBookingId) {
+      var bk = getBookings();
+      for (var i = 0; i < bk.length; i++) {
+        if (bk[i].bookingId === curBookingId && bk[i].vehicleId) {
+          currentVehicleId = bk[i].vehicleId;
+          break;
+        }
+      }
+    }
+    if (currentVehicleId) {
+      var sel = document.getElementById("vehicleSelect");
+      if (sel) sel.value = currentVehicleId;
+    }
+  }
+  if (pickupDateEl) pickupDateEl.removeEventListener("change", refreshVehicleList);
+  if (pickupDateEl) pickupDateEl.addEventListener("change", refreshVehicleList);
+  if (pickupTimeEl) pickupTimeEl.removeEventListener("change", refreshVehicleList);
+  if (pickupTimeEl) pickupTimeEl.addEventListener("change", refreshVehicleList);
 }
 
 function closeConfirmBookingModal() {
@@ -3122,121 +3172,107 @@ function sendBookingNotification(bookingId) {
     if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
   }
   if (!booking) return;
-  if (booking.notification_sent) {
-    showToast('Notification already sent for this booking.', 'info');
+  if (booking.email_sent) {
+    showToast('Confirmation email already sent for this booking.', 'info');
     return;
   }
-  var hasEmail = booking.email && booking.email.trim() !== '';
-  var hasPhone = booking.phone && booking.phone.trim() !== '';
-  if (!confirm('Send booking confirmation to customer?')) return;
-  if (hasEmail) {
-    // Send confirmation email via Visitors Azure Function (SMTP backend)
-    var visitorApiUrl = getVisitorApiUrl();
-    if (dataApiUrl) {
-      var vehicleInfo = '-';
-      var driverInfo = '-';
-      if (booking.vehicleId) { var v = getVehicleById(booking.vehicleId); if (v) { vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')'; driverInfo = v.driverName; } }
-      fetch(dataApiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        mode: 'cors',
-        body: JSON.stringify({
-          type: 'booking_confirmation',
-          name: booking.name, phone: booking.phone, email: booking.email,
-          route: booking.route, date: booking.pickup_date || booking.date,
-          time: booking.pickup_time || booking.time, vehicle: vehicleInfo,
-          driver: driverInfo, pickup_address: booking.pickup_address || '',
-          bookingId: booking.bookingId
-        }),
-      }).then(function(resp) {
-        if (resp.ok) {
-          booking.notification_sent = true;
-          booking.notification_type = 'email';
-          booking.notified_at = new Date().toISOString();
-          _bookingsCache = bookings;
-          renderBookingTable();
-          showToast('Confirmation email sent to ' + booking.email, 'success');
-          recordAuditTrail('notification_email', { bookingId: bookingId, email: booking.email });
-          persistBookingToApi(bookingId, { notification_sent: true, notification_type: 'email', notified_at: booking.notified_at });
-        } else { throw new Error('HTTP ' + resp.status); }
-      }).catch(function(err) {
-        console.error('[Notification] Email API failed:', err.message);
-        showToast('Email API failed — please send manually.', 'error');
-        recordAuditTrail('notification_email_failed', { bookingId: bookingId, email: booking.email, error: err.message });
-        // Do NOT mark notification_sent=true so admin can retry
-      });
-    } else {
-      showToast('No API configured. Please send email manually.', 'error');
-    }
-  } else if (hasPhone) {
-    var whatsappMsg = buildConfirmationWhatsAppMsg(booking);
-    var whatsappUrl = 'https://wa.me/91' + booking.phone.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(whatsappMsg);
-    window.open(whatsappUrl, '_blank');
-    booking.notification_sent = true;
-    booking.notification_type = 'whatsapp';
-    booking.notified_at = new Date().toISOString();
-    _bookingsCache = bookings;
-    renderBookingTable();
-    showToast('WhatsApp notification opened for +91' + booking.phone, 'success');
-    recordAuditTrail('notification_whatsapp', { bookingId: bookingId, phone: booking.phone });
-    persistBookingToApi(bookingId, { notification_sent: true, notification_type: 'whatsapp', notified_at: booking.notified_at });
-  } else {
-    showToast('No email or phone available. Please contact the customer manually.', 'error');
-    booking.needs_notification = true;
-    _bookingsCache = bookings;
-    renderBookingTable();
-    recordAuditTrail('notification_failed', { bookingId: bookingId, reason: 'no_contact' });
+  // Open email confirmation modal with pre-filled data
+  openEmailConfirmationModal(booking);
+}
+
+// ---------- Email Confirmation Modal ----------
+function openEmailConfirmationModal(booking) {
+  var modal = document.getElementById('emailConfirmModal');
+  if (!modal) return;
+  var lang = (typeof I18N !== 'undefined') ? I18N.getLanguage() : 'hi';
+  var vehicleInfo = '-';
+  var driverInfo = '-';
+  if (booking.vehicleId) { var v = getVehicleById(booking.vehicleId); if (v) { vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')'; driverInfo = v.driverName; } }
+  var emailBody = buildConfirmationEmailBody(booking);
+  // Pre-fill modal fields
+  document.getElementById('emailConfirmBookingId').value = booking.bookingId;
+  document.getElementById('emailConfirmTo').value = booking.email || '';
+  document.getElementById('emailConfirmCc1').value = 'gautam958@gmail.com';
+  document.getElementById('emailConfirmCc2').value = 'krishnakumar958@gmail.com';
+  document.getElementById('emailConfirmSubject').value = emailBody.subject;
+  document.getElementById('emailConfirmBody').value = emailBody.body;
+  // Store booking data for sending
+  modal.setAttribute('data-booking-id', booking.bookingId);
+  // Always show To field (admin can manually enter email if not available)
+  var toRow = document.getElementById('emailConfirmToRow');
+  if (toRow) toRow.style.display = '';
+  modal.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEmailConfirmModal() {
+  var modal = document.getElementById('emailConfirmModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
   }
 }
-function initConfirmBookingForm() {
-  var form = document.getElementById("confirmBookingForm");
-  if (!form) return;
-  form.addEventListener("submit", function (e) {
-    e.preventDefault();
-    var bookingId = document.getElementById("confirmBookingId").value;
-    var vehicleId = document.getElementById("vehicleSelect").value;
-    var pickupDate = document.getElementById("confirmPickupDate").value;
-    var pickupTime = document.getElementById("confirmPickupTime").value;
-    var pickupAddress = document.getElementById("confirmPickupAddress").value.trim();
-    var adminNotes = document.getElementById("confirmAdminNotes").value.trim();
 
-    if (!vehicleId) {
-      showToast("Please select a vehicle.", "error");
-      return;
-    }
-
-    // Release old vehicle if reassigning
-    var bookings = getBookings();
-    for (var i = 0; i < bookings.length; i++) {
-      if (bookings[i].bookingId === bookingId) {
-        if (bookings[i].vehicleId && bookings[i].vehicleId !== vehicleId) {
-          releaseVehicleFromBooking(bookingId);
+function sendEmailConfirmation() {
+  var modal = document.getElementById('emailConfirmModal');
+  if (!modal) return;
+  var bookingId = modal.getAttribute('data-booking-id');
+  var to = document.getElementById('emailConfirmTo').value.trim();
+  var cc1 = document.getElementById('emailConfirmCc1').value.trim();
+  var cc2 = document.getElementById('emailConfirmCc2').value.trim();
+  var subject = document.getElementById('emailConfirmSubject').value.trim();
+  var body = document.getElementById('emailConfirmBody').value.trim();
+  if (!to && !cc1 && !cc2) {
+    showToast('Please enter at least one email address.', 'error');
+    return;
+  }
+  var dataApiUrl = getDataApiUrl();
+  if (!dataApiUrl) {
+    showToast('No API configured. Please send email manually.', 'error');
+    return;
+  }
+  var sendBtn = document.getElementById('emailConfirmSendBtn');
+  if (sendBtn) { sendBtn.textContent = 'Sending...'; sendBtn.disabled = true; }
+  fetch(dataApiUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    mode: 'cors',
+    body: JSON.stringify({
+      type: 'booking_confirmation',
+      to: to,
+      cc: [cc1, cc2].filter(function(e) { return e !== ''; }),
+      subject: subject,
+      body: body,
+      bookingId: bookingId
+    }),
+  }).then(function(resp) {
+    if (resp.ok) {
+      // Mark email as sent on the booking
+      var bookings = getBookings();
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].bookingId === bookingId) {
+          bookings[i].email_sent = true;
+          bookings[i].notification_sent = true;
+          bookings[i].notification_type = 'email';
+          bookings[i].notified_at = new Date().toISOString();
+          bookings[i].email_sent_to = to;
+          bookings[i].email_sent_cc = [cc1, cc2].filter(function(e) { return e !== ''; });
+          break;
         }
-        break;
       }
-    }
-
-    // Assign vehicle and update booking
-    assignVehicleToBooking(bookingId, vehicleId);
-
-    // Update pickup details
-    var updatedBookings = getBookings();
-    for (var i = 0; i < updatedBookings.length; i++) {
-      if (updatedBookings[i].bookingId === bookingId) {
-        updatedBookings[i].pickup_date = pickupDate;
-        updatedBookings[i].pickup_time = pickupTime;
-        updatedBookings[i].pickup_address = pickupAddress;
-        updatedBookings[i].admin_notes = adminNotes;
-        break;
-      }
-    }
-    _bookingsCache = updatedBookings;
-
-    closeConfirmBookingModal();
-    renderBookingTable();
-    updateBookingKPIs();
-    showToast("Booking confirmed and vehicle assigned!", "success");
-    sendBookingNotification(bookingId);
+      _bookingsCache = bookings;
+      renderBookingTable();
+      persistBookingToApi(bookingId, { email_sent: true, notification_sent: true, notification_type: 'email', notified_at: new Date().toISOString(), email_sent_to: to, email_sent_cc: [cc1, cc2].filter(function(e) { return e !== ''; }) });
+      recordAuditTrail('notification_email', { bookingId: bookingId, to: to, cc: [cc1, cc2] });
+      showToast('Confirmation email sent to ' + to, 'success');
+      closeEmailConfirmModal();
+    } else { throw new Error('HTTP ' + resp.status); }
+  }).catch(function(err) {
+    console.error('[Notification] Email API failed:', err.message);
+    showToast('Email sending failed: ' + err.message, 'error');
+    recordAuditTrail('notification_email_failed', { bookingId: bookingId, error: err.message });
+  }).finally(function() {
+    if (sendBtn) { sendBtn.textContent = '✉️ Send Confirmation'; sendBtn.disabled = false; }
   });
 }
 
@@ -3252,6 +3288,11 @@ document.addEventListener("DOMContentLoaded", function () {
   var cbOverlay = document.getElementById("confirmBookingModal");
   if (cbCloseBtn) cbCloseBtn.addEventListener("click", closeConfirmBookingModal);
   if (cbOverlay) cbOverlay.addEventListener("click", function (e) { if (e.target === cbOverlay) closeConfirmBookingModal(); });
+  // Email confirm modal handlers
+  var emailOverlay = document.getElementById("emailConfirmModal");
+  if (emailOverlay) emailOverlay.addEventListener("click", function (e) { if (e.target === emailOverlay) closeEmailConfirmModal(); });
+  var emailCloseBtn = document.getElementById("emailConfirmModalClose");
+  if (emailCloseBtn) emailCloseBtn.addEventListener("click", closeEmailConfirmModal);
 
   var vhCloseBtn = document.getElementById("vehicleModalClose");
   var vhOverlay = document.getElementById("vehicleModal");
@@ -3283,6 +3324,7 @@ document.addEventListener("DOMContentLoaded", function () {
       closeQuickVehicleModal();
       closeVehicleSchedule();
       closeConfirmBookingModal();
+      if (typeof closeEmailConfirmModal === "function") closeEmailConfirmModal();
     }
   });
 });

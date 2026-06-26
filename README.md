@@ -359,6 +359,27 @@ private static void SendWebsiteSpecificEmail(dynamic visitor, string websiteIden
         var message = new MailMessage();
         message.From = new MailAddress(smtpUser, formattedSubjectLine);
         message.To.Add(recipientAddress);
+            // Add CC recipients if provided
+            if (data?.cc != null)
+            {
+                try
+                {
+                    var ccArray = data.cc as Newtonsoft.Json.Linq.JArray;
+                    if (ccArray != null)
+                    {
+                        foreach (var ccItem in ccArray)
+                        {
+                            var ccAddr = ccItem.ToString();
+                            if (!string.IsNullOrEmpty(ccAddr))
+                                message.CC.Add(ccAddr);
+                        }
+                    }
+                }
+                catch (Exception ccEx)
+                {
+                    log.LogWarning("Failed to parse CC addresses: " + ccEx.Message);
+                }
+            }
         message.Subject = formattedSubjectLine;
 
         // Apply CC addresses if any are specified for this profile
@@ -693,14 +714,15 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Vehicle saved" });
         }
 
-        // Handle booking_confirmation (send confirmation email via SMTP)
+        // Handle booking_confirmation (send confirmation email via SMTP, with CC support)
+        // Fixed CC: gautam958@gmail.com, krishnakumar958@gmail.com
         if (dataType == "booking_confirmation")
         {
             try
             {
                 string smtpUser = Environment.GetEnvironmentVariable("EMAIL_USER_PRATAP");
                 string smtpPass = Environment.GetEnvironmentVariable("EMAIL_PASS_PRATAP");
-                string recipientAddress = data?.email?.ToString();
+                string recipientAddress = data?.to?.ToString() ?? data?.email?.ToString();
                 if (string.IsNullOrEmpty(recipientAddress))
                     return new BadRequestObjectResult(new { error = "Customer email is required" });
 
@@ -722,6 +744,27 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                 var message = new MailMessage();
                 message.From = new MailAddress(smtpUser, "Pratap Travels Booking Confirmation");
                 message.To.Add(recipientAddress);
+            // Add CC recipients if provided
+            if (data?.cc != null)
+            {
+                try
+                {
+                    var ccArray = data.cc as Newtonsoft.Json.Linq.JArray;
+                    if (ccArray != null)
+                    {
+                        foreach (var ccItem in ccArray)
+                        {
+                            var ccAddr = ccItem.ToString();
+                            if (!string.IsNullOrEmpty(ccAddr))
+                                message.CC.Add(ccAddr);
+                        }
+                    }
+                }
+                catch (Exception ccEx)
+                {
+                    log.LogWarning("Failed to parse CC addresses: " + ccEx.Message);
+                }
+            }
                 message.Subject = "Pratap Travels — Your Booking is Confirmed!";
                 message.IsBodyHtml = true;
                 message.Priority = MailPriority.High;
@@ -1249,14 +1292,15 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Vehicle saved" });
         }
 
-        // Handle booking_confirmation (send confirmation email via SMTP)
+        // Handle booking_confirmation (send confirmation email via SMTP, with CC support)
+        // Fixed CC: gautam958@gmail.com, krishnakumar958@gmail.com
         if (dataType == "booking_confirmation")
         {
             try
             {
                 string smtpUser = Environment.GetEnvironmentVariable("EMAIL_USER_PRATAP");
                 string smtpPass = Environment.GetEnvironmentVariable("EMAIL_PASS_PRATAP");
-                string recipientAddress = data?.email?.ToString();
+                string recipientAddress = data?.to?.ToString() ?? data?.email?.ToString();
                 if (string.IsNullOrEmpty(recipientAddress))
                     return new BadRequestObjectResult(new { error = "Customer email is required" });
 

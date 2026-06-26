@@ -327,6 +327,7 @@ var I18N = (function () {
       "booking.table.tripType": "यात्रा प्रकार",
       "booking.table.passengers": "यात्री",
       "booking.table.referral": "रेफ़रल",
+      "booking.table.notified": "सूचना",
       "booking.table.status": "स्थिति",
       "booking.table.created": "बनाया",
       "booking.empty": "अभी तक कोई बुकिंग नहीं। उपयोगकर्ता जमा करने पर बुकिंग यहाँ दिखाई देंगी।",
@@ -452,6 +453,17 @@ var I18N = (function () {
       "booking.action.sendWhatsApp": "व्हाट्सएप भेजें",
       "booking.notified.needsAction": "सूचना आवश्यक",
       "booking.notified.sent": "सूचना भेजा गया",
+
+      // Email confirmation modal
+      "booking.emailModal.title": "✉️ पुष्टिकरण ईमेल भेजें",
+      "booking.emailModal.to": "को (ग्राहक ईमेल) *",
+      "booking.emailModal.cc1": "CC 1",
+      "booking.emailModal.cc1.placeholder": "owner@prataptravels.com",
+      "booking.emailModal.cc2": "CC 2",
+      "booking.emailModal.cc2.placeholder": "admin@prataptravels.com",
+      "booking.emailModal.subject": "विषय",
+      "booking.emailModal.body": "ईमेल सामग्री",
+      "booking.emailModal.send": "पुष्टिकरण भेजें",
     },
 
     en: {
@@ -894,6 +906,17 @@ var I18N = (function () {
       "booking.notified.none": "No notification sent",
       "booking.action.notifyEmail": "Send Email",
       "booking.action.notifyWhatsApp": "Send WhatsApp",
+      "booking.table.notified": "Notified",
+      // Email confirmation modal
+      "booking.emailModal.title": "✉️ Send Confirmation Email",
+      "booking.emailModal.to": "To (Customer Email) *",
+      "booking.emailModal.cc1": "CC 1",
+      "booking.emailModal.cc1.placeholder": "owner@prataptravels.com",
+      "booking.emailModal.cc2": "CC 2",
+      "booking.emailModal.cc2.placeholder": "admin@prataptravels.com",
+      "booking.emailModal.subject": "Subject",
+      "booking.emailModal.body": "Email Body",
+      "booking.emailModal.send": "Send Confirmation",
       "booking.table.notified": "Notified",
     },
   };
