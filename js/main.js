@@ -361,7 +361,7 @@ document.addEventListener("DOMContentLoaded", function () {
               remarks: remarksVal,
               referral_code: referralVal,
               createdAt: new Date().toISOString(),
-              status: "confirmed"
+              status: "pending"
             });
             recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
           })
@@ -383,7 +383,7 @@ document.addEventListener("DOMContentLoaded", function () {
               remarks: remarksVal,
               referral_code: referralVal,
               createdAt: new Date().toISOString(),
-              status: "confirmed"
+              status: "pending"
             });
             recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
           })
@@ -410,7 +410,7 @@ document.addEventListener("DOMContentLoaded", function () {
           remarks: remarksVal,
           referral_code: referralVal,
           createdAt: new Date().toISOString(),
-          status: "confirmed"
+          status: "pending"
         });
         recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
         if (submitBtn) {
@@ -548,42 +548,39 @@ function handleLogout() {
 document.addEventListener("DOMContentLoaded", function () {
   if (sessionStorage.getItem("pt_logged_in") === "true") {
     var user = JSON.parse(sessionStorage.getItem("pt_user"));
-    if (user && document.getElementById("authSection")) {    document.getElementById("authSection").classList.add("hidden");
-  document.getElementById("dashboardSection").classList.remove("hidden");
+    if (user && document.getElementById("authSection")) {
+      document.getElementById("authSection").classList.add("hidden");
+      document.getElementById("dashboardSection").classList.remove("hidden");
 
-  document.getElementById("userName").textContent = user.name;
-  document.getElementById("userEmail").textContent = user.email;
-  document.getElementById("userAvatar").textContent = user.initial;
+      document.getElementById("userName").textContent = user.name;
+      document.getElementById("userEmail").textContent = user.email;
+      document.getElementById("userAvatar").textContent = user.initial;
 
-  // Re-render dashboards after auth so tables show fresh data
-  _refreshCurrentDashboard();
-}
+      // Re-render dashboards after auth so tables show fresh data
+      _refreshCurrentDashboard();
+    }
+  }
+});
 
 // ---------- Refresh dashboard tables after login ----------
 function _refreshCurrentDashboard() {
   if (document.getElementById("visitorTableBody")) {
-    renderVisitorTable();
-    updateKPIs();
+    fetchVisitorRecordsFromApi().then(function() { renderVisitorTable(); updateKPIs(); });
   }
   if (document.getElementById("referralDashboardPanel")) {
-    renderReferralTable();
-    updateReferralKPIs();
+    fetchAllReferrals().then(function() { renderReferralTable(); updateReferralKPIs(); });
   }
   if (document.getElementById("bookingTableBody")) {
-    renderBookingTable();
-    updateBookingKPIs();
+    fetchBookingsFromApi().then(function() { renderBookingTable(); updateBookingKPIs(); });
   }
   if (document.getElementById("auditTableBody")) {
-    renderAuditTable();
-    updateAuditKPIs();
+    fetchAuditFromApi().then(function() { renderAuditTable(); updateAuditKPIs(); });
   }
   if (document.getElementById("vehicleTableBody")) {
     renderVehicleTable();
     updateVehicleKPIs();
   }
 }
-  }
-});
 
 // ---------- File Upload ----------
 function handleFileUpload(event) {
@@ -1984,6 +1981,96 @@ function getBookings() {
   } catch (e) { return []; }
 }
 
+// ---------- Fetch Bookings from PratapTravels-Data Azure Function API ----------
+async function fetchBookingsFromApi() {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return null;
+
+  try {
+    var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
+    var fetchUrl = apiUrl + separator + "type=booking";
+    var resp = await fetch(fetchUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var result = await resp.json();
+
+    // Response format: { total: N, bookings: [...] }
+    var bookings = Array.isArray(result) ? result : (result.bookings || []);
+
+    if (bookings.length > 0) {
+      // Merge with existing localStorage: prefer server data, but keep local-only records
+      var localBookings = getBookings();
+      var serverIds = {};
+      for (var i = 0; i < bookings.length; i++) {
+        serverIds[bookings[i].bookingId] = true;
+      }
+      // Add any local bookings not on server (pending submissions, etc.)
+      for (var i = 0; i < localBookings.length; i++) {
+        if (!serverIds[localBookings[i].bookingId]) {
+          bookings.push(localBookings[i]);
+        }
+      }
+      // Sort by createdAt descending
+      bookings.sort(function (a, b) {
+        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      });
+      localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+      return bookings;
+    }
+  } catch (e) {
+    console.warn("Booking API GET failed, using localStorage:", e.message);
+  }
+
+  return null;
+}
+
+// ---------- Fetch Audit Trail from PratapTravels-Data Azure Function API ----------
+async function fetchAuditFromApi() {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return null;
+
+  try {
+    var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
+    var fetchUrl = apiUrl + separator + "type=audit_trail";
+    var resp = await fetch(fetchUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var result = await resp.json();
+
+    var events = Array.isArray(result) ? result : (result.events || []);
+
+    if (events.length > 0) {
+      var localAudit = getAuditTrail();
+      var serverIds = {};
+      for (var i = 0; i < events.length; i++) {
+        serverIds[events[i].id] = true;
+      }
+      for (var i = 0; i < localAudit.length; i++) {
+        if (!serverIds[localAudit[i].id]) {
+          events.push(localAudit[i]);
+        }
+      }
+      events.sort(function (a, b) {
+        return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+      });
+      localStorage.setItem(PT_AUDIT_KEY, JSON.stringify(events));
+      return events;
+    }
+  } catch (e) {
+    console.warn("Audit API GET failed, using localStorage:", e.message);
+  }
+
+  return null;
+}
+
 /* ============================================
    AUDIT TRAIL
    Record all user activities on index.html
@@ -2915,12 +3002,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
   // Init booking dashboard (booking.html)
   if (document.getElementById("bookingTableBody")) {
+    await fetchBookingsFromApi();
     renderBookingTable();
     updateBookingKPIs();
   }
 
   // Init audit trail dashboard (audit-trail.html)
   if (document.getElementById("auditTableBody")) {
+    await fetchAuditFromApi();
     renderAuditTable();
     updateAuditKPIs();
   }

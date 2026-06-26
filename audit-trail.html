@@ -76,7 +76,7 @@
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
             <a href="admin.html" class="admin-back-btn" data-i18n="admin.back">← एडमिन डैशबोर्ड</a>
             <button class="btn-export" onclick="exportAuditCSV()">📥 <span data-i18n="admin.export.csv">CSV डाउनलोड</span></button>
-            <button class="btn-refresh" onclick="renderAuditTable();updateAuditKPIs();showToast('Refreshed.','success');">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
+            <button class="btn-refresh" onclick="fetchAuditFromApi().then(function(){ renderAuditTable(); updateAuditKPIs(); showToast('Refreshed.','success'); });">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             <button class="logout-btn" onclick="handleLogout()"><span data-i18n="visitors.btn.signout">साइन आउट</span></button>
           </div>
         </div>
@@ -125,7 +125,7 @@
                 <option value="week" data-i18n="audit.filter.week">पिछले 7 दिन</option>
                 <option value="month" data-i18n="audit.filter.month">पिछले 30 दिन</option>
               </select>
-              <button class="btn-refresh" onclick="renderAuditTable();updateAuditKPIs();">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
+              <button class="btn-refresh" onclick="fetchAuditFromApi().then(function(){ renderAuditTable(); updateAuditKPIs(); });">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             </div>
           </div>
           <div class="visitor-table-wrapper">
