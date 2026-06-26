@@ -573,7 +573,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
     string origin = req.Headers["Origin"].FirstOrDefault();
 
     var allowedOrigins = new[] {
-        "https://gautam958web.in",
         "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
     };
 
@@ -719,11 +718,11 @@ The admin can view all customer bookings in a dedicated dashboard at `booking.ht
   "name": "Customer Name",
   "phone": "7991182086",
   "email": "customer@example.com",
-  "route": "Basukinath",  // Always saved in English
+  "route": "Basukinath", // Always saved in English
   "date": "2026-07-01",
   "time": "08:00",
   "passengers": "4",
-  "trip_type": "One Way",  // Always saved in English
+  "trip_type": "One Way", // Always saved in English
   "remarks": "Airport pickup needed",
   "referral_code": "PTABC1234",
   "createdAt": "2026-06-26T...",
@@ -787,7 +786,6 @@ The admin can view all user activities on the website in a dedicated dashboard a
 - **Export CSV** — Download filtered events as CSV
 - Protected by **Google Sign-In**
 
-
 ---
 
 ## Vehicle Master
@@ -842,6 +840,7 @@ The admin can manage vehicles and drivers in a dedicated dashboard at `vehicle.h
 - **API:** PratapTravels-Data Azure Function (`type=vehicle`)
 - **Cache:** In-memory cache (`_vehiclesCache`) for fast reads
 - **Note:** Vehicle API support (`type=vehicle_data`, `type=vehicle_update`, `type=vehicle_delete`) must be implemented in the PratapTravels-Data Azure Function backend. Until then, vehicle data exists only in the browser's in-memory cache and is lost on page refresh.
+
 ---
 
 ## PratapTravels-Data Azure Function
@@ -873,15 +872,15 @@ https://communication-fn.azurewebsites.net/api/PratapTravels-Data?code=<FUNCTION
 
 Requests from the following origins are allowed:
 
-- `https://gautam958web.in`
 - `https://agreeable-meadow-041d69800.7.azurestaticapps.net`
 
 ### Data Storage
 
-Booking and audit trail records are stored in JSON files on the Azure Function's temp filesystem:
+Booking, audit trail, and vehicle records are stored in JSON files on the Azure Function's temp filesystem:
 
 - `bookings.json` — All customer booking records
 - `audit_trail.json` — All user activity events
+- `vehicles.json` — All vehicle and driver records
 
 > **⚠️ Note:** Data is ephemeral and will be lost on function restart.
 
@@ -911,42 +910,41 @@ using System;
 
 public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
 {
-    log.LogInformation($"PratapTravels-Data function triggered. Method: {req.Method}");
+    log.LogInformation("PratapTravels-Data function triggered. Method: " + req.Method);
 
     string origin = req.Headers["Origin"].FirstOrDefault();
 
-    // Allowed origins — same as referral function
     var allowedOrigins = new[] {
         "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
     };
 
     if (string.IsNullOrEmpty(origin) || !allowedOrigins.Contains(origin))
     {
-        log.LogWarning($"Blocked request from unauthorized origin: {origin}");
+        log.LogWarning("Blocked request from unauthorized origin: " + origin);
         return new StatusCodeResult(StatusCodes.Status403Forbidden);
     }
 
-    // --- JSON file storage — same pattern as referral function ---
-    string bookingsJsonFile = "bookings.json";
-    string auditJsonFile = "audit_trail.json";
-
+    // --- JSON file storage ---
     string rootPath = Environment.GetEnvironmentVariable("HOME") ?? "D:\\home";
-    string bookingsFilePath = Path.Combine(rootPath, "data", bookingsJsonFile);
-    string auditFilePath = Path.Combine(rootPath, "data", auditJsonFile);
-    Directory.CreateDirectory(Path.GetDirectoryName(bookingsFilePath));
+    string dataDir = Path.Combine(rootPath, "data");
+    Directory.CreateDirectory(dataDir);
+
+    string bookingsFilePath = Path.Combine(dataDir, "bookings.json");
+    string auditFilePath    = Path.Combine(dataDir, "audit_trail.json");
+    string vehiclesFilePath = Path.Combine(dataDir, "vehicles.json");
 
     if (!File.Exists(bookingsFilePath)) File.WriteAllText(bookingsFilePath, "[]");
-    if (!File.Exists(auditFilePath)) File.WriteAllText(auditFilePath, "[]");
+    if (!File.Exists(auditFilePath))    File.WriteAllText(auditFilePath, "[]");
+    if (!File.Exists(vehiclesFilePath)) File.WriteAllText(vehiclesFilePath, "[]");
 
     var bookingsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(bookingsFilePath));
-    var auditList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
+    var auditList    = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
+    var vehiclesList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(vehiclesFilePath));
 
-    // --- GET: Fetch all records ---
+    // --- GET ---
     if (string.Equals(req.Method, "GET", StringComparison.OrdinalIgnoreCase))
     {
         string dataType = req.Query["type"];
-
-        // Admin endpoint: require function key
         string functionKey = req.Headers["x-functions-key"].FirstOrDefault() ?? req.Query["code"];
         string expectedKey = Environment.GetEnvironmentVariable("DATA_FUNCTION_KEY") ?? "";
         if (string.IsNullOrEmpty(expectedKey) || functionKey != expectedKey)
@@ -954,91 +952,122 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
 
         if (dataType == "booking")
         {
-            var sortedBookings = bookingsList.OrderByDescending(b => b.createdAt).ToList();
-            return new OkObjectResult(new { total = sortedBookings.Count, bookings = sortedBookings });
+            var sorted = bookingsList.OrderByDescending(b => b.createdAt).ToList();
+            return new OkObjectResult(new { total = sorted.Count, bookings = sorted });
         }
-
         if (dataType == "audit_trail")
         {
-            var sortedAudit = auditList.OrderByDescending(a => a.timestamp).ToList();
-            return new OkObjectResult(new { total = sortedAudit.Count, events = sortedAudit });
+            var sorted = auditList.OrderByDescending(a => a.timestamp).ToList();
+            return new OkObjectResult(new { total = sorted.Count, events = sorted });
         }
-
-        // Default: return summary counts
-        return new OkObjectResult(new { totalBookings = bookingsList.Count, totalAuditEvents = auditList.Count });
+        if (dataType == "vehicle")
+        {
+            return new OkObjectResult(new { total = vehiclesList.Count, vehicles = vehiclesList });
+        }
+        return new OkObjectResult(new {
+            totalBookings = bookingsList.Count,
+            totalAuditEvents = auditList.Count,
+            totalVehicles = vehiclesList.Count
+        });
     }
 
-    // --- POST: Save new record ---
+    // --- POST ---
     if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase))
     {
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
         string dataType = data?.type?.ToString() ?? "";
 
-        // Handle booking_data (from frontend saveBookingLocally)
         if (dataType == "booking_data")
         {
             dynamic bookingData = data.data;
             bookingData.savedAt = DateTime.UtcNow.ToString("o");
             bookingsList.Add(bookingData);
             File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
-            log.LogInformation($"Booking saved: {bookingData.bookingId}");
             return new OkObjectResult(new { success = true, message = "Booking data saved" });
         }
-
-        // Handle audit_trail (from frontend recordAuditTrail)
         if (dataType == "audit_trail")
         {
             dynamic auditRecord = data.data;
             auditRecord.serverTimestamp = DateTime.UtcNow.ToString("o");
             auditList.Add(auditRecord);
             File.WriteAllText(auditFilePath, JsonConvert.SerializeObject(auditList, Formatting.Indented));
-            log.LogInformation($"Audit event saved: {auditRecord.type}");
             return new OkObjectResult(new { success = true, message = "Audit event saved" });
         }
+        if (dataType == "vehicle_data")
+        {
+            dynamic vehicleData = data.data;
+            vehicleData.savedAt = DateTime.UtcNow.ToString("o");
+            vehiclesList.Add(vehicleData);
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            return new OkObjectResult(new { success = true, message = "Vehicle saved" });
+        }
+        if (dataType == "vehicle_update")
+        {
+            string vehicleId = data.id?.ToString();
+            dynamic updateData = data.data;
+            if (updateData == null)
+                return new BadRequestObjectResult(new { error = "Vehicle update data is required" });
+            if (string.IsNullOrEmpty(vehicleId))
+                return new BadRequestObjectResult(new { error = "Vehicle id is required" });
 
-        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data' or 'audit_trail'." });
+            int index = -1;
+            for (int i = 0; i < vehiclesList.Count; i++)
+            {
+                if (vehiclesList[i].id?.ToString() == vehicleId) { index = i; break; }
+            }
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
+
+            var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
+            foreach (var prop in updateObj.Properties())
+                vehiclesList[index][prop.Name] = prop.Value;
+            vehiclesList[index].updatedAt = DateTime.UtcNow.ToString("o");
+
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            return new OkObjectResult(new { success = true, message = "Vehicle updated" });
+        }
+        if (dataType == "vehicle_delete")
+        {
+            string vehicleId = data.id?.ToString();
+            if (string.IsNullOrEmpty(vehicleId))
+                return new BadRequestObjectResult(new { error = "Vehicle id is required" });
+            int removed = vehiclesList.RemoveAll(v => v.id?.ToString() == vehicleId);
+            if (removed == 0)
+                return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            return new OkObjectResult(new { success = true, message = "Vehicle deleted" });
+        }
+        return new BadRequestObjectResult(new { error = "Unknown data type. Expected booking_data, audit_trail, vehicle_data, vehicle_update, or vehicle_delete." });
     }
 
-    // --- PUT: Update existing record ---
+    // --- PUT ---
     if (string.Equals(req.Method, "PUT", StringComparison.OrdinalIgnoreCase))
     {
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
         string dataType = data?.type?.ToString() ?? "";
-
         if (dataType == "booking_data")
         {
             dynamic update = data.data;
             string bookingId = update?.bookingId?.ToString();
-
             if (string.IsNullOrEmpty(bookingId))
-                return new BadRequestObjectResult(new { error = "bookingId is required for update" });
-
+                return new BadRequestObjectResult(new { error = "bookingId is required" });
             int index = -1;
             for (int i = 0; i < bookingsList.Count; i++)
             {
-                if (bookingsList[i].bookingId?.ToString() == bookingId)
-                {
-                    index = i;
-                    break;
-                }
+                if (bookingsList[i].bookingId?.ToString() == bookingId) { index = i; break; }
             }
-
             if (index == -1)
-                return new NotFoundObjectResult(new { error = $"Booking {bookingId} not found" });
-
+                return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
             var existing = bookingsList[index];
             if (update.status != null) existing.status = update.status;
             if (update.remarks != null) existing.remarks = update.remarks;
             existing.updatedAt = DateTime.UtcNow.ToString("o");
             bookingsList[index] = existing;
-
             File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
-            log.LogInformation($"Booking updated: {bookingId}");
             return new OkObjectResult(new { success = true, message = "Booking updated" });
         }
-
         return new BadRequestObjectResult(new { error = "Unknown data type for PUT" });
     }
 

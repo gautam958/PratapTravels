@@ -2289,6 +2289,21 @@ img {
 .btn-action-delete:hover {
   background: #fadbd8;
 }
+.btn-action-cancel {
+  padding: 4px 10px;
+  border-radius: 50px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e74c3c;
+  background: transparent;
+  color: #e74c3c;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-action-cancel:hover {
+  background: #e74c3c;
+  color: white;
+}
 
 .btn-action-confirm {
   padding: 4px 10px;

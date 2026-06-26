@@ -563,6 +563,14 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ---------- Refresh dashboard tables after login ----------
+
+// ---------- Cancel Booking ----------
+function cancelBooking(bookingId) {
+  if (!confirm('Are you sure you want to cancel this booking? This will release the assigned vehicle.')) return;
+  changeBookingStatus(bookingId, 'cancelled');
+  showToast('Booking cancelled and vehicle released.', 'info');
+}
+
 function _refreshCurrentDashboard() {
   if (document.getElementById("visitorTableBody")) {
     fetchVisitorRecordsFromApi().then(function() { renderVisitorTable(); updateKPIs(); });
@@ -2166,9 +2174,11 @@ function renderBookingTable() {
     }
     var actionBtn = '';
     if (b.status !== "confirmed" && b.status !== "cancelled") {
-      actionBtn = '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle">✅</button>';
-    } else if (b.status === "confirmed" && b.vehicleId) {
-      actionBtn = '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Update">✏️</button>';
+      actionBtn = '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle">✅</button> ' +
+        '<button class="btn-action-cancel" onclick="cancelBooking(\'' + b.bookingId + '\')" title="Cancel Booking">❌</button>';
+    } else if (b.status === "confirmed") {
+      actionBtn = '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Update">✏️</button> ' +
+        '<button class="btn-action-cancel" onclick="cancelBooking(\'' + b.bookingId + '\')" title="Cancel Booking">❌</button>';
     }
     tr.innerHTML =
       '<td><code class="vid-code">' + escapeHtml(b.bookingId || "-") + '</code></td>' +
@@ -2597,8 +2607,22 @@ function exportVehiclesCSV() {
 function updateVehicleDropdowns() {
   var selects = document.querySelectorAll(".vehicle-select-dropdown");
   var available = getAvailableVehicles();
+  // Also include the currently assigned vehicle (if any) so it appears in dropdown
+  var allVehicles = getVehicles();
   selects.forEach(function (sel) {
     var currentVal = sel.value;
+    // Check if there is a currently assigned vehicle that should be included
+    var bookingIdVal = document.getElementById("confirmBookingId") ? document.getElementById("confirmBookingId").value : null;
+    var currentVehicleId = null;
+    if (bookingIdVal) {
+      var bookings = getBookings();
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].bookingId === bookingIdVal && bookings[i].vehicleId) {
+          currentVehicleId = bookings[i].vehicleId;
+          break;
+        }
+      }
+    }
     sel.innerHTML = '<option value="">-- Select Vehicle --</option>';
     available.forEach(function (v) {
       var opt = document.createElement("option");
@@ -2606,7 +2630,26 @@ function updateVehicleDropdowns() {
       opt.textContent = v.vehicleNumber + " (" + v.vehicleType + ") - " + v.driverName;
       sel.appendChild(opt);
     });
-    // Also add 'Add New' option
+    // Add currently assigned vehicle if not already in available list
+    if (currentVehicleId) {
+      var alreadyInList = false;
+      for (var i = 0; i < available.length; i++) {
+        if (available[i].id === currentVehicleId) { alreadyInList = true; break; }
+      }
+      if (!alreadyInList) {
+        for (var i = 0; i < allVehicles.length; i++) {
+          if (allVehicles[i].id === currentVehicleId) {
+            var v = allVehicles[i];
+            var opt = document.createElement("option");
+            opt.value = v.id;
+            opt.textContent = v.vehicleNumber + " (" + v.vehicleType + ") - " + v.driverName + " [Currently Assigned]";
+            sel.appendChild(opt);
+            break;
+          }
+        }
+      }
+    }
+    // Add 'Add New' option
     var addOpt = document.createElement("option");
     addOpt.value = "__new__";
     addOpt.textContent = "+ Add New Vehicle";
@@ -2737,19 +2780,6 @@ function deleteVehicleFromApi(id) {
   } catch (e) { /* ignore */ }
 }
 
-// ---------- Save Booking to PratapTravels-Data API ----------
-function saveBookingToApi(booking) {
-  var apiUrl = getDataApiUrl();
-  if (!apiUrl) return;
-  try {
-    fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      mode: "cors",
-      body: JSON.stringify({ type: "booking_data", data: booking }),
-    }).catch(function () { /* fire-and-forget */ });
-  } catch (e) { /* ignore */ }
-}
 
 // ---------- Assign vehicle to booking ----------
 function assignVehicleToBooking(bookingId, vehicleId) {
