@@ -264,7 +264,11 @@ document.addEventListener("DOMContentLoaded", function () {
       // Self-referral prevention: check if booking phone matches code owner's phone
       if (referralVal) {
         var codeOwnerData = _referralDataCache;
-        if (codeOwnerData && codeOwnerData.phone && codeOwnerData.phone === phoneVal) {
+        if (
+          codeOwnerData &&
+          codeOwnerData.phone &&
+          codeOwnerData.phone === phoneVal
+        ) {
           showToast("You cannot use your own referral code!", "error");
           referralVal = "";
           if (referralInput) referralInput.value = "";
@@ -276,9 +280,14 @@ document.addEventListener("DOMContentLoaded", function () {
         var refValidationResult = { valid: true };
         try {
           refValidationResult = await validateReferralCodeServer(referralVal);
-        } catch(e) { /* proceed anyway on network error */ }
+        } catch (e) {
+          /* proceed anyway on network error */
+        }
         if (!refValidationResult || !refValidationResult.valid) {
-          showToast("Referral code is invalid or not found on server. Proceeding without referral.", "error");
+          showToast(
+            "Referral code is invalid or not found on server. Proceeding without referral.",
+            "error",
+          );
           referralVal = "";
           if (referralInput) referralInput.value = "";
         }
@@ -321,7 +330,8 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("bookingSuccess").classList.remove("hidden");
         if (openWhatsApp) {
           var whatsappUrl =
-            "https://wa.me/917991182806?text=" + encodeURIComponent(buildWhatsAppMsg());
+            "https://wa.me/917991182806?text=" +
+            encodeURIComponent(buildWhatsAppMsg());
           window.open(whatsappUrl, "_blank");
         }
       }
@@ -336,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function () {
             newCustomerPhone: phoneVal,
             rewardAmount: 50,
             createdAt: new Date().toISOString(),
-            status: "completed"
+            status: "completed",
           });
           // Update referrer's stats locally
           updateReferrerStatsOnRedemption(referralVal, phoneVal, bookingId);
@@ -374,9 +384,15 @@ document.addEventListener("DOMContentLoaded", function () {
               remarks: remarksVal,
               referral_code: referralVal,
               createdAt: new Date().toISOString(),
-              status: "pending"
+              status: "pending",
             });
-            recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
+            recordAuditTrail("booking_submit", {
+              bookingId: bookingId,
+              name: nameVal,
+              phone: phoneVal,
+              route: routeVal,
+              referral_code: referralVal,
+            });
           })
           .catch(function (error) {
             console.error("Booking API failed:", error);
@@ -396,9 +412,15 @@ document.addEventListener("DOMContentLoaded", function () {
               remarks: remarksVal,
               referral_code: referralVal,
               createdAt: new Date().toISOString(),
-              status: "pending"
+              status: "pending",
             });
-            recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
+            recordAuditTrail("booking_submit", {
+              bookingId: bookingId,
+              name: nameVal,
+              phone: phoneVal,
+              route: routeVal,
+              referral_code: referralVal,
+            });
           })
           .finally(function () {
             if (submitBtn) {
@@ -423,9 +445,15 @@ document.addEventListener("DOMContentLoaded", function () {
           remarks: remarksVal,
           referral_code: referralVal,
           createdAt: new Date().toISOString(),
-          status: "pending"
+          status: "pending",
         });
-        recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
+        recordAuditTrail("booking_submit", {
+          bookingId: bookingId,
+          name: nameVal,
+          phone: phoneVal,
+          route: routeVal,
+          referral_code: referralVal,
+        });
         if (submitBtn) {
           submitBtn.textContent = "🚗 Submit Booking Request";
           submitBtn.disabled = false;
@@ -550,7 +578,9 @@ function _handleAuthSuccess(user) {
 
 // ---------- Dev Login Bypass (TEMPORARY - remove before production) ----------
 function handleDevLogin() {
-  console.warn("[DEV BYPASS] Static login used — remove handleDevLogin() before production!");
+  console.warn(
+    "[DEV BYPASS] Static login used — remove handleDevLogin() before production!",
+  );
   var devUser = {
     name: "Dev Admin",
     email: "dev@prataptravels.local",
@@ -590,26 +620,46 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // ---------- Cancel Booking ----------
 function cancelBooking(bookingId) {
-  if (!confirm('Are you sure you want to cancel this booking? This will release the assigned vehicle.')) return;
-  changeBookingStatus(bookingId, 'cancelled');
-  showToast('Booking cancelled and vehicle released.', 'info');
+  if (
+    !confirm(
+      "Are you sure you want to cancel this booking? This will release the assigned vehicle.",
+    )
+  )
+    return;
+  changeBookingStatus(bookingId, "cancelled");
+  showToast("Booking cancelled and vehicle released.", "info");
 }
 
 function _refreshCurrentDashboard() {
   if (document.getElementById("visitorTableBody")) {
-    fetchVisitorRecordsFromApi().then(function() { renderVisitorTable(); updateKPIs(); });
+    fetchVisitorRecordsFromApi().then(function () {
+      renderVisitorTable();
+      updateKPIs();
+    });
   }
   if (document.getElementById("referralDashboardPanel")) {
-    fetchAllReferrals().then(function() { renderReferralTable(); updateReferralKPIs(); });
+    fetchAllReferrals().then(function () {
+      renderReferralTable();
+      updateReferralKPIs();
+    });
   }
   if (document.getElementById("bookingTableBody")) {
-    fetchBookingsFromApi().then(function() { renderBookingTable(); updateBookingKPIs(); });
+    fetchBookingsFromApi().then(function () {
+      renderBookingTable();
+      updateBookingKPIs();
+    });
   }
   if (document.getElementById("auditTableBody")) {
-    fetchAuditFromApi().then(function() { renderAuditTable(); updateAuditKPIs(); });
+    fetchAuditFromApi().then(function () {
+      renderAuditTable();
+      updateAuditKPIs();
+    });
   }
   if (document.getElementById("vehicleTableBody")) {
-    fetchVehiclesFromApi().then(function() { renderVehicleTable(); updateVehicleKPIs(); });
+    fetchVehiclesFromApi().then(function () {
+      renderVehicleTable();
+      updateVehicleKPIs();
+    });
   }
 }
 
@@ -765,9 +815,12 @@ async function generateReferralCode() {
     phone: phone,
     code: code,
     createdAt: new Date().toISOString(),
-    totalReferrals: (existing && existing.phone === phone) ? (existing.totalReferrals || 0) : 0,
-    totalRewards: (existing && existing.phone === phone) ? (existing.totalRewards || 0) : 0,
-    rewardBalance: (existing && existing.phone === phone) ? (existing.rewardBalance || 0) : 0,
+    totalReferrals:
+      existing && existing.phone === phone ? existing.totalReferrals || 0 : 0,
+    totalRewards:
+      existing && existing.phone === phone ? existing.totalRewards || 0 : 0,
+    rewardBalance:
+      existing && existing.phone === phone ? existing.rewardBalance || 0 : 0,
   };
   _referralDataCache = refData;
 
@@ -776,7 +829,11 @@ async function generateReferralCode() {
   showToast("Referral code generated!", "success");
 
   // Audit: referral code generated
-  recordAuditTrail("referral_generate", { code: code, name: name, phone: phone });
+  recordAuditTrail("referral_generate", {
+    code: code,
+    name: name,
+    phone: phone,
+  });
 }
 
 // ---------- Copy referral code to clipboard ----------
@@ -817,18 +874,22 @@ function shareReferralWhatsApp() {
     return;
   }
 
-  var lang = (typeof I18N !== "undefined") ? I18N.getLanguage() : "hi";
-  var bookLink = window.location.origin + "?ref=" + encodeURIComponent(refData.code);
+  var lang = typeof I18N !== "undefined" ? I18N.getLanguage() : "hi";
+  var bookLink =
+    window.location.origin + "?ref=" + encodeURIComponent(refData.code);
   var msg;
   if (lang === "hi") {
     msg = "🚔 *PRATAP TRAVELS - रेफ़रल*\n\n";
-    msg += "नमस्ते! मैंने PRATAP TRAVELS की सेवाओं का उपयोग किया है और बहुत अच्छा अनुभव रहा।\n\n";
+    msg +=
+      "नमस्ते! मैंने PRATAP TRAVELS की सेवाओं का उपयोग किया है और बहुत अच्छा अनुभव रहा।\n\n";
     msg += "🎁 मेरा रेफ़रल कोड: *" + refData.code + "*\n\n";
-    msg += "इस कोड का उपयोग करके अपनी पहली यात्रा बुक करें और ₹50 की छूट पाएँ!\n\n";
+    msg +=
+      "इस कोड का उपयोग करके अपनी पहली यात्रा बुक करें और ₹50 की छूट पाएँ!\n\n";
     msg += "📞 अभी बुक करें: " + bookLink;
   } else {
     msg = "🚔 *PRATAP TRAVELS - Referral*\n\n";
-    msg += "Hi! I've used PRATAP TRAVELS services and had a great experience.\n\n";
+    msg +=
+      "Hi! I've used PRATAP TRAVELS services and had a great experience.\n\n";
     msg += "🎁 My referral code: *" + refData.code + "*\n\n";
     msg += "Use this code on your first booking and get ₹50 off!\n\n";
     msg += "📞 Book now: " + bookLink;
@@ -872,9 +933,15 @@ function updateReferralStatsDisplay() {
     var rewardBalance = refData.rewardBalance || 0;
 
     statsEl.innerHTML =
-      '<div class="refer-stat"><span class="refer-stat-num">' + totalReferrals + '</span><span class="refer-stat-label">Total Referrals</span></div>' +
-      '<div class="refer-stat"><span class="refer-stat-num">₹' + totalRewards + '</span><span class="refer-stat-label">Total Earned</span></div>' +
-      '<div class="refer-stat"><span class="refer-stat-num">₹' + rewardBalance + '</span><span class="refer-stat-label">Balance</span></div>';
+      '<div class="refer-stat"><span class="refer-stat-num">' +
+      totalReferrals +
+      '</span><span class="refer-stat-label">Total Referrals</span></div>' +
+      '<div class="refer-stat"><span class="refer-stat-num">₹' +
+      totalRewards +
+      '</span><span class="refer-stat-label">Total Earned</span></div>' +
+      '<div class="refer-stat"><span class="refer-stat-num">₹' +
+      rewardBalance +
+      '</span><span class="refer-stat-label">Balance</span></div>';
     statsEl.classList.remove("hidden");
   }
 }
@@ -958,7 +1025,8 @@ async function fetchReferralStats() {
 
   // Append referral code param - use ? or & depending on existing query
   var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
-  var statsUrl = apiUrl + separator + "referral_code=" + encodeURIComponent(refData.code);
+  var statsUrl =
+    apiUrl + separator + "referral_code=" + encodeURIComponent(refData.code);
 
   try {
     var resp = await fetch(statsUrl, {
@@ -1569,10 +1637,15 @@ function mergeLocalRedemptions(referrals) {
   for (var i = 0; i < referrals.length; i++) {
     var local = localByCode[referrals[i].code];
     if (local) {
-      referrals[i].totalRedemptions = (referrals[i].totalRedemptions || referrals[i].redeemedCount || 0) + local.count;
-      referrals[i].totalReferrals = (referrals[i].totalReferrals || 0) + local.count;
-      referrals[i].totalRewards = (referrals[i].totalRewards || 0) + local.rewards;
-      referrals[i].rewardBalance = (referrals[i].rewardBalance || 0) + local.rewards;
+      referrals[i].totalRedemptions =
+        (referrals[i].totalRedemptions || referrals[i].redeemedCount || 0) +
+        local.count;
+      referrals[i].totalReferrals =
+        (referrals[i].totalReferrals || 0) + local.count;
+      referrals[i].totalRewards =
+        (referrals[i].totalRewards || 0) + local.rewards;
+      referrals[i].rewardBalance =
+        (referrals[i].rewardBalance || 0) + local.rewards;
     }
   }
 
@@ -1582,7 +1655,11 @@ function mergeLocalRedemptions(referrals) {
 // ---------- Fetch all referrals from backend (admin) ----------
 async function fetchAllReferrals() {
   var apiUrl = getReferralApiUrl();
-  if (!apiUrl) return { data: mergeLocalRedemptions(getAllReferralRecords()), fromServer: false };
+  if (!apiUrl)
+    return {
+      data: mergeLocalRedemptions(getAllReferralRecords()),
+      fromServer: false,
+    };
 
   try {
     var resp = await fetch(apiUrl, {
@@ -1594,12 +1671,15 @@ async function fetchAllReferrals() {
     var data = await resp.json();
 
     // Handle both array and object responses
-    var referrals = Array.isArray(data) ? data : (data.referrals || []);
+    var referrals = Array.isArray(data) ? data : data.referrals || [];
     _allReferralsCache = referrals;
     return { data: mergeLocalRedemptions(referrals), fromServer: true };
   } catch (e) {
     console.warn("Referral admin API failed, using cached data:", e.message);
-    return { data: mergeLocalRedemptions(getAllReferralRecords()), fromServer: false };
+    return {
+      data: mergeLocalRedemptions(getAllReferralRecords()),
+      fromServer: false,
+    };
   }
 }
 
@@ -1649,9 +1729,7 @@ function renderReferralTable() {
   var filtered = records;
   if (query) {
     filtered = records.filter(function (r) {
-      var haystack = [r.code, r.name, r.email, r.phone]
-        .join(" ")
-        .toLowerCase();
+      var haystack = [r.code, r.name, r.email, r.phone].join(" ").toLowerCase();
       return haystack.indexOf(query) !== -1;
     });
   }
@@ -1660,9 +1738,11 @@ function renderReferralTable() {
     if (emptyState) {
       var emptyMsg = emptyState.querySelector("p");
       if (records.length === 0) {
-        emptyMsg.textContent = "No referral codes yet. Codes will appear here as users generate them.";
+        emptyMsg.textContent =
+          "No referral codes yet. Codes will appear here as users generate them.";
       } else {
-        emptyMsg.textContent = "No results found for '" + escapeHtml(query) + "'";
+        emptyMsg.textContent =
+          "No results found for '" + escapeHtml(query) + "'";
       }
       emptyState.classList.remove("hidden");
     }
@@ -1801,7 +1881,8 @@ async function openRedemptionHistory(code) {
   // Show modal immediately with loading state
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
-  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light);">⏳ Loading redemption history...</td></tr>';
+  tbody.innerHTML =
+    '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text-light);">⏳ Loading redemption history...</td></tr>';
   if (emptyState) emptyState.classList.add("hidden");
 
   // Fetch redemption data from API/cache
@@ -1830,7 +1911,9 @@ async function openRedemptionHistory(code) {
   var cachedStats = null;
   try {
     cachedStats = _redemptionsCache[code] || null;
-  } catch (e) { /* ignore */ }
+  } catch (e) {
+    /* ignore */
+  }
 
   // Update summary stats
   var allRecords = getAllReferralRecords();
@@ -1842,9 +1925,18 @@ async function openRedemptionHistory(code) {
     }
   }
 
-  var totalRedemptions = (cachedStats && cachedStats.totalReferrals) || (refRecord ? refRecord.totalReferrals : 0) || 0;
-  var totalRewards = (cachedStats && cachedStats.totalRewards) || (refRecord ? refRecord.totalRewards : 0) || 0;
-  var pendingBalance = (cachedStats && cachedStats.rewardBalance) || (refRecord ? refRecord.rewardBalance : 0) || 0;
+  var totalRedemptions =
+    (cachedStats && cachedStats.totalReferrals) ||
+    (refRecord ? refRecord.totalReferrals : 0) ||
+    0;
+  var totalRewards =
+    (cachedStats && cachedStats.totalRewards) ||
+    (refRecord ? refRecord.totalRewards : 0) ||
+    0;
+  var pendingBalance =
+    (cachedStats && cachedStats.rewardBalance) ||
+    (refRecord ? refRecord.rewardBalance : 0) ||
+    0;
 
   var elTotal = document.getElementById("redTotalRedemptions");
   var elRewards = document.getElementById("redTotalRewards");
@@ -1876,12 +1968,27 @@ async function openRedemptionHistory(code) {
     else if (status === "failed") statusClass = "failed";
 
     tr.innerHTML =
-      '<td>' + (idx + 1) + '</td>' +
-      '<td>' + escapeHtml(phone) + '</td>' +
-      '<td><code class="vid-code">' + escapeHtml(shortId(bookingId)) + '</code></td>' +
-      '<td>₹' + amount + '</td>' +
-      '<td><small>' + formatDate(redeemedAt) + '</small></td>' +
-      '<td><span class="redemption-status-badge ' + statusClass + '">' + status.charAt(0).toUpperCase() + status.slice(1) + '</span></td>';
+      "<td>" +
+      (idx + 1) +
+      "</td>" +
+      "<td>" +
+      escapeHtml(phone) +
+      "</td>" +
+      '<td><code class="vid-code">' +
+      escapeHtml(shortId(bookingId)) +
+      "</code></td>" +
+      "<td>₹" +
+      amount +
+      "</td>" +
+      "<td><small>" +
+      formatDate(redeemedAt) +
+      "</small></td>" +
+      '<td><span class="redemption-status-badge ' +
+      statusClass +
+      '">' +
+      status.charAt(0).toUpperCase() +
+      status.slice(1) +
+      "</span></td>";
 
     tbody.appendChild(tr);
   });
@@ -1910,7 +2017,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && overlay && !overlay.classList.contains("hidden")) {
+    if (
+      e.key === "Escape" &&
+      overlay &&
+      !overlay.classList.contains("hidden")
+    ) {
       closeRedemptionModal();
     }
   });
@@ -1922,7 +2033,11 @@ document.addEventListener("DOMContentLoaded", function () {
    the code owner's stats in cache
    ============================================ */
 
-function updateReferrerStatsOnRedemption(referralCode, customerPhone, bookingId) {
+function updateReferrerStatsOnRedemption(
+  referralCode,
+  customerPhone,
+  bookingId,
+) {
   // Update the local referral data if this is the current user's code
   var refData = _referralDataCache;
   if (refData && refData.code === referralCode) {
@@ -1938,10 +2053,12 @@ function updateReferrerStatsOnRedemption(referralCode, customerPhone, bookingId)
   var found = false;
   for (var i = 0; i < allReferrals.length; i++) {
     if (allReferrals[i].code === referralCode) {
-      allReferrals[i].totalReferrals = (allReferrals[i].totalReferrals || 0) + 1;
+      allReferrals[i].totalReferrals =
+        (allReferrals[i].totalReferrals || 0) + 1;
       allReferrals[i].totalRewards = (allReferrals[i].totalRewards || 0) + 50;
       allReferrals[i].rewardBalance = (allReferrals[i].rewardBalance || 0) + 50;
-      allReferrals[i].totalRedemptions = (allReferrals[i].totalRedemptions || 0) + 1;
+      allReferrals[i].totalRedemptions =
+        (allReferrals[i].totalRedemptions || 0) + 1;
       found = true;
       break;
     }
@@ -1955,7 +2072,7 @@ function updateReferrerStatsOnRedemption(referralCode, customerPhone, bookingId)
       totalRedemptions: 1,
       totalRewards: 50,
       rewardBalance: 50,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     });
   }
   _allReferralsCache = allReferrals;
@@ -1983,8 +2100,12 @@ function saveBookingLocally(booking) {
         headers: { "Content-Type": "application/json" },
         mode: "cors",
         body: JSON.stringify({ type: "booking_data", data: booking }),
-      }).catch(function () { /* fire-and-forget */ });
-    } catch (e) { /* ignore */ }
+      }).catch(function () {
+        /* fire-and-forget */
+      });
+    } catch (e) {
+      /* ignore */
+    }
   }
 }
 
@@ -1995,7 +2116,10 @@ function getBookings() {
 // ---------- Fetch Bookings from PratapTravels-Data Azure Function API ----------
 async function fetchBookingsFromApi() {
   var apiUrl = getDataApiUrl();
-  if (!apiUrl) { console.warn("[Bookings] No DATA_API_URL configured in config.js"); return null; }
+  if (!apiUrl) {
+    console.warn("[Bookings] No DATA_API_URL configured in config.js");
+    return null;
+  }
 
   try {
     var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
@@ -2007,7 +2131,10 @@ async function fetchBookingsFromApi() {
     });
 
     if (!resp.ok) {
-      var errBody = ""; try { errBody = await resp.text(); } catch(_){}
+      var errBody = "";
+      try {
+        errBody = await resp.text();
+      } catch (_) {}
       console.error("[Bookings] HTTP " + resp.status + " —", errBody);
       throw new Error("HTTP " + resp.status);
     }
@@ -2015,7 +2142,7 @@ async function fetchBookingsFromApi() {
     console.log("[Bookings] Response:", result);
 
     // Response format: { total: N, bookings: [...] }
-    var bookings = Array.isArray(result) ? result : (result.bookings || []);
+    var bookings = Array.isArray(result) ? result : result.bookings || [];
 
     // Merge: prefer server data, keep any local-only records
     var localBookings = getBookings();
@@ -2044,7 +2171,10 @@ async function fetchBookingsFromApi() {
 // ---------- Fetch Audit Trail from PratapTravels-Data Azure Function API ----------
 async function fetchAuditFromApi() {
   var apiUrl = getDataApiUrl();
-  if (!apiUrl) { console.warn("[Audit] No DATA_API_URL configured in config.js"); return null; }
+  if (!apiUrl) {
+    console.warn("[Audit] No DATA_API_URL configured in config.js");
+    return null;
+  }
 
   try {
     var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
@@ -2056,14 +2186,17 @@ async function fetchAuditFromApi() {
     });
 
     if (!resp.ok) {
-      var errBody = ""; try { errBody = await resp.text(); } catch(_){}
+      var errBody = "";
+      try {
+        errBody = await resp.text();
+      } catch (_) {}
       console.error("[Audit] HTTP " + resp.status + " —", errBody);
       throw new Error("HTTP " + resp.status);
     }
     var result = await resp.json();
     console.log("[Audit] Response:", result);
 
-    var events = Array.isArray(result) ? result : (result.events || []);
+    var events = Array.isArray(result) ? result : result.events || [];
 
     var localAudit = getAuditTrail();
     var serverIds = {};
@@ -2097,9 +2230,9 @@ function recordAuditTrail(activityType, details) {
     id: "AUD" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
     type: activityType,
     details: details || {},
-    page: window.location.pathname.split('/').pop() || 'index.html',
+    page: window.location.pathname.split("/").pop() || "index.html",
     timestamp: new Date().toISOString(),
-    visitorId: getVisitorId()
+    visitorId: getVisitorId(),
   };
 
   var auditLog = _auditCache;
@@ -2117,8 +2250,12 @@ function recordAuditTrail(activityType, details) {
         headers: { "Content-Type": "application/json" },
         mode: "cors",
         body: JSON.stringify({ type: "audit_trail", data: record }),
-      }).catch(function () { /* fire-and-forget */ });
-    } catch (e) { /* ignore */ }
+      }).catch(function () {
+        /* fire-and-forget */
+      });
+    } catch (e) {
+      /* ignore */
+    }
   }
 }
 
@@ -2152,17 +2289,32 @@ function renderBookingTable() {
   var filtered = bookings;
   if (query) {
     filtered = filtered.filter(function (b) {
-      var haystack = [b.bookingId, b.name, b.phone, b.email, b.route, b.referral_code, b.trip_type]
-        .join(" ").toLowerCase();
+      var haystack = [
+        b.bookingId,
+        b.name,
+        b.phone,
+        b.email,
+        b.route,
+        b.referral_code,
+        b.trip_type,
+      ]
+        .join(" ")
+        .toLowerCase();
       return haystack.indexOf(query) !== -1;
     });
   }
   if (statusVal && statusVal !== "all") {
-    filtered = filtered.filter(function (b) { return b.status === statusVal; });
+    filtered = filtered.filter(function (b) {
+      return b.status === statusVal;
+    });
   }
   if (dateVal && dateVal !== "all") {
     var now = new Date();
-    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
     filtered = filtered.filter(function (b) {
       var bt = new Date(b.createdAt).getTime();
       if (dateVal === "today") return bt >= todayStart;
@@ -2180,7 +2332,8 @@ function renderBookingTable() {
     if (emptyState) {
       var emptyMsg = emptyState.querySelector("p");
       if (bookings.length === 0) {
-        emptyMsg.textContent = "No bookings yet. Bookings will appear here as users submit them.";
+        emptyMsg.textContent =
+          "No bookings yet. Bookings will appear here as users submit them.";
       } else {
         emptyMsg.textContent = "No results found.";
       }
@@ -2192,49 +2345,122 @@ function renderBookingTable() {
 
   filtered.forEach(function (b) {
     var tr = document.createElement("tr");
-    var statusClass = b.status === "confirmed" ? "status-confirmed" : b.status === "cancelled" ? "status-cancelled" : "status-pending";
+    var statusClass =
+      b.status === "confirmed"
+        ? "status-confirmed"
+        : b.status === "cancelled"
+          ? "status-cancelled"
+          : "status-pending";
     var vehicleInfo = "-";
     var driverInfo = "-";
     if (b.vehicleId) {
       var v = getVehicleById(b.vehicleId);
       if (v) {
-        vehicleInfo = '<code class="vid-code">' + escapeHtml(v.vehicleNumber) + '</code>';
+        vehicleInfo =
+          '<code class="vid-code">' + escapeHtml(v.vehicleNumber) + "</code>";
         driverInfo = escapeHtml(v.driverName);
       }
     }
-    var actionBtn = '';
+    var actionBtn = "";
     if (b.status !== "confirmed" && b.status !== "cancelled") {
-      actionBtn = '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle">✅</button> ' +
-        '<button class="btn-action-cancel" onclick="cancelBooking(\'' + b.bookingId + '\')" title="Cancel Booking">❌</button>';
+      actionBtn =
+        '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' +
+        b.bookingId +
+        '\')" title="Confirm & Assign Vehicle">✅</button> ' +
+        '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
+        b.bookingId +
+        '\')" title="Cancel Booking">❌</button>';
     } else if (b.status === "confirmed") {
-      actionBtn = '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Update">✏️</button> ' +
-        '<button class="btn-action-cancel" onclick="cancelBooking(\'' + b.bookingId + '\')" title="Cancel Booking">❌</button>';
+      actionBtn =
+        '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' +
+        b.bookingId +
+        '\')" title="Update">✏️</button> ' +
+        '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
+        b.bookingId +
+        '\')" title="Cancel Booking">❌</button>';
     }
     tr.innerHTML =
-      '<td><code class="vid-code">' + escapeHtml(b.bookingId || "-") + '</code></td>' +
-      '<td>' + escapeHtml(b.name || "-") + '</td>' +
-      '<td>' + escapeHtml(b.phone || "-") + '</td>' +
-      '<td>' + escapeHtml(b.route || "-") + '</td>' +
-      '<td>' + escapeHtml(b.date || "-") + '</td>' +
-      '<td>' + escapeHtml(b.time || "-") + '</td>' +
-      '<td>' + escapeHtml(b.trip_type || "-") + '</td>' +
-      '<td>' + escapeHtml(b.passengers || "-") + '</td>' +
-      '<td>' + vehicleInfo + '</td>' +
-      '<td>' + driverInfo + '</td>' +
-      '<td>' + (b.referral_code ? '<code class="vid-code">' + escapeHtml(b.referral_code) + '</code>' : '<span style="color:#999">-</span>') + '</td>' +
-      '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>' +
-      '<td>' + (function() {
-      if (b.email_sent) {
-        var ccInfo = b.email_sent_cc && b.email_sent_cc.length > 0 ? ' | CC: ' + b.email_sent_cc.join(', ') : '';
-        return '<span class="notified-badge notified-sent" title="Sent to ' + (b.email_sent_to || b.email || '') + ccInfo + ' | ' + (b.notified_at || '') + '">&#9993; Sent ✓</span>';
-      } else if (b.notification_sent && b.notification_type === 'whatsapp') {
-        return '<span class="notified-badge notified-sent" title="' + (b.notified_at || '') + '">WhatsApp ✓</span>';
-      } else if (b.needs_notification) {
-        return '<span class="notified-badge notified-flagged">' + I18N.t('booking.notified.needsAction') + '</span>';
-      } else {
-        return '<button class="btn-action-confirm" style="padding:3px 8px;font-size:0.75rem;" onclick="sendBookingNotification(\'' + b.bookingId + '\')" title="' + I18N.t('booking.action.sendEmail') + '">\u2709\ufe0f</button>';
-      }
-    })() + '</td>' + '<td>' + actionBtn + '</td>';
+      '<td><code class="vid-code">' +
+      escapeHtml(b.bookingId || "-") +
+      "</code></td>" +
+      "<td>" +
+      escapeHtml(b.name || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.phone || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.route || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.date || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.time || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.trip_type || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.passengers || "-") +
+      "</td>" +
+      "<td>" +
+      vehicleInfo +
+      "</td>" +
+      "<td>" +
+      driverInfo +
+      "</td>" +
+      "<td>" +
+      (b.referral_code
+        ? '<code class="vid-code">' + escapeHtml(b.referral_code) + "</code>"
+        : '<span style="color:#999">-</span>') +
+      "</td>" +
+      '<td><span class="booking-status-badge ' +
+      statusClass +
+      '">' +
+      (b.status || "pending") +
+      "</span></td>" +
+      "<td>" +
+      (function () {
+        if (b.email_sent) {
+          var ccInfo =
+            b.email_sent_cc && b.email_sent_cc.length > 0
+              ? " | CC: " + b.email_sent_cc.join(", ")
+              : "";
+          return (
+            '<span class="notified-badge notified-sent" title="Sent to ' +
+            (b.email_sent_to || b.email || "") +
+            ccInfo +
+            " | " +
+            (b.notified_at || "") +
+            '">&#9993; Sent ✓</span>'
+          );
+        } else if (b.notification_sent && b.notification_type === "whatsapp") {
+          return (
+            '<span class="notified-badge notified-sent" title="' +
+            (b.notified_at || "") +
+            '">WhatsApp ✓</span>'
+          );
+        } else if (b.needs_notification) {
+          return (
+            '<span class="notified-badge notified-flagged">' +
+            I18N.t("booking.notified.needsAction") +
+            "</span>"
+          );
+        } else {
+          return (
+            '<button class="btn-action-confirm" style="padding:3px 8px;font-size:0.75rem;" onclick="sendBookingNotification(\'' +
+            b.bookingId +
+            '\')" title="' +
+            I18N.t("booking.action.sendEmail") +
+            '">\u2709\ufe0f</button>'
+          );
+        }
+      })() +
+      "</td>" +
+      "<td>" +
+      actionBtn +
+      "</td>";
     tbody.appendChild(tr);
   });
 }
@@ -2242,7 +2468,9 @@ function renderBookingTable() {
 function updateBookingKPIs() {
   var bookings = getBookings();
   var total = bookings.length;
-  var confirmed = 0, pending = 0, withReferral = 0;
+  var confirmed = 0,
+    pending = 0,
+    withReferral = 0;
   for (var i = 0; i < bookings.length; i++) {
     if (bookings[i].status === "confirmed") confirmed++;
     else pending++;
@@ -2260,16 +2488,65 @@ function updateBookingKPIs() {
 
 function exportBookingsCSV() {
   var bookings = getBookings();
-  if (bookings.length === 0) { showToast("No data to export.", "error"); return; }
-  var headers = ["Booking ID","Name","Phone","Email","Route","Date","Time","Passengers","Trip Type","Vehicle","Driver","Referral Code","Status","Created"];
+  if (bookings.length === 0) {
+    showToast("No data to export.", "error");
+    return;
+  }
+  var headers = [
+    "Booking ID",
+    "Name",
+    "Phone",
+    "Email",
+    "Route",
+    "Date",
+    "Time",
+    "Passengers",
+    "Trip Type",
+    "Vehicle",
+    "Driver",
+    "Referral Code",
+    "Status",
+    "Created",
+  ];
   var rows = bookings.map(function (b) {
-    var vName = "", dName = "";
-    if (b.vehicleId) { var v = getVehicleById(b.vehicleId); if (v) { vName = v.vehicleNumber; dName = v.driverName; } }
-    return [b.bookingId,b.name,b.phone,b.email,b.route,b.date,b.time,b.passengers,b.trip_type,vName,dName,b.referral_code,b.status,b.createdAt];
+    var vName = "",
+      dName = "";
+    if (b.vehicleId) {
+      var v = getVehicleById(b.vehicleId);
+      if (v) {
+        vName = v.vehicleNumber;
+        dName = v.driverName;
+      }
+    }
+    return [
+      b.bookingId,
+      b.name,
+      b.phone,
+      b.email,
+      b.route,
+      b.date,
+      b.time,
+      b.passengers,
+      b.trip_type,
+      vName,
+      dName,
+      b.referral_code,
+      b.status,
+      b.createdAt,
+    ];
   });
-  var csv = headers.join(",") + "\n" + rows.map(function (row) {
-    return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
-  }).join("\n");
+  var csv =
+    headers.join(",") +
+    "\n" +
+    rows
+      .map(function (row) {
+        return row
+          .map(function (c) {
+            return '"' + String(c || "").replace(/"/g, '""') + '"';
+          })
+          .join(",");
+      })
+      .join("\n");
   downloadFile(csv, "pratap-travels-bookings.csv", "text/csv");
   showToast("CSV exported.", "success");
 }
@@ -2298,16 +2575,24 @@ function renderAuditTable() {
   var filtered = records;
   if (query) {
     filtered = filtered.filter(function (r) {
-      var haystack = [r.id, r.type, r.page, JSON.stringify(r.details)].join(" ").toLowerCase();
+      var haystack = [r.id, r.type, r.page, JSON.stringify(r.details)]
+        .join(" ")
+        .toLowerCase();
       return haystack.indexOf(query) !== -1;
     });
   }
   if (typeVal && typeVal !== "all") {
-    filtered = filtered.filter(function (r) { return r.type === typeVal; });
+    filtered = filtered.filter(function (r) {
+      return r.type === typeVal;
+    });
   }
   if (dateVal && dateVal !== "all") {
     var now = new Date();
-    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    var todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
     filtered = filtered.filter(function (r) {
       var rt = new Date(r.timestamp).getTime();
       if (dateVal === "today") return rt >= todayStart;
@@ -2332,20 +2617,38 @@ function renderAuditTable() {
     var tr = document.createElement("tr");
     var typeLabel = r.type.replace(/_/g, " ");
     var detailsStr = r.details ? JSON.stringify(r.details) : "-";
-    if (detailsStr.length > 80) detailsStr = detailsStr.substring(0, 80) + "...";
+    if (detailsStr.length > 80)
+      detailsStr = detailsStr.substring(0, 80) + "...";
     var typeClass = "audit-type-info";
     if (r.type.indexOf("booking") !== -1) typeClass = "audit-type-booking";
-    else if (r.type.indexOf("referral") !== -1) typeClass = "audit-type-referral";
+    else if (r.type.indexOf("referral") !== -1)
+      typeClass = "audit-type-referral";
     else if (r.type.indexOf("visit") !== -1) typeClass = "audit-type-visit";
     else if (r.type.indexOf("click") !== -1) typeClass = "audit-type-click";
 
     tr.innerHTML =
-      '<td><code class="vid-code">' + escapeHtml(r.id || "-") + '</code></td>' +
-      '<td><span class="audit-type-badge ' + typeClass + '">' + escapeHtml(typeLabel) + '</span></td>' +
-      '<td><small title="' + escapeHtml(detailsStr) + '">' + escapeHtml(detailsStr) + '</small></td>' +
-      '<td>' + escapeHtml(r.page || "-") + '</td>' +
-      '<td><small>' + formatDate(r.timestamp) + '</small></td>' +
-      '<td><code class="vid-code">' + escapeHtml(shortId(r.visitorId)) + '</code></td>';
+      '<td><code class="vid-code">' +
+      escapeHtml(r.id || "-") +
+      "</code></td>" +
+      '<td><span class="audit-type-badge ' +
+      typeClass +
+      '">' +
+      escapeHtml(typeLabel) +
+      "</span></td>" +
+      '<td><small title="' +
+      escapeHtml(detailsStr) +
+      '">' +
+      escapeHtml(detailsStr) +
+      "</small></td>" +
+      "<td>" +
+      escapeHtml(r.page || "-") +
+      "</td>" +
+      "<td><small>" +
+      formatDate(r.timestamp) +
+      "</small></td>" +
+      '<td><code class="vid-code">' +
+      escapeHtml(shortId(r.visitorId)) +
+      "</code></td>";
     tbody.appendChild(tr);
   });
 }
@@ -2353,7 +2656,10 @@ function renderAuditTable() {
 function updateAuditKPIs() {
   var records = getAuditTrail();
   var total = records.length;
-  var bookings = 0, referrals = 0, visits = 0, clicks = 0;
+  var bookings = 0,
+    referrals = 0,
+    visits = 0,
+    clicks = 0;
   var todayCount = 0;
   var todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -2379,14 +2685,33 @@ function updateAuditKPIs() {
 
 function exportAuditCSV() {
   var records = getAuditTrail();
-  if (records.length === 0) { showToast("No data to export.", "error"); return; }
-  var headers = ["ID","Type","Details","Page","Timestamp","Visitor ID"];
+  if (records.length === 0) {
+    showToast("No data to export.", "error");
+    return;
+  }
+  var headers = ["ID", "Type", "Details", "Page", "Timestamp", "Visitor ID"];
   var rows = records.map(function (r) {
-    return [r.id, r.type, JSON.stringify(r.details), r.page, r.timestamp, r.visitorId];
+    return [
+      r.id,
+      r.type,
+      JSON.stringify(r.details),
+      r.page,
+      r.timestamp,
+      r.visitorId,
+    ];
   });
-  var csv = headers.join(",") + "\n" + rows.map(function (row) {
-    return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
-  }).join("\n");
+  var csv =
+    headers.join(",") +
+    "\n" +
+    rows
+      .map(function (row) {
+        return row
+          .map(function (c) {
+            return '"' + String(c || "").replace(/"/g, '""') + '"';
+          })
+          .join(",");
+      })
+      .join("\n");
   downloadFile(csv, "pratap-travels-audit-trail.csv", "text/csv");
   showToast("CSV exported.", "success");
 }
@@ -2408,12 +2733,17 @@ function saveVehicles(vehicles) {
 
 function addVehicle(vehicle) {
   var vehicles = getVehicles();
-  vehicle.id = "VH" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
+  vehicle.id =
+    "VH" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
   vehicle.status = vehicle.status || "available";
   vehicle.createdAt = new Date().toISOString();
   vehicles.unshift(vehicle);
   saveVehicles(vehicles);
-  recordAuditTrail("vehicle_add", { vehicleId: vehicle.id, vehicleNumber: vehicle.vehicleNumber, driverName: vehicle.driverName });
+  recordAuditTrail("vehicle_add", {
+    vehicleId: vehicle.id,
+    vehicleNumber: vehicle.vehicleNumber,
+    driverName: vehicle.driverName,
+  });
   saveVehicleToApi(vehicle);
   return vehicle;
 }
@@ -2437,7 +2767,9 @@ function updateVehicle(id, updates) {
 
 function deleteVehicle(id) {
   var vehicles = getVehicles();
-  var filtered = vehicles.filter(function (v) { return v.id !== id; });
+  var filtered = vehicles.filter(function (v) {
+    return v.id !== id;
+  });
   saveVehicles(filtered);
   recordAuditTrail("vehicle_delete", { vehicleId: id });
   deleteVehicleFromApi(id);
@@ -2452,22 +2784,34 @@ function getVehicleById(id) {
 }
 
 function getAvailableVehicles(date, time) {
-  var allVehicles = getVehicles().filter(function (v) { return v.status !== "maintenance"; });
-  if (!date) return allVehicles.filter(function (v) { return v.status === "available"; });
+  var allVehicles = getVehicles().filter(function (v) {
+    return v.status !== "maintenance";
+  });
+  if (!date)
+    return allVehicles.filter(function (v) {
+      return v.status === "available";
+    });
   // Check which vehicles are already booked for this date/time slot
   var bookings = getBookings();
   var bookedVehicleIds = {};
   for (var i = 0; i < bookings.length; i++) {
     var b = bookings[i];
     if (b.status === "cancelled" || b.status === "completed") continue;
-    if (b.bookingId && _confirmBookingData && b.bookingId === _confirmBookingData.bookingId) continue;
+    if (
+      b.bookingId &&
+      _confirmBookingData &&
+      b.bookingId === _confirmBookingData.bookingId
+    )
+      continue;
     var bDate = b.pickup_date || b.date;
     var bTime = b.pickup_time || b.time;
     if (bDate === date) {
       if (b.vehicleId) bookedVehicleIds[b.vehicleId] = true;
     }
   }
-  return allVehicles.filter(function (v) { return !bookedVehicleIds[v.id]; });
+  return allVehicles.filter(function (v) {
+    return !bookedVehicleIds[v.id];
+  });
 }
 
 function renderVehicleTable() {
@@ -2485,12 +2829,21 @@ function renderVehicleTable() {
   var filtered = vehicles;
   if (query) {
     filtered = filtered.filter(function (v) {
-      var haystack = [v.vehicleNumber, v.driverName, v.vehicleType, v.driverPhone].join(" ").toLowerCase();
+      var haystack = [
+        v.vehicleNumber,
+        v.driverName,
+        v.vehicleType,
+        v.driverPhone,
+      ]
+        .join(" ")
+        .toLowerCase();
       return haystack.indexOf(query) !== -1;
     });
   }
   if (statusVal && statusVal !== "all") {
-    filtered = filtered.filter(function (v) { return v.status === statusVal; });
+    filtered = filtered.filter(function (v) {
+      return v.status === statusVal;
+    });
   }
 
   var countEl = document.getElementById("vehicleCount");
@@ -2500,7 +2853,8 @@ function renderVehicleTable() {
     if (emptyState) {
       var emptyMsg = emptyState.querySelector("p");
       if (vehicles.length === 0) {
-        emptyMsg.textContent = "No vehicles yet. Add vehicles to start assigning them to bookings.";
+        emptyMsg.textContent =
+          "No vehicles yet. Add vehicles to start assigning them to bookings.";
       } else {
         emptyMsg.textContent = "No results found.";
       }
@@ -2512,21 +2866,53 @@ function renderVehicleTable() {
 
   filtered.forEach(function (v) {
     var tr = document.createElement("tr");
-    var statusClass = v.status === "available" ? "vehicle-available" : v.status === "booked" ? "vehicle-booked" : "vehicle-maintenance";
-    var statusText = v.status === "available" ? "Available" : v.status === "booked" ? "Booked" : "Maintenance";
+    var statusClass =
+      v.status === "available"
+        ? "vehicle-available"
+        : v.status === "booked"
+          ? "vehicle-booked"
+          : "vehicle-maintenance";
+    var statusText =
+      v.status === "available"
+        ? "Available"
+        : v.status === "booked"
+          ? "Booked"
+          : "Maintenance";
     tr.innerHTML =
-      '<td><code class="vid-code">' + escapeHtml(v.vehicleNumber || "-") + '</code></td>' +
-      '<td>' + escapeHtml(v.vehicleType || "-") + '</td>' +
-      '<td>' + escapeHtml(v.driverName || "-") + '</td>' +
-      '<td>' + escapeHtml(v.driverPhone || "-") + '</td>' +
-      '<td>' + escapeHtml(v.seats || "-") + '</td>' +
-      '<td><span class="vehicle-status-badge ' + statusClass + '">' + statusText + '</span></td>' +
-      '<td><small>' + formatDate(v.createdAt) + '</small></td>' +
-      '<td>' +
-        '<button class="btn-action-edit" onclick="editVehicle(\'' + v.id + '\')" title="Edit">✏️</button> ' +
-        '<button class="btn-action-confirm" onclick="renderVehicleSchedule(\'' + v.id + '\')" title="View Schedule">📅</button> ' +
-        '<button class="btn-action-delete" onclick="deleteVehicleConfirm(\'' + v.id + '\')" title="Delete">🗑️</button>' +
-      '</td>';
+      '<td><code class="vid-code">' +
+      escapeHtml(v.vehicleNumber || "-") +
+      "</code></td>" +
+      "<td>" +
+      escapeHtml(v.vehicleType || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(v.driverName || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(v.driverPhone || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(v.seats || "-") +
+      "</td>" +
+      '<td><span class="vehicle-status-badge ' +
+      statusClass +
+      '">' +
+      statusText +
+      "</span></td>" +
+      "<td><small>" +
+      formatDate(v.createdAt) +
+      "</small></td>" +
+      "<td>" +
+      '<button class="btn-action-edit" onclick="editVehicle(\'' +
+      v.id +
+      '\')" title="Edit">✏️</button> ' +
+      '<button class="btn-action-confirm" onclick="renderVehicleSchedule(\'' +
+      v.id +
+      '\')" title="View Schedule">📅</button> ' +
+      '<button class="btn-action-delete" onclick="deleteVehicleConfirm(\'' +
+      v.id +
+      '\')" title="Delete">🗑️</button>' +
+      "</td>";
     tbody.appendChild(tr);
   });
 }
@@ -2534,7 +2920,9 @@ function renderVehicleTable() {
 function updateVehicleKPIs() {
   var vehicles = getVehicles();
   var total = vehicles.length;
-  var available = 0, booked = 0, maintenance = 0;
+  var available = 0,
+    booked = 0,
+    maintenance = 0;
   for (var i = 0; i < vehicles.length; i++) {
     if (vehicles[i].status === "available") available++;
     else if (vehicles[i].status === "booked") booked++;
@@ -2579,7 +2967,8 @@ function editVehicle(id) {
   document.getElementById("vehicleType").value = vehicle.vehicleType || "";
   document.getElementById("vehicleSeats").value = vehicle.seats || "4";
   document.getElementById("vehicleDriverName").value = vehicle.driverName || "";
-  document.getElementById("vehicleDriverPhone").value = vehicle.driverPhone || "";
+  document.getElementById("vehicleDriverPhone").value =
+    vehicle.driverPhone || "";
   document.getElementById("vehicleNotes").value = vehicle.notes || "";
   var statusField = document.getElementById("vehicleStatus");
   if (statusField) statusField.value = vehicle.status || "available";
@@ -2610,7 +2999,7 @@ function saveVehicleForm(e) {
     driverName: driverName,
     driverPhone: driverPhone,
     notes: notes,
-    status: status
+    status: status,
   };
 
   if (editId) {
@@ -2628,7 +3017,11 @@ function saveVehicleForm(e) {
 }
 
 function deleteVehicleConfirm(id) {
-  if (confirm("Are you sure you want to delete this vehicle? This cannot be undone.")) {
+  if (
+    confirm(
+      "Are you sure you want to delete this vehicle? This cannot be undone.",
+    )
+  ) {
     deleteVehicle(id);
     renderVehicleTable();
     updateVehicleKPIs();
@@ -2647,14 +3040,44 @@ function closeVehicleModal() {
 
 function exportVehiclesCSV() {
   var vehicles = getVehicles();
-  if (vehicles.length === 0) { showToast("No data to export.", "error"); return; }
-  var headers = ["Vehicle Number","Type","Seats","Driver Name","Driver Phone","Status","Notes","Created"];
+  if (vehicles.length === 0) {
+    showToast("No data to export.", "error");
+    return;
+  }
+  var headers = [
+    "Vehicle Number",
+    "Type",
+    "Seats",
+    "Driver Name",
+    "Driver Phone",
+    "Status",
+    "Notes",
+    "Created",
+  ];
   var rows = vehicles.map(function (v) {
-    return [v.vehicleNumber, v.vehicleType, v.seats, v.driverName, v.driverPhone, v.status, v.notes, v.createdAt];
+    return [
+      v.vehicleNumber,
+      v.vehicleType,
+      v.seats,
+      v.driverName,
+      v.driverPhone,
+      v.status,
+      v.notes,
+      v.createdAt,
+    ];
   });
-  var csv = headers.join(",") + "\n" + rows.map(function (row) {
-    return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
-  }).join("\n");
+  var csv =
+    headers.join(",") +
+    "\n" +
+    rows
+      .map(function (row) {
+        return row
+          .map(function (c) {
+            return '"' + String(c || "").replace(/"/g, '""') + '"';
+          })
+          .join(",");
+      })
+      .join("\n");
   downloadFile(csv, "pratap-travels-vehicles.csv", "text/csv");
   showToast("CSV exported.", "success");
 }
@@ -2668,7 +3091,9 @@ function updateVehicleDropdowns(filterDate, filterTime) {
   selects.forEach(function (sel) {
     var currentVal = sel.value;
     // Check if there is a currently assigned vehicle that should be included
-    var bookingIdVal = document.getElementById("confirmBookingId") ? document.getElementById("confirmBookingId").value : null;
+    var bookingIdVal = document.getElementById("confirmBookingId")
+      ? document.getElementById("confirmBookingId").value
+      : null;
     var currentVehicleId = null;
     if (bookingIdVal) {
       var bookings = getBookings();
@@ -2683,14 +3108,18 @@ function updateVehicleDropdowns(filterDate, filterTime) {
     available.forEach(function (v) {
       var opt = document.createElement("option");
       opt.value = v.id;
-      opt.textContent = v.vehicleNumber + " (" + v.vehicleType + ") - " + v.driverName;
+      opt.textContent =
+        v.vehicleNumber + " (" + v.vehicleType + ") - " + v.driverName;
       sel.appendChild(opt);
     });
     // Add currently assigned vehicle if not already in available list
     if (currentVehicleId) {
       var alreadyInList = false;
       for (var i = 0; i < available.length; i++) {
-        if (available[i].id === currentVehicleId) { alreadyInList = true; break; }
+        if (available[i].id === currentVehicleId) {
+          alreadyInList = true;
+          break;
+        }
       }
       if (!alreadyInList) {
         for (var i = 0; i < allVehicles.length; i++) {
@@ -2698,7 +3127,13 @@ function updateVehicleDropdowns(filterDate, filterTime) {
             var v = allVehicles[i];
             var opt = document.createElement("option");
             opt.value = v.id;
-            opt.textContent = v.vehicleNumber + " (" + v.vehicleType + ") - " + v.driverName + " [Currently Assigned]";
+            opt.textContent =
+              v.vehicleNumber +
+              " (" +
+              v.vehicleType +
+              ") - " +
+              v.driverName +
+              " [Currently Assigned]";
             sel.appendChild(opt);
             break;
           }
@@ -2729,10 +3164,16 @@ function handleVehicleSelectChange(sel) {
 
 function saveQuickVehicle(e) {
   if (e) e.preventDefault();
-  var vehicleNumber = document.getElementById("quickVehicleNumber").value.trim();
-  var driverName = document.getElementById("quickVehicleDriverName").value.trim();
+  var vehicleNumber = document
+    .getElementById("quickVehicleNumber")
+    .value.trim();
+  var driverName = document
+    .getElementById("quickVehicleDriverName")
+    .value.trim();
   var vehicleType = document.getElementById("quickVehicleType").value.trim();
-  var driverPhone = document.getElementById("quickVehicleDriverPhone").value.trim();
+  var driverPhone = document
+    .getElementById("quickVehicleDriverPhone")
+    .value.trim();
 
   if (!vehicleNumber || !driverName) {
     showToast("Vehicle number and driver name are required.", "error");
@@ -2746,7 +3187,7 @@ function saveQuickVehicle(e) {
     driverPhone: driverPhone,
     seats: "4",
     status: "available",
-    notes: "Added from booking confirmation"
+    notes: "Added from booking confirmation",
   });
 
   closeQuickVehicleModal();
@@ -2767,11 +3208,13 @@ function closeQuickVehicleModal() {
   }
 }
 
-
 // ---------- Fetch Vehicles from PratapTravels-Data API ----------
 async function fetchVehiclesFromApi() {
   var apiUrl = getDataApiUrl();
-  if (!apiUrl) { console.warn("[Vehicles] No DATA_API_URL configured in config.js"); return null; }
+  if (!apiUrl) {
+    console.warn("[Vehicles] No DATA_API_URL configured in config.js");
+    return null;
+  }
 
   try {
     var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
@@ -2783,13 +3226,16 @@ async function fetchVehiclesFromApi() {
     });
 
     if (!resp.ok) {
-      var errBody = ""; try { errBody = await resp.text(); } catch(_){}
+      var errBody = "";
+      try {
+        errBody = await resp.text();
+      } catch (_) {}
       console.error("[Vehicles] HTTP " + resp.status + " —", errBody);
       throw new Error("HTTP " + resp.status);
     }
     var result = await resp.json();
     console.log("[Vehicles] Response:", result);
-    var vehicles = Array.isArray(result) ? result : (result.vehicles || []);
+    var vehicles = Array.isArray(result) ? result : result.vehicles || [];
 
     _vehiclesCache = vehicles;
     return vehicles;
@@ -2809,8 +3255,12 @@ function saveVehicleToApi(vehicle) {
       headers: { "Content-Type": "application/json" },
       mode: "cors",
       body: JSON.stringify({ type: "vehicle_data", data: vehicle }),
-    }).catch(function () { /* fire-and-forget */ });
-  } catch (e) { /* ignore */ }
+    }).catch(function () {
+      /* fire-and-forget */
+    });
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 // ---------- Update Vehicle on PratapTravels-Data API ----------
@@ -2823,8 +3273,12 @@ function updateVehicleOnApi(id, data) {
       headers: { "Content-Type": "application/json" },
       mode: "cors",
       body: JSON.stringify({ type: "vehicle_update", id: id, data: data }),
-    }).catch(function () { /* fire-and-forget */ });
-  } catch (e) { /* ignore */ }
+    }).catch(function () {
+      /* fire-and-forget */
+    });
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 // ---------- Delete Vehicle from PratapTravels-Data API ----------
@@ -2837,10 +3291,13 @@ function deleteVehicleFromApi(id) {
       headers: { "Content-Type": "application/json" },
       mode: "cors",
       body: JSON.stringify({ type: "vehicle_delete", id: id }),
-    }).catch(function () { /* fire-and-forget */ });
-  } catch (e) { /* ignore */ }
+    }).catch(function () {
+      /* fire-and-forget */
+    });
+  } catch (e) {
+    /* ignore */
+  }
 }
-
 
 // ---------- Persist booking update to server ----------
 function persistBookingToApi(bookingId, updates) {
@@ -2851,9 +3308,17 @@ function persistBookingToApi(bookingId, updates) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       mode: "cors",
-      body: JSON.stringify({ type: "booking_update", id: bookingId, data: updates }),
-    }).catch(function () { /* fire-and-forget */ });
-  } catch (e) { /* ignore */ }
+      body: JSON.stringify({
+        type: "booking_update",
+        id: bookingId,
+        data: updates,
+      }),
+    }).catch(function () {
+      /* fire-and-forget */
+    });
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 // ---------- Assign vehicle to booking ----------
@@ -2876,7 +3341,10 @@ function assignVehicleToBooking(bookingId, vehicleId) {
   updateVehicle(vehicleId, { status: "booked" });
 
   // Audit
-  recordAuditTrail("vehicle_assigned", { bookingId: bookingId, vehicleId: vehicleId });
+  recordAuditTrail("vehicle_assigned", {
+    bookingId: bookingId,
+    vehicleId: vehicleId,
+  });
 }
 
 function releaseVehicleFromBooking(bookingId) {
@@ -2892,7 +3360,10 @@ function releaseVehicleFromBooking(bookingId) {
   _bookingsCache = bookings;
   if (vehicleId) {
     updateVehicle(vehicleId, { status: "available" });
-    recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
+    recordAuditTrail("vehicle_released", {
+      bookingId: bookingId,
+      vehicleId: vehicleId,
+    });
   }
 }
 
@@ -2905,12 +3376,18 @@ function changeBookingStatus(bookingId, newStatus) {
       if (newStatus === "cancelled" && vehicleId) {
         bookings[i].vehicleId = null;
         updateVehicle(vehicleId, { status: "available" });
-        recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
+        recordAuditTrail("vehicle_released", {
+          bookingId: bookingId,
+          vehicleId: vehicleId,
+        });
       }
       _bookingsCache = bookings;
       // Persist status change to server
       persistBookingToApi(bookingId, { status: newStatus });
-      recordAuditTrail("booking_status_change", { bookingId: bookingId, newStatus: newStatus });
+      recordAuditTrail("booking_status_change", {
+        bookingId: bookingId,
+        newStatus: newStatus,
+      });
       break;
     }
   }
@@ -2923,12 +3400,17 @@ function getVehicleSchedule(vehicleId) {
   var bookings = getBookings();
   var schedule = [];
   for (var i = 0; i < bookings.length; i++) {
-    if (bookings[i].vehicleId === vehicleId && bookings[i].status !== "cancelled") {
+    if (
+      bookings[i].vehicleId === vehicleId &&
+      bookings[i].status !== "cancelled"
+    ) {
       schedule.push(bookings[i]);
     }
   }
   // Sort by date
-  schedule.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+  schedule.sort(function (a, b) {
+    return new Date(a.date) - new Date(b.date);
+  });
   return schedule;
 }
 
@@ -2941,7 +3423,8 @@ function renderVehicleSchedule(vehicleId) {
   var vehicle = getVehicleById(vehicleId);
   var titleEl = document.getElementById("vehicleScheduleTitle");
   if (titleEl && vehicle) {
-    titleEl.textContent = "📅 Schedule: " + vehicle.vehicleNumber + " (" + vehicle.driverName + ")";
+    titleEl.textContent =
+      "📅 Schedule: " + vehicle.vehicleNumber + " (" + vehicle.driverName + ")";
   }
 
   var schedule = getVehicleSchedule(vehicleId);
@@ -2956,16 +3439,39 @@ function renderVehicleSchedule(vehicleId) {
 
   schedule.forEach(function (b) {
     var tr = document.createElement("tr");
-    var statusClass = b.status === "confirmed" ? "status-confirmed" : b.status === "cancelled" ? "status-cancelled" : "status-pending";
+    var statusClass =
+      b.status === "confirmed"
+        ? "status-confirmed"
+        : b.status === "cancelled"
+          ? "status-cancelled"
+          : "status-pending";
     tr.innerHTML =
-      '<td><code class="vid-code">' + escapeHtml(b.bookingId || "-") + '</code></td>' +
-      '<td>' + escapeHtml(b.name || "-") + '</td>' +
-      '<td>' + escapeHtml(b.phone || "-") + '</td>' +
-      '<td>' + escapeHtml(b.route || "-") + '</td>' +
-      '<td>' + escapeHtml(b.date || "-") + '</td>' +
-      '<td>' + escapeHtml(b.time || "-") + '</td>' +
-      '<td>' + escapeHtml(b.passengers || "-") + '</td>' +
-      '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>';
+      '<td><code class="vid-code">' +
+      escapeHtml(b.bookingId || "-") +
+      "</code></td>" +
+      "<td>" +
+      escapeHtml(b.name || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.phone || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.route || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.date || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.time || "-") +
+      "</td>" +
+      "<td>" +
+      escapeHtml(b.passengers || "-") +
+      "</td>" +
+      '<td><span class="booking-status-badge ' +
+      statusClass +
+      '">' +
+      (b.status || "pending") +
+      "</span></td>";
     tbody.appendChild(tr);
   });
 
@@ -2984,7 +3490,10 @@ function openConfirmBooking(bookingId) {
   var bookings = getBookings();
   var booking = null;
   for (var i = 0; i < bookings.length; i++) {
-    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
+    if (bookings[i].bookingId === bookingId) {
+      booking = bookings[i];
+      break;
+    }
   }
   if (!booking) return;
   _confirmBookingData = booking;
@@ -2996,25 +3505,51 @@ function openConfirmBooking(bookingId) {
   document.getElementById("confirmBookingId").value = bookingId;
 
   // Show booking summary
-  var vName = "-", dName = "-";
-  if (booking.vehicleId) { var v = getVehicleById(booking.vehicleId); if (v) { vName = v.vehicleNumber; dName = v.driverName; } }
+  var vName = "-",
+    dName = "-";
+  if (booking.vehicleId) {
+    var v = getVehicleById(booking.vehicleId);
+    if (v) {
+      vName = v.vehicleNumber;
+      dName = v.driverName;
+    }
+  }
   infoDiv.innerHTML =
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem;">' +
-    '<div><strong>Name:</strong> ' + escapeHtml(booking.name || "-") + '</div>' +
-    '<div><strong>Phone:</strong> ' + escapeHtml(booking.phone || "-") + '</div>' +
-    '<div><strong>Route:</strong> ' + escapeHtml(booking.route || "-") + '</div>' +
-    '<div><strong>Date:</strong> ' + escapeHtml(booking.date || "-") + '</div>' +
-    '<div><strong>Time:</strong> ' + escapeHtml(booking.time || "-") + '</div>' +
-    '<div><strong>Passengers:</strong> ' + escapeHtml(booking.passengers || "-") + '</div>' +
-    '<div><strong>Trip Type:</strong> ' + escapeHtml(booking.trip_type || "-") + '</div>' +
-    '<div><strong>Current Vehicle:</strong> ' + vName + '</div>' +
-    '</div>';
+    "<div><strong>Name:</strong> " +
+    escapeHtml(booking.name || "-") +
+    "</div>" +
+    "<div><strong>Phone:</strong> " +
+    escapeHtml(booking.phone || "-") +
+    "</div>" +
+    "<div><strong>Route:</strong> " +
+    escapeHtml(booking.route || "-") +
+    "</div>" +
+    "<div><strong>Date:</strong> " +
+    escapeHtml(booking.date || "-") +
+    "</div>" +
+    "<div><strong>Time:</strong> " +
+    escapeHtml(booking.time || "-") +
+    "</div>" +
+    "<div><strong>Passengers:</strong> " +
+    escapeHtml(booking.passengers || "-") +
+    "</div>" +
+    "<div><strong>Trip Type:</strong> " +
+    escapeHtml(booking.trip_type || "-") +
+    "</div>" +
+    "<div><strong>Current Vehicle:</strong> " +
+    vName +
+    "</div>" +
+    "</div>";
 
   // Pre-fill pickup date/time from booking
   document.getElementById("confirmPickupDate").value = booking.date || "";
-  document.getElementById("confirmPickupTime").value = (booking.time && booking.time !== "Not specified") ? booking.time : "";
-  document.getElementById("confirmPickupAddress").value = booking.pickup_address || "";
-  document.getElementById("confirmAdminNotes").value = booking.admin_notes || "";
+  document.getElementById("confirmPickupTime").value =
+    booking.time && booking.time !== "Not specified" ? booking.time : "";
+  document.getElementById("confirmPickupAddress").value =
+    booking.pickup_address || "";
+  document.getElementById("confirmAdminNotes").value =
+    booking.admin_notes || "";
 
   // Populate vehicle dropdown with date/time filtering
   var selPickupDate = document.getElementById("confirmPickupDate");
@@ -3036,7 +3571,9 @@ function openConfirmBooking(bookingId) {
   function refreshVehicleList() {
     var d = pickupDateEl ? pickupDateEl.value : null;
     var t = pickupTimeEl ? pickupTimeEl.value : null;
-    var curBookingId = document.getElementById("confirmBookingId") ? document.getElementById("confirmBookingId").value : null;
+    var curBookingId = document.getElementById("confirmBookingId")
+      ? document.getElementById("confirmBookingId").value
+      : null;
     updateVehicleDropdowns(d, t);
     // Re-select current vehicle if still available
     var currentVehicleId = null;
@@ -3054,9 +3591,11 @@ function openConfirmBooking(bookingId) {
       if (sel) sel.value = currentVehicleId;
     }
   }
-  if (pickupDateEl) pickupDateEl.removeEventListener("change", refreshVehicleList);
+  if (pickupDateEl)
+    pickupDateEl.removeEventListener("change", refreshVehicleList);
   if (pickupDateEl) pickupDateEl.addEventListener("change", refreshVehicleList);
-  if (pickupTimeEl) pickupTimeEl.removeEventListener("change", refreshVehicleList);
+  if (pickupTimeEl)
+    pickupTimeEl.removeEventListener("change", refreshVehicleList);
   if (pickupTimeEl) pickupTimeEl.addEventListener("change", refreshVehicleList);
 }
 
@@ -3069,98 +3608,112 @@ function closeConfirmBookingModal() {
   _confirmBookingData = null;
 }
 
-
 /* ============================================
    BOOKING NOTIFICATION SYSTEM
    Send email / WhatsApp notification on booking confirm
    ============================================ */
 
 function buildConfirmationEmailBody(booking) {
-  var name = booking.name || 'Guest';
-  var route = booking.route || '-';
-  var vehicleInfo = '-';
-  var driverInfo = '-';
+  var name = booking.name || "Guest";
+  var route = booking.route || "-";
+  var vehicleInfo = "-";
+  var driverInfo = "-";
   if (booking.vehicleId) {
     var v = getVehicleById(booking.vehicleId);
     if (v) {
-      vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')';
+      vehicleInfo = v.vehicleNumber + " (" + v.vehicleType + ")";
       driverInfo = v.driverName;
     }
   }
-  var pickupDate = booking.pickup_date || booking.date || '-';
-  var pickupTime = booking.pickup_time || booking.time || 'Not specified';
-  var pickupAddr = booking.pickup_address || '';
-  var lang = (typeof I18N !== 'undefined') ? I18N.getLanguage() : 'hi';
+  var pickupDate = booking.pickup_date || booking.date || "-";
+  var pickupTime = booking.pickup_time || booking.time || "Not specified";
+  var pickupAddr = booking.pickup_address || "";
+  var lang = typeof I18N !== "undefined" ? I18N.getLanguage() : "hi";
   var subject, body;
-  if (lang === 'hi') {
-    subject = 'Pratap Travels \u2014 \u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e';
-    body = '\u0928\u092e\u0938\u094d\u0924\u094e ' + name + ',\n\n';
-    body += '\u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e \u0939\u0948!\n\n';
-    body += '\u092c\u0941\u0915\u093f\u0902\u0917 ID: ' + (booking.bookingId || '-') + '\n';
-    body += '\u092e\u093e\u0930\u094d\u0917: ' + route + '\n';
-    body += '\u0924\u093f\u0925: ' + pickupDate + '\n';
-    body += '\u0938\u092e\u092f: ' + pickupTime + '\n';
-    body += '\u0935\u093e\u0939\u0928: ' + vehicleInfo + '\n';
-    body += '\u0921\u094d\u0930\u093e\u0907\u0935\u0930: ' + driverInfo + '\n';
-    if (pickupAddr) body += '\u092a\u093f\u0915\u0905\u092a: ' + pickupAddr + '\n';
-    body += '\n\u0915\u0943\u092a\u092f\u093e \u091f\u094d\u0930\u0948\u0935\u0932\u094d\u0938 +91 76313 82174';
+  if (lang === "hi") {
+    subject =
+      "Pratap Travels \u2014 \u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e";
+    body = "\u0928\u092e\u0938\u094d\u0924\u094e " + name + ",\n\n";
+    body +=
+      "\u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e \u0939\u0948!\n\n";
+    body +=
+      "\u092c\u0941\u0915\u093f\u0902\u0917 ID: " +
+      (booking.bookingId || "-") +
+      "\n";
+    body += "\u092e\u093e\u0930\u094d\u0917: " + route + "\n";
+    body += "\u0924\u093f\u0925: " + pickupDate + "\n";
+    body += "\u0938\u092e\u092f: " + pickupTime + "\n";
+    body += "\u0935\u093e\u0939\u0928: " + vehicleInfo + "\n";
+    body += "\u0921\u094d\u0930\u093e\u0907\u0935\u0930: " + driverInfo + "\n";
+    if (pickupAddr)
+      body += "\u092a\u093f\u0915\u0905\u092a: " + pickupAddr + "\n";
+    body +=
+      "\n\u0915\u0943\u092a\u092f\u093e \u091f\u094d\u0930\u0948\u0935\u0932\u094d\u0938 +91 76313 82174";
   } else {
-    subject = 'Pratap Travels \u2014 Your Booking is Confirmed!';
-    body = 'Hi ' + name + ',\n\n';
-    body += 'Your booking has been confirmed!\n\n';
-    body += 'Booking ID: ' + (booking.bookingId || '-') + '\n';
-    body += 'Route: ' + route + '\n';
-    body += 'Travel Date: ' + pickupDate + '\n';
-    body += 'Time: ' + pickupTime + '\n';
-    body += 'Vehicle: ' + vehicleInfo + '\n';
-    body += 'Driver: ' + driverInfo + '\n';
-    if (pickupAddr) body += 'Pickup: ' + pickupAddr + '\n';
-    body += '\nThank you for choosing Pratap Travels! Call +91 76313 82174 for queries.';
+    subject = "Pratap Travels \u2014 Your Booking is Confirmed!";
+    body = "Hi " + name + ",\n\n";
+    body += "Your booking has been confirmed!\n\n";
+    body += "Booking ID: " + (booking.bookingId || "-") + "\n";
+    body += "Route: " + route + "\n";
+    body += "Travel Date: " + pickupDate + "\n";
+    body += "Time: " + pickupTime + "\n";
+    body += "Vehicle: " + vehicleInfo + "\n";
+    body += "Driver: " + driverInfo + "\n";
+    if (pickupAddr) body += "Pickup: " + pickupAddr + "\n";
+    body +=
+      "\nThank you for choosing Pratap Travels! Call +91 76313 82174 for queries.";
   }
   return { subject: subject, body: body };
 }
 
 function buildConfirmationWhatsAppMsg(booking) {
-  var name = booking.name || 'Guest';
-  var route = booking.route || '-';
-  var vehicleInfo = '-';
-  var driverInfo = '-';
+  var name = booking.name || "Guest";
+  var route = booking.route || "-";
+  var vehicleInfo = "-";
+  var driverInfo = "-";
   if (booking.vehicleId) {
     var v = getVehicleById(booking.vehicleId);
     if (v) {
-      vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')';
+      vehicleInfo = v.vehicleNumber + " (" + v.vehicleType + ")";
       driverInfo = v.driverName;
     }
   }
-  var pickupDate = booking.pickup_date || booking.date || '-';
-  var pickupTime = booking.pickup_time || booking.time || 'Not specified';
-  var pickupAddr = booking.pickup_address || '';
-  var lang = (typeof I18N !== 'undefined') ? I18N.getLanguage() : 'hi';
+  var pickupDate = booking.pickup_date || booking.date || "-";
+  var pickupTime = booking.pickup_time || booking.time || "Not specified";
+  var pickupAddr = booking.pickup_address || "";
+  var lang = typeof I18N !== "undefined" ? I18N.getLanguage() : "hi";
   var msg;
-  if (lang === 'hi') {
-    msg = '*PRATAP TRAVELS \u2014 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f!*\n\n';
-    msg += '\u0928\u092e\u0938\u094d\u0924\u094e ' + name + ',\n\n';
-    msg += '\u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e \u0939\u0948!\n\n';
-    msg += '*\u092c\u0941\u0915\u093f\u0902\u0917 ID:* ' + (booking.bookingId || '-') + '\n';
-    msg += '*\u092e\u093e\u0930\u094d\u0917:* ' + route + '\n';
-    msg += '*\u0924\u093f\u0925:* ' + pickupDate + '\n';
-    msg += '*\u0938\u092e\u092f:* ' + pickupTime + '\n';
-    msg += '*\u0935\u093e\u0939\u0928:* ' + vehicleInfo + '\n';
-    msg += '*\u0921\u094d\u0930\u093e\u0907\u0935\u0930:* ' + driverInfo + '\n';
-    if (pickupAddr) msg += '*\u092a\u093f\u0915\u0905\u092a:* ' + pickupAddr + '\n';
-    msg += '\n\u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u091a\u0941\u0928\u0947 \u0935\u093e\u0932\u0947 \u091f\u094d\u0930\u0948\u0935\u0932\u094d\u0938!';
+  if (lang === "hi") {
+    msg =
+      "*PRATAP TRAVELS \u2014 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f!*\n\n";
+    msg += "\u0928\u092e\u0938\u094d\u0924\u094e " + name + ",\n\n";
+    msg +=
+      "\u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e \u0939\u0948!\n\n";
+    msg +=
+      "*\u092c\u0941\u0915\u093f\u0902\u0917 ID:* " +
+      (booking.bookingId || "-") +
+      "\n";
+    msg += "*\u092e\u093e\u0930\u094d\u0917:* " + route + "\n";
+    msg += "*\u0924\u093f\u0925:* " + pickupDate + "\n";
+    msg += "*\u0938\u092e\u092f:* " + pickupTime + "\n";
+    msg += "*\u0935\u093e\u0939\u0928:* " + vehicleInfo + "\n";
+    msg += "*\u0921\u094d\u0930\u093e\u0907\u0935\u0930:* " + driverInfo + "\n";
+    if (pickupAddr)
+      msg += "*\u092a\u093f\u0915\u0905\u092a:* " + pickupAddr + "\n";
+    msg +=
+      "\n\u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u091a\u0941\u0928\u0947 \u0935\u093e\u0932\u0947 \u091f\u094d\u0930\u0948\u0935\u0932\u094d\u0938!";
   } else {
-    msg = '*PRATAP TRAVELS \u2014 Booking Confirmed!*\n\n';
-    msg += 'Hi ' + name + ',\n\n';
-    msg += 'Your booking has been confirmed!\n\n';
-    msg += '*Booking ID:* ' + (booking.bookingId || '-') + '\n';
-    msg += '*Route:* ' + route + '\n';
-    msg += '*Date:* ' + pickupDate + '\n';
-    msg += '*Time:* ' + pickupTime + '\n';
-    msg += '*Vehicle:* ' + vehicleInfo + '\n';
-    msg += '*Driver:* ' + driverInfo + '\n';
-    if (pickupAddr) msg += '*Pickup:* ' + pickupAddr + '\n';
-    msg += '\nThank you for choosing Pratap Travels!';
+    msg = "*PRATAP TRAVELS \u2014 Booking Confirmed!*\n\n";
+    msg += "Hi " + name + ",\n\n";
+    msg += "Your booking has been confirmed!\n\n";
+    msg += "*Booking ID:* " + (booking.bookingId || "-") + "\n";
+    msg += "*Route:* " + route + "\n";
+    msg += "*Date:* " + pickupDate + "\n";
+    msg += "*Time:* " + pickupTime + "\n";
+    msg += "*Vehicle:* " + vehicleInfo + "\n";
+    msg += "*Driver:* " + driverInfo + "\n";
+    if (pickupAddr) msg += "*Pickup:* " + pickupAddr + "\n";
+    msg += "\nThank you for choosing Pratap Travels!";
   }
   return msg;
 }
@@ -3169,11 +3722,14 @@ function sendBookingNotification(bookingId) {
   var bookings = getBookings();
   var booking = null;
   for (var i = 0; i < bookings.length; i++) {
-    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
+    if (bookings[i].bookingId === bookingId) {
+      booking = bookings[i];
+      break;
+    }
   }
   if (!booking) return;
   if (booking.email_sent) {
-    showToast('Confirmation email already sent for this booking.', 'info');
+    showToast("Confirmation email already sent for this booking.", "info");
     return;
   }
   // Open email confirmation modal with pre-filled data
@@ -3182,98 +3738,137 @@ function sendBookingNotification(bookingId) {
 
 // ---------- Email Confirmation Modal ----------
 function openEmailConfirmationModal(booking) {
-  var modal = document.getElementById('emailConfirmModal');
+  var modal = document.getElementById("emailConfirmModal");
   if (!modal) return;
-  var lang = (typeof I18N !== 'undefined') ? I18N.getLanguage() : 'hi';
-  var vehicleInfo = '-';
-  var driverInfo = '-';
-  if (booking.vehicleId) { var v = getVehicleById(booking.vehicleId); if (v) { vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')'; driverInfo = v.driverName; } }
+  var lang = typeof I18N !== "undefined" ? I18N.getLanguage() : "hi";
+  var vehicleInfo = "-";
+  var driverInfo = "-";
+  if (booking.vehicleId) {
+    var v = getVehicleById(booking.vehicleId);
+    if (v) {
+      vehicleInfo = v.vehicleNumber + " (" + v.vehicleType + ")";
+      driverInfo = v.driverName;
+    }
+  }
   var emailBody = buildConfirmationEmailBody(booking);
   // Pre-fill modal fields
-  document.getElementById('emailConfirmBookingId').value = booking.bookingId;
-  document.getElementById('emailConfirmTo').value = booking.email || '';
-  document.getElementById('emailConfirmCc1').value = 'gautam958@gmail.com';
-  document.getElementById('emailConfirmCc2').value = 'krishnakumar958@gmail.com';
-  document.getElementById('emailConfirmSubject').value = emailBody.subject;
-  document.getElementById('emailConfirmBody').value = emailBody.body;
+  document.getElementById("emailConfirmBookingId").value = booking.bookingId;
+  document.getElementById("emailConfirmTo").value = booking.email || "";
+  document.getElementById("emailConfirmCc1").value = "gautam958@gmail.com";
+  document.getElementById("emailConfirmCc2").value =
+    "krishnakumar958@gmail.com";
+  document.getElementById("emailConfirmSubject").value = emailBody.subject;
+  document.getElementById("emailConfirmBody").value = emailBody.body;
   // Store booking data for sending
-  modal.setAttribute('data-booking-id', booking.bookingId);
+  modal.setAttribute("data-booking-id", booking.bookingId);
   // Always show To field (admin can manually enter email if not available)
-  var toRow = document.getElementById('emailConfirmToRow');
-  if (toRow) toRow.style.display = '';
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  var toRow = document.getElementById("emailConfirmToRow");
+  if (toRow) toRow.style.display = "";
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
 }
 
 function closeEmailConfirmModal() {
-  var modal = document.getElementById('emailConfirmModal');
+  var modal = document.getElementById("emailConfirmModal");
   if (modal) {
-    modal.classList.add('hidden');
-    document.body.style.overflow = '';
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
   }
 }
 
 function sendEmailConfirmation() {
-  var modal = document.getElementById('emailConfirmModal');
+  var modal = document.getElementById("emailConfirmModal");
   if (!modal) return;
-  var bookingId = modal.getAttribute('data-booking-id');
-  var to = document.getElementById('emailConfirmTo').value.trim();
-  var cc1 = document.getElementById('emailConfirmCc1').value.trim();
-  var cc2 = document.getElementById('emailConfirmCc2').value.trim();
-  var subject = document.getElementById('emailConfirmSubject').value.trim();
-  var body = document.getElementById('emailConfirmBody').value.trim();
+  var bookingId = modal.getAttribute("data-booking-id");
+  var to = document.getElementById("emailConfirmTo").value.trim();
+  var cc1 = document.getElementById("emailConfirmCc1").value.trim();
+  var cc2 = document.getElementById("emailConfirmCc2").value.trim();
+  var subject = document.getElementById("emailConfirmSubject").value.trim();
+  var body = document.getElementById("emailConfirmBody").value.trim();
   if (!to && !cc1 && !cc2) {
-    showToast('Please enter at least one email address.', 'error');
+    showToast("Please enter at least one email address.", "error");
     return;
   }
   var dataApiUrl = getDataApiUrl();
   if (!dataApiUrl) {
-    showToast('No API configured. Please send email manually.', 'error');
+    showToast("No API configured. Please send email manually.", "error");
     return;
   }
-  var sendBtn = document.getElementById('emailConfirmSendBtn');
-  if (sendBtn) { sendBtn.textContent = 'Sending...'; sendBtn.disabled = true; }
+  var sendBtn = document.getElementById("emailConfirmSendBtn");
+  if (sendBtn) {
+    sendBtn.textContent = "Sending...";
+    sendBtn.disabled = true;
+  }
   fetch(dataApiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    mode: 'cors',
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    mode: "cors",
     body: JSON.stringify({
-      type: 'booking_confirmation',
+      type: "booking_confirmation",
       to: to,
-      cc: [cc1, cc2].filter(function(e) { return e !== ''; }),
+      email: to,
+      cc: [cc1, cc2].filter(function (e) {
+        return e !== "";
+      }),
       subject: subject,
       body: body,
-      bookingId: bookingId
+      bookingId: bookingId,
     }),
-  }).then(function(resp) {
-    if (resp.ok) {
-      // Mark email as sent on the booking
-      var bookings = getBookings();
-      for (var i = 0; i < bookings.length; i++) {
-        if (bookings[i].bookingId === bookingId) {
-          bookings[i].email_sent = true;
-          bookings[i].notification_sent = true;
-          bookings[i].notification_type = 'email';
-          bookings[i].notified_at = new Date().toISOString();
-          bookings[i].email_sent_to = to;
-          bookings[i].email_sent_cc = [cc1, cc2].filter(function(e) { return e !== ''; });
-          break;
+  })
+    .then(function (resp) {
+      if (resp.ok) {
+        // Mark email as sent on the booking
+        var bookings = getBookings();
+        for (var i = 0; i < bookings.length; i++) {
+          if (bookings[i].bookingId === bookingId) {
+            bookings[i].email_sent = true;
+            bookings[i].notification_sent = true;
+            bookings[i].notification_type = "email";
+            bookings[i].notified_at = new Date().toISOString();
+            bookings[i].email_sent_to = to;
+            bookings[i].email_sent_cc = [cc1, cc2].filter(function (e) {
+              return e !== "";
+            });
+            break;
+          }
         }
+        _bookingsCache = bookings;
+        renderBookingTable();
+        persistBookingToApi(bookingId, {
+          email_sent: true,
+          notification_sent: true,
+          notification_type: "email",
+          notified_at: new Date().toISOString(),
+          email_sent_to: to,
+          email_sent_cc: [cc1, cc2].filter(function (e) {
+            return e !== "";
+          }),
+        });
+        recordAuditTrail("notification_email", {
+          bookingId: bookingId,
+          to: to,
+          cc: [cc1, cc2],
+        });
+        showToast("Confirmation email sent to " + to, "success");
+        closeEmailConfirmModal();
+      } else {
+        throw new Error("HTTP " + resp.status);
       }
-      _bookingsCache = bookings;
-      renderBookingTable();
-      persistBookingToApi(bookingId, { email_sent: true, notification_sent: true, notification_type: 'email', notified_at: new Date().toISOString(), email_sent_to: to, email_sent_cc: [cc1, cc2].filter(function(e) { return e !== ''; }) });
-      recordAuditTrail('notification_email', { bookingId: bookingId, to: to, cc: [cc1, cc2] });
-      showToast('Confirmation email sent to ' + to, 'success');
-      closeEmailConfirmModal();
-    } else { throw new Error('HTTP ' + resp.status); }
-  }).catch(function(err) {
-    console.error('[Notification] Email API failed:', err.message);
-    showToast('Email sending failed: ' + err.message, 'error');
-    recordAuditTrail('notification_email_failed', { bookingId: bookingId, error: err.message });
-  }).finally(function() {
-    if (sendBtn) { sendBtn.textContent = '✉️ Send Confirmation'; sendBtn.disabled = false; }
-  });
+    })
+    .catch(function (err) {
+      console.error("[Notification] Email API failed:", err.message);
+      showToast("Email sending failed: " + err.message, "error");
+      recordAuditTrail("notification_email_failed", {
+        bookingId: bookingId,
+        error: err.message,
+      });
+    })
+    .finally(function () {
+      if (sendBtn) {
+        sendBtn.textContent = "✉️ Send Confirmation";
+        sendBtn.disabled = false;
+      }
+    });
 }
 
 // ---------- Init vehicle modal listeners ----------
@@ -3286,18 +3881,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
   var cbCloseBtn = document.getElementById("confirmBookingModalClose");
   var cbOverlay = document.getElementById("confirmBookingModal");
-  if (cbCloseBtn) cbCloseBtn.addEventListener("click", closeConfirmBookingModal);
-  if (cbOverlay) cbOverlay.addEventListener("click", function (e) { if (e.target === cbOverlay) closeConfirmBookingModal(); });
+  if (cbCloseBtn)
+    cbCloseBtn.addEventListener("click", closeConfirmBookingModal);
+  if (cbOverlay)
+    cbOverlay.addEventListener("click", function (e) {
+      if (e.target === cbOverlay) closeConfirmBookingModal();
+    });
   // Email confirm modal handlers
   var emailOverlay = document.getElementById("emailConfirmModal");
-  if (emailOverlay) emailOverlay.addEventListener("click", function (e) { if (e.target === emailOverlay) closeEmailConfirmModal(); });
+  if (emailOverlay)
+    emailOverlay.addEventListener("click", function (e) {
+      if (e.target === emailOverlay) closeEmailConfirmModal();
+    });
   var emailCloseBtn = document.getElementById("emailConfirmModalClose");
-  if (emailCloseBtn) emailCloseBtn.addEventListener("click", closeEmailConfirmModal);
+  if (emailCloseBtn)
+    emailCloseBtn.addEventListener("click", closeEmailConfirmModal);
 
   var vhCloseBtn = document.getElementById("vehicleModalClose");
   var vhOverlay = document.getElementById("vehicleModal");
   if (vhCloseBtn) vhCloseBtn.addEventListener("click", closeVehicleModal);
-  if (vhOverlay) vhOverlay.addEventListener("click", function (e) { if (e.target === vhOverlay) closeVehicleModal(); });
+  if (vhOverlay)
+    vhOverlay.addEventListener("click", function (e) {
+      if (e.target === vhOverlay) closeVehicleModal();
+    });
 
   var qvForm = document.getElementById("quickVehicleForm");
   if (qvForm) qvForm.addEventListener("submit", saveQuickVehicle);
@@ -3305,7 +3911,10 @@ document.addEventListener("DOMContentLoaded", function () {
   var qvCloseBtn = document.getElementById("quickVehicleModalClose");
   var qvOverlay = document.getElementById("quickVehicleModal");
   if (qvCloseBtn) qvCloseBtn.addEventListener("click", closeQuickVehicleModal);
-  if (qvOverlay) qvOverlay.addEventListener("click", function (e) { if (e.target === qvOverlay) closeQuickVehicleModal(); });
+  if (qvOverlay)
+    qvOverlay.addEventListener("click", function (e) {
+      if (e.target === qvOverlay) closeQuickVehicleModal();
+    });
 
   // Init vehicle dashboard (vehicle.html)
   if (document.getElementById("vehicleTableBody")) {
@@ -3324,7 +3933,8 @@ document.addEventListener("DOMContentLoaded", function () {
       closeQuickVehicleModal();
       closeVehicleSchedule();
       closeConfirmBookingModal();
-      if (typeof closeEmailConfirmModal === "function") closeEmailConfirmModal();
+      if (typeof closeEmailConfirmModal === "function")
+        closeEmailConfirmModal();
     }
   });
 });
@@ -3337,7 +3947,7 @@ function trackUserClick(element, action) {
   recordAuditTrail("click", {
     action: action,
     element: element,
-    page: window.location.pathname.split('/').pop() || 'index.html'
+    page: window.location.pathname.split("/").pop() || "index.html",
   });
 }
 
@@ -3387,8 +3997,14 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Auto-track this page visit (fires on every page that loads main.js)
   // Skip tracking on admin-only pages (admin.html, visitors.html, referral.html)
   if (typeof trackVisit === "function") {
-    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    var adminPages = ['admin.html', 'visitors.html', 'referral.html', 'booking.html', 'audit-trail.html'];
+    var currentPage = window.location.pathname.split("/").pop() || "index.html";
+    var adminPages = [
+      "admin.html",
+      "visitors.html",
+      "referral.html",
+      "booking.html",
+      "audit-trail.html",
+    ];
     if (adminPages.indexOf(currentPage) === -1) {
       trackVisit().catch(function () {
         /* fire-and-forget tracking */
