@@ -38,10 +38,9 @@
     <!-- ===== Hero ===== -->
     <section class="visitors-hero">
       <div>
-        <h1>🎁 Referral Dashboard</h1>
-        <p>
-          Track referral codes, redemptions, and reward balances
-        </p>
+        <h1 data-i18n="referral.hero.title">🎁 रेफ़रल डैशबोर्ड</h1>
+        <p data-i18n="referral.hero.desc">रेफ़रल कोड, रिडेम्पशन और इनाम बैलेंस ट्रैक करें</p>
+        <a href="admin.html" class="admin-back-link">← एडमिन डैशबोर्ड</a>
       </div>
     </section>
 
@@ -49,9 +48,7 @@
     <section class="auth-section" id="authSection">
       <div class="auth-card">
         <h2 data-i18n="visitors.auth.title">🔒 एडमिन एक्सेस आवश्यक</h2>
-        <p data-i18n="visitors.auth.desc">
-          रेफ़रल डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें
-        </p>
+        <p data-i18n="referral.auth.desc">रेफ़रल डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें</p>
         <div
           id="g_id_onload"
           data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com"
@@ -113,13 +110,8 @@
               flex-wrap: wrap;
             "
           >
-            <button
-              class="btn-refresh"
-              onclick="refreshReferralData()"
-              title="Refresh data"
-            >
-              🔄 Refresh
-            </button>
+            <a href="admin.html" class="admin-back-btn" data-i18n="admin.back">← एडमिन डैशबोर्ड</a>
+            <button class="btn-refresh" onclick="refreshReferralData()" title="Refresh data">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             <button class="logout-btn" onclick="handleLogout()">
               <span data-i18n="visitors.btn.signout">साइन आउट</span>
             </button>
@@ -131,39 +123,40 @@
           <div class="stat-card">
             <div class="stat-icon">🎯</div>
             <div class="stat-number" id="refKpiTotalCodes">0</div>
-            <div class="stat-label">Total Codes</div>
+            <div class="stat-label" data-i18n="referral.kpi.totalCodes">कुल कोड</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">✅</div>
             <div class="stat-number" id="refKpiRedemptions">0</div>
-            <div class="stat-label">Redemptions</div>
+            <div class="stat-label" data-i18n="referral.kpi.redemptions">रिडेम्पशन</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">💰</div>
             <div class="stat-number" id="refKpiTotalRewards">₹0</div>
-            <div class="stat-label">Rewards Paid</div>
+            <div class="stat-label" data-i18n="referral.kpi.rewardsPaid">भुगतान इनाम</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">⏳</div>
             <div class="stat-number" id="refKpiPending">₹0</div>
-            <div class="stat-label">Pending Rewards</div>
+            <div class="stat-label" data-i18n="referral.kpi.pending">लंबित इनाम</div>
           </div>
         </div>
 
         <!-- Referral Table -->
         <div class="panel referral-dashboard-panel" id="referralDashboardPanel">
           <div class="panel-header-row">
-            <h3>🎁 Referral Codes</h3>
+            <h3 data-i18n="referral.table.title">🎁 रेफ़रल कोड</h3>
             <div class="visitor-controls">
               <input
                 type="text"
                 id="referralSearch"
                 class="visitor-search-input"
-                placeholder="🔍 Search by code or name..."
+                data-i18n-placeholder="referral.table.search"
+                placeholder="🔍 कोड या नाम से खोजें..."
                 oninput="renderReferralTable()"
               />
               <button class="btn-refresh" onclick="refreshReferralData()">
-                🔄 Refresh
+                🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span>
               </button>
             </div>
           </div>
@@ -171,14 +164,14 @@
             <table class="visitor-table" id="referralTable">
               <thead>
                 <tr>
-                  <th>Code</th>
-                  <th>Name</th>
-                  <th>Referrals</th>
-                  <th>Redemptions</th>
-                  <th>Rewards Earned</th>
-                  <th>Reward Balance</th>
-                  <th>Created</th>
-                  <th>Status</th>
+                  <th data-i18n="referral.table.code">कोड</th>
+                  <th data-i18n="referral.table.name">नाम</th>
+                  <th data-i18n="referral.table.referrals">रेफ़रल</th>
+                  <th data-i18n="referral.table.redemptions">रिडेम्पशन</th>
+                  <th data-i18n="referral.table.rewardsEarned">अर्जित इनाम</th>
+                  <th data-i18n="referral.table.rewardBalance">इनाम बैलेंस</th>
+                  <th data-i18n="referral.table.created">बनाया</th>
+                  <th data-i18n="referral.table.status">स्थिति</th>
                 </tr>
               </thead>
               <tbody id="referralTableBody">
@@ -187,7 +180,7 @@
             </table>
             <div class="empty-state" id="emptyReferralState">
               <div class="empty-icon">🎯</div>
-              <p>No referral codes yet. Codes will appear here as users generate them.</p>
+              <p data-i18n="referral.empty">अभी तक कोई रेफ़रल कोड नहीं। उपयोगकर्ता कोड बनाने पर यहाँ दिखाई देंगे।</p>
             </div>
           </div>
         </div>
@@ -199,23 +192,23 @@
       <div class="redemption-modal">
         <button class="modal-close" id="redemptionModalClose">×</button>
         <div class="modal-header">
-          <h2>🎁 Redemption History</h2>
-          <p id="redemptionModalSubtitle">Referral code details</p>
+          <h2 data-i18n="referral.modal.title">🎁 रिडेम्पशन इतिहास</h2>
+          <p id="redemptionModalSubtitle" data-i18n="referral.modal.subtitle">रेफ़रल कोड विवरण</p>
         </div>
         <div class="modal-body">
           <!-- Summary Stats -->
           <div class="redemption-summary" id="redemptionSummary">
             <div class="redemption-stat">
               <span class="redemption-stat-num" id="redTotalRedemptions">0</span>
-              <span class="redemption-stat-label">Total Redemptions</span>
+              <span class="redemption-stat-label" data-i18n="referral.modal.totalRedemptions">कुल रिडेम्पशन</span>
             </div>
             <div class="redemption-stat">
               <span class="redemption-stat-num" id="redTotalRewards">₹0</span>
-              <span class="redemption-stat-label">Rewards Paid</span>
+              <span class="redemption-stat-label" data-i18n="referral.modal.rewardsPaid">भुगतान इनाम</span>
             </div>
             <div class="redemption-stat">
               <span class="redemption-stat-num" id="redPendingRewards">₹0</span>
-              <span class="redemption-stat-label">Pending Balance</span>
+              <span class="redemption-stat-label" data-i18n="referral.modal.pendingBalance">लंबित बैलेंस</span>
             </div>
           </div>
 
@@ -225,11 +218,11 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Customer Phone</th>
-                  <th>Booking ID</th>
-                  <th>Reward Amount</th>
-                  <th>Redeemed On</th>
-                  <th>Status</th>
+                  <th data-i18n="referral.modal.th.phone">ग्राहक फ़ोन</th>
+                  <th data-i18n="referral.modal.th.bookingId">बुकिंग ID</th>
+                  <th data-i18n="referral.modal.th.amount">इनाम राशि</th>
+                  <th data-i18n="referral.modal.th.redeemedOn">रिडीम किया गया</th>
+                  <th data-i18n="referral.modal.th.status">स्थिति</th>
                 </tr>
               </thead>
               <tbody id="redemptionTableBody">
@@ -238,7 +231,7 @@
             </table>
             <div class="empty-state" id="emptyRedemptionState">
               <div class="empty-icon">📋</div>
-              <p>No redemptions yet for this referral code.</p>
+              <p data-i18n="referral.modal.empty">इस रेफ़रल कोड के लिए अभी तक कोई रिडेम्पशन नहीं।</p>
             </div>
           </div>
         </div>

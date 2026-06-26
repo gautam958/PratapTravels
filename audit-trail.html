@@ -31,8 +31,9 @@
     <!-- ===== Hero ===== -->
     <section class="visitors-hero">
       <div>
-        <h1>📜 Audit Trail</h1>
-        <p>Track all user activities and interactions on the website</p>
+        <h1 data-i18n="audit.hero.title">📜 ऑडिट ट्रेल</h1>
+        <p data-i18n="audit.hero.desc">वेबसाइट पर सभी उपयोगकर्ता गतिविधियाँ और इंटरैक्शन ट्रैक करें</p>
+        <a href="admin.html" class="admin-back-link">← एडमिन डैशबोर्ड</a>
       </div>
     </section>
 
@@ -40,7 +41,7 @@
     <section class="auth-section" id="authSection">
       <div class="auth-card">
         <h2 data-i18n="visitors.auth.title">🔒 एडमिन एक्सेस आवश्यक</h2>
-        <p>ऑडिट ट्रेल देखने के लिए अधिकृत Google खाते से साइन इन करें</p>
+        <p data-i18n="audit.auth.desc">ऑडिट ट्रेल देखने के लिए अधिकृत Google खाते से साइन इन करें</p>
         <div id="g_id_onload"
           data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com"
           data-callback="handleGoogleCredentialResponse"
@@ -73,8 +74,9 @@
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button class="btn-export" onclick="exportAuditCSV()">📥 Export CSV</button>
-            <button class="btn-refresh" onclick="renderAuditTable();updateAuditKPIs();showToast('Refreshed.','success');">🔄 Refresh</button>
+            <a href="admin.html" class="admin-back-btn" data-i18n="admin.back">← एडमिन डैशबोर्ड</a>
+            <button class="btn-export" onclick="exportAuditCSV()">📥 <span data-i18n="admin.export.csv">CSV डाउनलोड</span></button>
+            <button class="btn-refresh" onclick="renderAuditTable();updateAuditKPIs();showToast('Refreshed.','success');">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             <button class="logout-btn" onclick="handleLogout()"><span data-i18n="visitors.btn.signout">साइन आउट</span></button>
           </div>
         </div>
@@ -84,65 +86,65 @@
           <div class="stat-card">
             <div class="stat-icon">📜</div>
             <div class="stat-number" id="audKpiTotal">0</div>
-            <div class="stat-label">Total Events</div>
+            <div class="stat-label" data-i18n="audit.kpi.total">कुल इवेंट</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">📋</div>
             <div class="stat-number" id="audKpiBookings">0</div>
-            <div class="stat-label">Bookings</div>
+            <div class="stat-label" data-i18n="audit.kpi.bookings">बुकिंग</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🎁</div>
             <div class="stat-number" id="audKpiReferrals">0</div>
-            <div class="stat-label">Referral Events</div>
+            <div class="stat-label" data-i18n="audit.kpi.referrals">रेफ़रल इवेंट</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">📅</div>
             <div class="stat-number" id="audKpiToday">0</div>
-            <div class="stat-label">Today's Events</div>
+            <div class="stat-label" data-i18n="audit.kpi.today">आज के इवेंट</div>
           </div>
         </div>
 
         <!-- Audit Table -->
         <div class="panel referral-dashboard-panel">
           <div class="panel-header-row">
-            <h3>📜 Activity Log <small id="auditCount" style="font-weight:400;color:var(--text-light);margin-left:8px;"></small></h3>
+            <h3 data-i18n="audit.table.title">📜 गतिविधि लॉग <small id="auditCount" style="font-weight:400;color:var(--text-light);margin-left:8px;"></small></h3>
             <div class="visitor-controls">
-              <input type="text" id="auditSearch" class="visitor-search-input" placeholder="🔍 Search events..." oninput="renderAuditTable()" />
+              <input type="text" id="auditSearch" class="visitor-search-input" data-i18n-placeholder="audit.table.search" placeholder="🔍 इवेंट खोजें..." oninput="renderAuditTable()" />
               <select id="auditTypeFilter" class="visitor-search-input" style="min-width:160px;" onchange="renderAuditTable()">
-                <option value="all">All Types</option>
-                <option value="page_visit">Page Visits</option>
-                <option value="booking_submit">Bookings</option>
-                <option value="referral_generate">Referral Generated</option>
-                <option value="referral_redeem">Referral Redeemed</option>
-                <option value="click">Clicks</option>
+                <option value="all" data-i18n="audit.filter.allTypes">सभी प्रकार</option>
+                <option value="page_visit" data-i18n="audit.filter.pageVisit">पृष्ठ विज़िट</option>
+                <option value="booking_submit" data-i18n="audit.filter.bookings">बुकिंग</option>
+                <option value="referral_generate" data-i18n="audit.filter.referralGen">रेफ़रल बनाया</option>
+                <option value="referral_redeem" data-i18n="audit.filter.referralRedeem">रेफ़रल रिडीम</option>
+                <option value="click" data-i18n="audit.filter.clicks">क्लिक</option>
               </select>
               <select id="auditDateFilter" class="visitor-search-input" style="min-width:130px;" onchange="renderAuditTable()">
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">Last 30 Days</option>
+                <option value="all" data-i18n="audit.filter.allTime">सभी समय</option>
+                <option value="today" data-i18n="audit.filter.today">आज</option>
+                <option value="week" data-i18n="audit.filter.week">पिछले 7 दिन</option>
+                <option value="month" data-i18n="audit.filter.month">पिछले 30 दिन</option>
               </select>
-              <button class="btn-refresh" onclick="renderAuditTable();updateAuditKPIs();">🔄 Refresh</button>
+              <button class="btn-refresh" onclick="renderAuditTable();updateAuditKPIs();">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             </div>
           </div>
           <div class="visitor-table-wrapper">
             <table class="visitor-table" id="auditTable">
               <thead>
                 <tr>
-                  <th>Event ID</th>
-                  <th>Type</th>
-                  <th>Details</th>
-                  <th>Page</th>
-                  <th>Timestamp</th>
-                  <th>Visitor</th>
+                  <th data-i18n="audit.table.id">इवेंट ID</th>
+                  <th data-i18n="audit.table.type">प्रकार</th>
+                  <th data-i18n="audit.table.details">विवरण</th>
+                  <th data-i18n="audit.table.page">पृष्ठ</th>
+                  <th data-i18n="audit.table.timestamp">समय</th>
+                  <th data-i18n="audit.table.visitor">आगंतुक</th>
                 </tr>
               </thead>
               <tbody id="auditTableBody"></tbody>
             </table>
             <div class="empty-state" id="emptyAuditState">
               <div class="empty-icon">📜</div>
-              <p>No audit events yet. Activities will appear here as users interact with the site.</p>
+              <p data-i18n="audit.empty">अभी तक कोई ऑडिट इवेंट नहीं। उपयोगकर्ता साइट से इंटरैक्ट करने पर गतिविधियाँ यहाँ दिखाई देंगी।</p>
             </div>
           </div>
         </div>

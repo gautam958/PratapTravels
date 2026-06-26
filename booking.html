@@ -31,8 +31,9 @@
     <!-- ===== Hero ===== -->
     <section class="visitors-hero">
       <div>
-        <h1>📋 Bookings Dashboard</h1>
-        <p>View and manage all customer bookings</p>
+        <h1 data-i18n="booking.hero.title">📋 बुकिंग डैशबोर्ड</h1>
+        <p data-i18n="booking.hero.desc">सभी ग्राहक बुकिंग देखें और प्रबंधित करें</p>
+        <a href="admin.html" class="admin-back-link">← एडमिन डैशबोर्ड</a>
       </div>
     </section>
 
@@ -40,7 +41,7 @@
     <section class="auth-section" id="authSection">
       <div class="auth-card">
         <h2 data-i18n="visitors.auth.title">🔒 एडमिन एक्सेस आवश्यक</h2>
-        <p>बुकिंग डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें</p>
+        <p data-i18n="booking.auth.desc">बुकिंग डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें</p>
         <div id="g_id_onload"
           data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com"
           data-callback="handleGoogleCredentialResponse"
@@ -73,8 +74,9 @@
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <button class="btn-export" onclick="exportBookingsCSV()">📥 Export CSV</button>
-            <button class="btn-refresh" onclick="renderBookingTable();updateBookingKPIs();showToast('Refreshed.','success');">🔄 Refresh</button>
+            <a href="admin.html" class="admin-back-btn" data-i18n="admin.back">← एडमिन डैशबोर्ड</a>
+            <button class="btn-export" onclick="exportBookingsCSV()">📥 <span data-i18n="admin.export.csv">CSV डाउनलोड</span></button>
+            <button class="btn-refresh" onclick="renderBookingTable();updateBookingKPIs();showToast('Refreshed.','success');">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             <button class="logout-btn" onclick="handleLogout()"><span data-i18n="visitors.btn.signout">साइन आउट</span></button>
           </div>
         </div>
@@ -84,68 +86,68 @@
           <div class="stat-card">
             <div class="stat-icon">📋</div>
             <div class="stat-number" id="bkKpiTotal">0</div>
-            <div class="stat-label">Total Bookings</div>
+            <div class="stat-label" data-i18n="booking.kpi.total">कुल बुकिंग</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">✅</div>
             <div class="stat-number" id="bkKpiConfirmed">0</div>
-            <div class="stat-label">Confirmed</div>
+            <div class="stat-label" data-i18n="booking.kpi.confirmed">पुष्टि</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">⏳</div>
             <div class="stat-number" id="bkKpiPending">0</div>
-            <div class="stat-label">Pending</div>
+            <div class="stat-label" data-i18n="booking.kpi.pending">लंबित</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">🎁</div>
             <div class="stat-number" id="bkKpiReferral">0</div>
-            <div class="stat-label">With Referral</div>
+            <div class="stat-label" data-i18n="booking.kpi.referral">रेफ़रल सहित</div>
           </div>
         </div>
 
         <!-- Booking Table -->
         <div class="panel referral-dashboard-panel" id="bookingDashboardPanel">
           <div class="panel-header-row">
-            <h3>📋 All Bookings <small id="bookingCount" style="font-weight:400;color:var(--text-light);margin-left:8px;"></small></h3>
+            <h3 data-i18n="booking.table.title">📋 सभी बुकिंग <small id="bookingCount" style="font-weight:400;color:var(--text-light);margin-left:8px;"></small></h3>
             <div class="visitor-controls">
-              <input type="text" id="bookingSearch" class="visitor-search-input" placeholder="🔍 Search name, phone, route..." oninput="renderBookingTable()" />
+              <input type="text" id="bookingSearch" class="visitor-search-input" data-i18n-placeholder="booking.table.search" placeholder="🔍 नाम, फ़ोन, मार्ग खोजें..." oninput="renderBookingTable()" />
               <select id="bookingStatusFilter" class="visitor-search-input" style="min-width:140px;" onchange="renderBookingTable()">
-                <option value="all">All Status</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="pending">Pending</option>
-                <option value="cancelled">Cancelled</option>
+                <option value="all" data-i18n="booking.filter.allStatus">सभी स्थिति</option>
+                <option value="confirmed" data-i18n="booking.filter.confirmed">पुष्टि</option>
+                <option value="pending" data-i18n="booking.filter.pending">लंबित</option>
+                <option value="cancelled" data-i18n="booking.filter.cancelled">रद्द</option>
               </select>
               <select id="bookingDateFilter" class="visitor-search-input" style="min-width:130px;" onchange="renderBookingTable()">
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">Last 7 Days</option>
-                <option value="month">Last 30 Days</option>
+                <option value="all" data-i18n="booking.filter.allTime">सभी समय</option>
+                <option value="today" data-i18n="booking.filter.today">आज</option>
+                <option value="week" data-i18n="booking.filter.week">पिछले 7 दिन</option>
+                <option value="month" data-i18n="booking.filter.month">पिछले 30 दिन</option>
               </select>
-              <button class="btn-refresh" onclick="renderBookingTable();updateBookingKPIs();">🔄 Refresh</button>
+              <button class="btn-refresh" onclick="renderBookingTable();updateBookingKPIs();">🔄 <span data-i18n="admin.refresh">रिफ़्रेश</span></button>
             </div>
           </div>
           <div class="visitor-table-wrapper">
             <table class="visitor-table" id="bookingTable">
               <thead>
                 <tr>
-                  <th>Booking ID</th>
-                  <th>Name</th>
-                  <th>Phone</th>
-                  <th>Route</th>
-                  <th>Date</th>
-                  <th>Time</th>
-                  <th>Trip Type</th>
-                  <th>Passengers</th>
-                  <th>Referral</th>
-                  <th>Status</th>
-                  <th>Created</th>
+                  <th data-i18n="booking.table.id">बुकिंग ID</th>
+                  <th data-i18n="booking.table.name">नाम</th>
+                  <th data-i18n="booking.table.phone">फ़ोन</th>
+                  <th data-i18n="booking.table.route">मार्ग</th>
+                  <th data-i18n="booking.table.date">तिथि</th>
+                  <th data-i18n="booking.table.time">समय</th>
+                  <th data-i18n="booking.table.tripType">यात्रा प्रकार</th>
+                  <th data-i18n="booking.table.passengers">यात्री</th>
+                  <th data-i18n="booking.table.referral">रेफ़रल</th>
+                  <th data-i18n="booking.table.status">स्थिति</th>
+                  <th data-i18n="booking.table.created">बनाया</th>
                 </tr>
               </thead>
               <tbody id="bookingTableBody"></tbody>
             </table>
             <div class="empty-state" id="emptyBookingState">
               <div class="empty-icon">📋</div>
-              <p>No bookings yet. Bookings will appear here as users submit them.</p>
+              <p data-i18n="booking.empty">अभी तक कोई बुकिंग नहीं। उपयोगकर्ता जमा करने पर बुकिंग यहाँ दिखाई देंगी।</p>
             </div>
           </div>
         </div>

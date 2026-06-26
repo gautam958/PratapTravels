@@ -42,6 +42,7 @@
         <p data-i18n="visitors.hero.desc">
           ट्रैक करें कि आपकी वेबसाइट पर कौन आया — स्थान, डिवाइस, पृष्ठ और बहुत कुछ
         </p>
+        <a href="admin.html" class="admin-back-link">← एडमिन डैशबोर्ड</a>
       </div>
     </section>
 
@@ -117,9 +118,8 @@
               title="Refresh data"
             >
               🔄 <span data-i18n="visitors.btn.refresh">रिफ़्रेश</span>
-            </button>
-            <button
-              class="btn-export"
+            </button>              <a href="admin.html" class="admin-back-btn" data-i18n="admin.back">← एडमिन डैशबोर्ड</a>
+            <button class="btn-export"
               onclick="exportCSV()"
               title="Export as CSV"
             >
@@ -194,18 +194,18 @@
             <table class="visitor-table" id="visitorTable">
               <thead>
                 <tr>
-                  <th>Visitor ID</th>
-                  <th>IP</th>
-                  <th>Country</th>
-                  <th>State</th>
-                  <th>City</th>
-                  <th>Device / Browser</th>
-                  <th>Pages</th>
-                  <th>Visits</th>
-                  <th>First Seen</th>
-                  <th>Last Seen</th>
-                  <th>Timestamp</th>
-                  <th>User</th>
+                  <th data-i18n="visitors.table.th.id">आगंतुक ID</th>
+                  <th data-i18n="visitors.table.th.ip">IP</th>
+                  <th data-i18n="visitors.table.th.country">देश</th>
+                  <th data-i18n="visitors.table.th.state">राज्य</th>
+                  <th data-i18n="visitors.table.th.city">शहर</th>
+                  <th data-i18n="visitors.table.th.device">डिवाइस / ब्राउज़र</th>
+                  <th data-i18n="visitors.table.th.pages">पृष्ठ</th>
+                  <th data-i18n="visitors.table.th.visits">विज़िट</th>
+                  <th data-i18n="visitors.table.th.firstSeen">पहली बार</th>
+                  <th data-i18n="visitors.table.th.lastSeen">अंतिम बार</th>
+                  <th data-i18n="visitors.table.th.timestamp">समय</th>
+                  <th data-i18n="visitors.table.th.user">उपयोगकर्ता</th>
                 </tr>
               </thead>
               <tbody id="visitorTableBody">
