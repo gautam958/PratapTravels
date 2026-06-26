@@ -2193,7 +2193,16 @@ function renderBookingTable() {
       '<td>' + driverInfo + '</td>' +
       '<td>' + (b.referral_code ? '<code class="vid-code">' + escapeHtml(b.referral_code) + '</code>' : '<span style="color:#999">-</span>') + '</td>' +
       '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>' +
-      '<td>' + actionBtn + '</td>';
+      '<td>' + (function() {
+      if (b.notification_sent) {
+        var nType = b.notification_type === 'email' ? I18N.t('booking.action.sendEmail') : I18N.t('booking.action.sendWhatsApp');
+        return '<span class="notified-badge notified-sent" title="' + (b.notified_at || '') + '">' + nType + ' \u2713</span>';
+      } else if (b.needs_notification) {
+        return '<span class="notified-badge notified-flagged">' + I18N.t('booking.notified.needsAction') + '</span>';
+      } else {
+        return '<button class="btn-action-confirm" style="padding:3px 8px;font-size:0.75rem;" onclick="sendBookingNotification(\'' + b.bookingId + '\')" title="' + I18N.t('booking.action.sendEmail') + '">\u2709\ufe0f</button>';
+      }
+    })() + '</td>' + '<td>' + actionBtn + '</td>';
     tbody.appendChild(tr);
   });
 }
@@ -2956,6 +2965,171 @@ function closeConfirmBookingModal() {
   _confirmBookingData = null;
 }
 
+
+/* ============================================
+   BOOKING NOTIFICATION SYSTEM
+   Send email / WhatsApp notification on booking confirm
+   ============================================ */
+
+function buildConfirmationEmailBody(booking) {
+  var name = booking.name || 'Guest';
+  var route = booking.route || '-';
+  var vehicleInfo = '-';
+  var driverInfo = '-';
+  if (booking.vehicleId) {
+    var v = getVehicleById(booking.vehicleId);
+    if (v) {
+      vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')';
+      driverInfo = v.driverName;
+    }
+  }
+  var pickupDate = booking.pickup_date || booking.date || '-';
+  var pickupTime = booking.pickup_time || booking.time || 'Not specified';
+  var pickupAddr = booking.pickup_address || '';
+  var lang = (typeof I18N !== 'undefined') ? I18N.getLanguage() : 'hi';
+  var subject, body;
+  if (lang === 'hi') {
+    subject = 'Pratap Travels \u2014 \u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e';
+    body = '\u0928\u092e\u0938\u094d\u0924\u094e ' + name + ',\n\n';
+    body += '\u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e \u0939\u0948!\n\n';
+    body += '\u092c\u0941\u0915\u093f\u0902\u0917 ID: ' + (booking.bookingId || '-') + '\n';
+    body += '\u092e\u093e\u0930\u094d\u0917: ' + route + '\n';
+    body += '\u0924\u093f\u0925: ' + pickupDate + '\n';
+    body += '\u0938\u092e\u092f: ' + pickupTime + '\n';
+    body += '\u0935\u093e\u0939\u0928: ' + vehicleInfo + '\n';
+    body += '\u0921\u094d\u0930\u093e\u0907\u0935\u0930: ' + driverInfo + '\n';
+    if (pickupAddr) body += '\u092a\u093f\u0915\u0905\u092a: ' + pickupAddr + '\n';
+    body += '\n\u0915\u0943\u092a\u092f\u093e \u091f\u094d\u0930\u0948\u0935\u0932\u094d\u0938 +91 76313 82174';
+  } else {
+    subject = 'Pratap Travels \u2014 Your Booking is Confirmed!';
+    body = 'Hi ' + name + ',\n\n';
+    body += 'Your booking has been confirmed!\n\n';
+    body += 'Booking ID: ' + (booking.bookingId || '-') + '\n';
+    body += 'Route: ' + route + '\n';
+    body += 'Travel Date: ' + pickupDate + '\n';
+    body += 'Time: ' + pickupTime + '\n';
+    body += 'Vehicle: ' + vehicleInfo + '\n';
+    body += 'Driver: ' + driverInfo + '\n';
+    if (pickupAddr) body += 'Pickup: ' + pickupAddr + '\n';
+    body += '\nThank you for choosing Pratap Travels! Call +91 76313 82174 for queries.';
+  }
+  return { subject: subject, body: body };
+}
+
+function buildConfirmationWhatsAppMsg(booking) {
+  var name = booking.name || 'Guest';
+  var route = booking.route || '-';
+  var vehicleInfo = '-';
+  var driverInfo = '-';
+  if (booking.vehicleId) {
+    var v = getVehicleById(booking.vehicleId);
+    if (v) {
+      vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')';
+      driverInfo = v.driverName;
+    }
+  }
+  var pickupDate = booking.pickup_date || booking.date || '-';
+  var pickupTime = booking.pickup_time || booking.time || 'Not specified';
+  var pickupAddr = booking.pickup_address || '';
+  var lang = (typeof I18N !== 'undefined') ? I18N.getLanguage() : 'hi';
+  var msg;
+  if (lang === 'hi') {
+    msg = '*PRATAP TRAVELS \u2014 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f!*\n\n';
+    msg += '\u0928\u092e\u0938\u094d\u0924\u094e ' + name + ',\n\n';
+    msg += '\u0906\u092a\u0915\u0940 \u092c\u0941\u0915\u093f\u0902\u0917 \u092a\u0941\u0937\u094d\u091f\u093f \u0939\u094b \u0917\u092f\u093e \u0939\u0948!\n\n';
+    msg += '*\u092c\u0941\u0915\u093f\u0902\u0917 ID:* ' + (booking.bookingId || '-') + '\n';
+    msg += '*\u092e\u093e\u0930\u094d\u0917:* ' + route + '\n';
+    msg += '*\u0924\u093f\u0925:* ' + pickupDate + '\n';
+    msg += '*\u0938\u092e\u092f:* ' + pickupTime + '\n';
+    msg += '*\u0935\u093e\u0939\u0928:* ' + vehicleInfo + '\n';
+    msg += '*\u0921\u094d\u0930\u093e\u0907\u0935\u0930:* ' + driverInfo + '\n';
+    if (pickupAddr) msg += '*\u092a\u093f\u0915\u0905\u092a:* ' + pickupAddr + '\n';
+    msg += '\n\u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u091a\u0941\u0928\u0947 \u0935\u093e\u0932\u0947 \u091f\u094d\u0930\u0948\u0935\u0932\u094d\u0938!';
+  } else {
+    msg = '*PRATAP TRAVELS \u2014 Booking Confirmed!*\n\n';
+    msg += 'Hi ' + name + ',\n\n';
+    msg += 'Your booking has been confirmed!\n\n';
+    msg += '*Booking ID:* ' + (booking.bookingId || '-') + '\n';
+    msg += '*Route:* ' + route + '\n';
+    msg += '*Date:* ' + pickupDate + '\n';
+    msg += '*Time:* ' + pickupTime + '\n';
+    msg += '*Vehicle:* ' + vehicleInfo + '\n';
+    msg += '*Driver:* ' + driverInfo + '\n';
+    if (pickupAddr) msg += '*Pickup:* ' + pickupAddr + '\n';
+    msg += '\nThank you for choosing Pratap Travels!';
+  }
+  return msg;
+}
+
+function sendBookingNotification(bookingId) {
+  var bookings = getBookings();
+  var booking = null;
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
+  }
+  if (!booking) return;
+  if (booking.notification_sent) {
+    showToast('Notification already sent for this booking.', 'info');
+    return;
+  }
+  var hasEmail = booking.email && booking.email.trim() !== '';
+  var hasPhone = booking.phone && booking.phone.trim() !== '';
+  if (!confirm('Send booking confirmation to customer?')) return;
+  if (hasEmail) {
+    var emailData = buildConfirmationEmailBody(booking);
+    var mailtoUrl = 'mailto:' + encodeURIComponent(booking.email) +
+      '?subject=' + encodeURIComponent(emailData.subject) +
+      '&body=' + encodeURIComponent(emailData.body);
+    window.open(mailtoUrl, '_blank');
+    booking.notification_sent = true;
+    booking.notification_type = 'email';
+    booking.notified_at = new Date().toISOString();
+    _bookingsCache = bookings;
+    renderBookingTable();
+    showToast('Email notification prepared for ' + booking.email, 'success');
+    recordAuditTrail('notification_email', { bookingId: bookingId, email: booking.email });
+    var apiUrl = getDataApiUrl();
+    if (apiUrl) {
+      try {
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          body: JSON.stringify({ type: 'booking_update', id: bookingId, data: { notification_sent: true, notification_type: 'email', notified_at: booking.notified_at } }),
+        }).catch(function(){});
+      } catch(e) {}
+    }
+  } else if (hasPhone) {
+    var whatsappMsg = buildConfirmationWhatsAppMsg(booking);
+    var whatsappUrl = 'https://wa.me/91' + booking.phone.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(whatsappMsg);
+    window.open(whatsappUrl, '_blank');
+    booking.notification_sent = true;
+    booking.notification_type = 'whatsapp';
+    booking.notified_at = new Date().toISOString();
+    _bookingsCache = bookings;
+    renderBookingTable();
+    showToast('WhatsApp notification opened for +91' + booking.phone, 'success');
+    recordAuditTrail('notification_whatsapp', { bookingId: bookingId, phone: booking.phone });
+    var apiUrl2 = getDataApiUrl();
+    if (apiUrl2) {
+      try {
+        fetch(apiUrl2, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          mode: 'cors',
+          body: JSON.stringify({ type: 'booking_update', id: bookingId, data: { notification_sent: true, notification_type: 'whatsapp', notified_at: booking.notified_at } }),
+        }).catch(function(){});
+      } catch(e) {}
+    }
+  } else {
+    showToast('No email or phone available. Please contact the customer manually.', 'error');
+    booking.needs_notification = true;
+    _bookingsCache = bookings;
+    renderBookingTable();
+    recordAuditTrail('notification_failed', { bookingId: bookingId, reason: 'no_contact' });
+  }
+}
+
 function initConfirmBookingForm() {
   var form = document.getElementById("confirmBookingForm");
   if (!form) return;
@@ -3004,6 +3178,7 @@ function initConfirmBookingForm() {
     renderBookingTable();
     updateBookingKPIs();
     showToast("Booking confirmed and vehicle assigned!", "success");
+    sendBookingNotification(bookingId);
   });
 }
 

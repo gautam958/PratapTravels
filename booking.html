@@ -142,6 +142,7 @@
                   <th data-i18n="booking.table.driver">ड्राइवर</th>
                   <th data-i18n="booking.table.referral">रेफ़रल</th>
                   <th data-i18n="booking.table.status">स्थिति</th>
+                  <th data-i18n="booking.table.notified">सूचना</th>
                   <th data-i18n="booking.table.actions">कार्य</th>
                 </tr>
               </thead>
@@ -170,7 +171,7 @@
             <div class="form-group">
               <label data-i18n="booking.confirm.vehicle">🚗 वाहन चुनें</label>
               <select id="vehicleSelect" class="vehicle-select-dropdown" onchange="handleVehicleSelectChange(this)">
-                <option value="">-- Select Vehicle --</option>
+                <option value="" data-i18n="booking.confirm.selectVehicle">-- वाहन चुनें --</option>
               </select>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -185,11 +186,11 @@
             </div>
             <div class="form-group">
               <label data-i18n="booking.confirm.pickupAddress">📍 पिकअप पता</label>
-              <input type="text" id="confirmPickupAddress" placeholder="Pickup address (optional)" />
+              <input type="text" id="confirmPickupAddress" data-i18n-placeholder="booking.confirm.pickupAddress.placeholder" placeholder="पिकअप पता (वैकल्पिक)" />
             </div>
             <div class="form-group">
               <label data-i18n="booking.confirm.adminNotes">📝 एडमिन नोट्स</label>
-              <textarea id="confirmAdminNotes" rows="2" placeholder="Internal notes (optional)"></textarea>
+              <textarea id="confirmAdminNotes" rows="2" data-i18n-placeholder="booking.confirm.adminNotes.placeholder" placeholder="आंतरिक नोट्स (वैकल्पिक)"></textarea>
             </div>
             <div style="display:flex;gap:10px;justify-content:flex-end;">
               <button type="button" class="btn-refresh" onclick="closeConfirmBookingModal()" data-i18n="booking.confirm.cancel">रद्द करें</button>
