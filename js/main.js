@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
       dateInput.setAttribute("min", today);
     }
 
-    bookingForm.addEventListener("submit", function (e) {
+    bookingForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
       // Clear previous errors
@@ -271,6 +271,19 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
+      // Validate referral code against backend API (not just local format)
+      if (referralVal) {
+        var refValidationResult = { valid: true };
+        try {
+          refValidationResult = await validateReferralCodeServer(referralVal);
+        } catch(e) { /* proceed anyway on network error */ }
+        if (!refValidationResult || !refValidationResult.valid) {
+          showToast("Referral code is invalid or not found on server. Proceeding without referral.", "error");
+          referralVal = "";
+          if (referralInput) referralInput.value = "";
+        }
+      }
+
       // Send booking to Azure Function API (same visitors endpoint)
       var bookingPayload = {
         type: "booking",
@@ -331,7 +344,7 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       var bookingId = "BK" + Date.now() + phoneVal.slice(-4);
-      var visitorApiUrl = getVisitorApiUrl();
+      var dataApiUrl = getDataApiUrl();
 
       if (visitorApiUrl) {
         fetch(visitorApiUrl, {
@@ -533,6 +546,17 @@ function _handleAuthSuccess(user) {
   // Store login state
   sessionStorage.setItem("pt_logged_in", "true");
   sessionStorage.setItem("pt_user", JSON.stringify(user));
+}
+
+// ---------- Dev Login Bypass (TEMPORARY - remove before production) ----------
+function handleDevLogin() {
+  console.warn("[DEV BYPASS] Static login used — remove handleDevLogin() before production!");
+  var devUser = {
+    name: "Dev Admin",
+    email: "dev@prataptravels.local",
+    initial: "D",
+  };
+  _handleAuthSuccess(devUser);
 }
 
 // ---------- Logout ----------
@@ -939,7 +963,6 @@ async function fetchReferralStats() {
   try {
     var resp = await fetch(statsUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
@@ -1190,7 +1213,6 @@ async function fetchVisitorRecordsFromApi() {
   try {
     var resp = await fetch(apiUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
@@ -1565,7 +1587,6 @@ async function fetchAllReferrals() {
   try {
     var resp = await fetch(apiUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
@@ -1738,7 +1759,6 @@ async function fetchRedemptionsForCode(code) {
   try {
     var resp = await fetch(url, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
@@ -1975,19 +1995,24 @@ function getBookings() {
 // ---------- Fetch Bookings from PratapTravels-Data Azure Function API ----------
 async function fetchBookingsFromApi() {
   var apiUrl = getDataApiUrl();
-  if (!apiUrl) return null;
+  if (!apiUrl) { console.warn("[Bookings] No DATA_API_URL configured in config.js"); return null; }
 
   try {
     var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
     var fetchUrl = apiUrl + separator + "type=booking";
+    console.log("[Bookings] Fetching:", fetchUrl);
     var resp = await fetch(fetchUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    if (!resp.ok) {
+      var errBody = ""; try { errBody = await resp.text(); } catch(_){}
+      console.error("[Bookings] HTTP " + resp.status + " —", errBody);
+      throw new Error("HTTP " + resp.status);
+    }
     var result = await resp.json();
+    console.log("[Bookings] Response:", result);
 
     // Response format: { total: N, bookings: [...] }
     var bookings = Array.isArray(result) ? result : (result.bookings || []);
@@ -2010,7 +2035,7 @@ async function fetchBookingsFromApi() {
     _bookingsCache = bookings;
     return bookings;
   } catch (e) {
-    console.warn("Booking API GET failed:", e.message);
+    console.warn("[Bookings] API GET failed:", e.message);
   }
 
   return getBookings().length > 0 ? getBookings() : null;
@@ -2019,19 +2044,24 @@ async function fetchBookingsFromApi() {
 // ---------- Fetch Audit Trail from PratapTravels-Data Azure Function API ----------
 async function fetchAuditFromApi() {
   var apiUrl = getDataApiUrl();
-  if (!apiUrl) return null;
+  if (!apiUrl) { console.warn("[Audit] No DATA_API_URL configured in config.js"); return null; }
 
   try {
     var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
     var fetchUrl = apiUrl + separator + "type=audit_trail";
+    console.log("[Audit] Fetching:", fetchUrl);
     var resp = await fetch(fetchUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    if (!resp.ok) {
+      var errBody = ""; try { errBody = await resp.text(); } catch(_){}
+      console.error("[Audit] HTTP " + resp.status + " —", errBody);
+      throw new Error("HTTP " + resp.status);
+    }
     var result = await resp.json();
+    console.log("[Audit] Response:", result);
 
     var events = Array.isArray(result) ? result : (result.events || []);
 
@@ -2051,7 +2081,7 @@ async function fetchAuditFromApi() {
     _auditCache = events;
     return events;
   } catch (e) {
-    console.warn("Audit API GET failed:", e.message);
+    console.warn("[Audit] API GET failed:", e.message);
   }
 
   return getAuditTrail().length > 0 ? getAuditTrail() : null;
@@ -2724,25 +2754,30 @@ function closeQuickVehicleModal() {
 // ---------- Fetch Vehicles from PratapTravels-Data API ----------
 async function fetchVehiclesFromApi() {
   var apiUrl = getDataApiUrl();
-  if (!apiUrl) return null;
+  if (!apiUrl) { console.warn("[Vehicles] No DATA_API_URL configured in config.js"); return null; }
 
   try {
     var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
     var fetchUrl = apiUrl + separator + "type=vehicle";
+    console.log("[Vehicles] Fetching:", fetchUrl);
     var resp = await fetch(fetchUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
       mode: "cors",
     });
 
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    if (!resp.ok) {
+      var errBody = ""; try { errBody = await resp.text(); } catch(_){}
+      console.error("[Vehicles] HTTP " + resp.status + " —", errBody);
+      throw new Error("HTTP " + resp.status);
+    }
     var result = await resp.json();
+    console.log("[Vehicles] Response:", result);
     var vehicles = Array.isArray(result) ? result : (result.vehicles || []);
 
     _vehiclesCache = vehicles;
     return vehicles;
   } catch (e) {
-    console.warn("Vehicle API GET failed:", e.message);
+    console.warn("[Vehicles] API GET failed:", e.message);
   }
   return null;
 }
@@ -2790,6 +2825,20 @@ function deleteVehicleFromApi(id) {
 }
 
 
+// ---------- Persist booking update to server ----------
+function persistBookingToApi(bookingId, updates) {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return;
+  try {
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ type: "booking_update", id: bookingId, data: updates }),
+    }).catch(function () { /* fire-and-forget */ });
+  } catch (e) { /* ignore */ }
+}
+
 // ---------- Assign vehicle to booking ----------
 function assignVehicleToBooking(bookingId, vehicleId) {
   if (!bookingId || !vehicleId) return;
@@ -2802,6 +2851,9 @@ function assignVehicleToBooking(bookingId, vehicleId) {
     }
   }
   _bookingsCache = bookings;
+
+  // Persist status change to server
+  persistBookingToApi(bookingId, { status: "confirmed", vehicleId: vehicleId });
 
   // Update vehicle status to booked
   updateVehicle(vehicleId, { status: "booked" });
@@ -2839,6 +2891,8 @@ function changeBookingStatus(bookingId, newStatus) {
         recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
       }
       _bookingsCache = bookings;
+      // Persist status change to server
+      persistBookingToApi(bookingId, { status: newStatus });
       recordAuditTrail("booking_status_change", { bookingId: bookingId, newStatus: newStatus });
       break;
     }
@@ -3076,28 +3130,43 @@ function sendBookingNotification(bookingId) {
   var hasPhone = booking.phone && booking.phone.trim() !== '';
   if (!confirm('Send booking confirmation to customer?')) return;
   if (hasEmail) {
-    var emailData = buildConfirmationEmailBody(booking);
-    var mailtoUrl = 'mailto:' + encodeURIComponent(booking.email) +
-      '?subject=' + encodeURIComponent(emailData.subject) +
-      '&body=' + encodeURIComponent(emailData.body);
-    window.open(mailtoUrl, '_blank');
-    booking.notification_sent = true;
-    booking.notification_type = 'email';
-    booking.notified_at = new Date().toISOString();
-    _bookingsCache = bookings;
-    renderBookingTable();
-    showToast('Email notification prepared for ' + booking.email, 'success');
-    recordAuditTrail('notification_email', { bookingId: bookingId, email: booking.email });
-    var apiUrl = getDataApiUrl();
-    if (apiUrl) {
-      try {
-        fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'cors',
-          body: JSON.stringify({ type: 'booking_update', id: bookingId, data: { notification_sent: true, notification_type: 'email', notified_at: booking.notified_at } }),
-        }).catch(function(){});
-      } catch(e) {}
+    // Send confirmation email via Visitors Azure Function (SMTP backend)
+    var visitorApiUrl = getVisitorApiUrl();
+    if (dataApiUrl) {
+      var vehicleInfo = '-';
+      var driverInfo = '-';
+      if (booking.vehicleId) { var v = getVehicleById(booking.vehicleId); if (v) { vehicleInfo = v.vehicleNumber + ' (' + v.vehicleType + ')'; driverInfo = v.driverName; } }
+      fetch(dataApiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        body: JSON.stringify({
+          type: 'booking_confirmation',
+          name: booking.name, phone: booking.phone, email: booking.email,
+          route: booking.route, date: booking.pickup_date || booking.date,
+          time: booking.pickup_time || booking.time, vehicle: vehicleInfo,
+          driver: driverInfo, pickup_address: booking.pickup_address || '',
+          bookingId: booking.bookingId
+        }),
+      }).then(function(resp) {
+        if (resp.ok) {
+          booking.notification_sent = true;
+          booking.notification_type = 'email';
+          booking.notified_at = new Date().toISOString();
+          _bookingsCache = bookings;
+          renderBookingTable();
+          showToast('Confirmation email sent to ' + booking.email, 'success');
+          recordAuditTrail('notification_email', { bookingId: bookingId, email: booking.email });
+          persistBookingToApi(bookingId, { notification_sent: true, notification_type: 'email', notified_at: booking.notified_at });
+        } else { throw new Error('HTTP ' + resp.status); }
+      }).catch(function(err) {
+        console.error('[Notification] Email API failed:', err.message);
+        showToast('Email API failed — please send manually.', 'error');
+        recordAuditTrail('notification_email_failed', { bookingId: bookingId, email: booking.email, error: err.message });
+        // Do NOT mark notification_sent=true so admin can retry
+      });
+    } else {
+      showToast('No API configured. Please send email manually.', 'error');
     }
   } else if (hasPhone) {
     var whatsappMsg = buildConfirmationWhatsAppMsg(booking);
@@ -3110,17 +3179,7 @@ function sendBookingNotification(bookingId) {
     renderBookingTable();
     showToast('WhatsApp notification opened for +91' + booking.phone, 'success');
     recordAuditTrail('notification_whatsapp', { bookingId: bookingId, phone: booking.phone });
-    var apiUrl2 = getDataApiUrl();
-    if (apiUrl2) {
-      try {
-        fetch(apiUrl2, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          mode: 'cors',
-          body: JSON.stringify({ type: 'booking_update', id: bookingId, data: { notification_sent: true, notification_type: 'whatsapp', notified_at: booking.notified_at } }),
-        }).catch(function(){});
-      } catch(e) {}
-    }
+    persistBookingToApi(bookingId, { notification_sent: true, notification_type: 'whatsapp', notified_at: booking.notified_at });
   } else {
     showToast('No email or phone available. Please contact the customer manually.', 'error');
     booking.needs_notification = true;
@@ -3129,7 +3188,6 @@ function sendBookingNotification(bookingId) {
     recordAuditTrail('notification_failed', { bookingId: bookingId, reason: 'no_contact' });
   }
 }
-
 function initConfirmBookingForm() {
   var form = document.getElementById("confirmBookingForm");
   if (!form) return;

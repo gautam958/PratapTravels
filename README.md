@@ -554,6 +554,9 @@ Referral and redemption records are stored in JSON files on the Azure Function's
 #### Function Source Code (`run.csx`)
 
 ```csharp
+#r "Microsoft.Azure.WebJobs.Extensions.Http"
+#r "Microsoft.AspNetCore.Http"
+#r "Microsoft.AspNetCore.Mvc"
 #r "Newtonsoft.Json"
 
 using System.Net;
@@ -565,136 +568,348 @@ using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 using System;
+using System.Net.Mail;
 
 public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
 {
-    log.LogInformation($"Referral API function triggered. Method: {req.Method}");
+    log.LogInformation("PratapTravels-Data function triggered. Method: " + req.Method);
 
     string origin = req.Headers["Origin"].FirstOrDefault();
 
+    // Allowed origins
     var allowedOrigins = new[] {
+        "https://localhost:3000",
+        "https://localhost:8000",
+        "https://localhost:8001",
+        "https://localhost:8080",
         "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
     };
 
     if (string.IsNullOrEmpty(origin) || !allowedOrigins.Contains(origin))
     {
-        log.LogWarning($"Blocked request from unauthorized origin: {origin}");
+        log.LogWarning("Blocked request from unauthorized origin: " + origin);
         return new StatusCodeResult(StatusCodes.Status403Forbidden);
     }
 
-    string referralsJsonFile = "referrals.json";
-    string redemptionsJsonFile = "redemptions.json";
+    // --- JSON file storage ---
+    string rootPath = Environment.GetEnvironmentVariable("HOME") ?? @"D:\home";
+    string dataDir = Path.Combine(rootPath, "data");
+    Directory.CreateDirectory(dataDir);
 
-    string rootPath = Environment.GetEnvironmentVariable("HOME") ?? "D:\\home";
-    string referralsFilePath = Path.Combine(rootPath, "data", referralsJsonFile);
-    string redemptionsFilePath = Path.Combine(rootPath, "data", redemptionsJsonFile);
-    Directory.CreateDirectory(Path.GetDirectoryName(referralsFilePath));
+    string bookingsFilePath = Path.Combine(dataDir, "bookings.json");
+    string auditFilePath = Path.Combine(dataDir, "audit_trail.json");
+    string vehiclesFilePath = Path.Combine(dataDir, "vehicles.json");
 
-    if (!File.Exists(referralsFilePath)) File.WriteAllText(referralsFilePath, "[]");
-    if (!File.Exists(redemptionsFilePath)) File.WriteAllText(redemptionsFilePath, "[]");
+    if (!File.Exists(bookingsFilePath)) File.WriteAllText(bookingsFilePath, "[]");
+    if (!File.Exists(auditFilePath)) File.WriteAllText(auditFilePath, "[]");
+    if (!File.Exists(vehiclesFilePath)) File.WriteAllText(vehiclesFilePath, "[]");
 
-    var referralsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(referralsFilePath));
-    var redemptionsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(redemptionsFilePath));
+    var bookingsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(bookingsFilePath));
+    var auditList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
+    var vehiclesList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(vehiclesFilePath));
 
+    // --- GET: Fetch all records ---
+    if (string.Equals(req.Method, "GET", StringComparison.OrdinalIgnoreCase))
+    {
+        string dataType = req.Query["type"];
+
+        // Admin endpoint: require function key
+        string functionKey = req.Headers["x-functions-key"].FirstOrDefault() ?? req.Query["code"];
+        string expectedKey = Environment.GetEnvironmentVariable("DATA_FUNCTION_KEY") ?? "";
+        if (string.IsNullOrEmpty(expectedKey) || functionKey != expectedKey)
+            return new ForbidResult();
+
+        if (dataType == "booking")
+        {
+            var sortedBookings = bookingsList.OrderByDescending(b => b.createdAt).ToList();
+            return new OkObjectResult(new { total = sortedBookings.Count, bookings = sortedBookings });
+        }
+
+        if (dataType == "audit_trail")
+        {
+            var sortedAudit = auditList.OrderByDescending(a => a.timestamp).ToList();
+            return new OkObjectResult(new { total = sortedAudit.Count, events = sortedAudit });
+        }
+
+        if (dataType == "vehicle")
+        {
+            return new OkObjectResult(new { total = vehiclesList.Count, vehicles = vehiclesList });
+        }
+
+        // Default: return summary counts
+        return new OkObjectResult(new {
+            totalBookings = bookingsList.Count,
+            totalAuditEvents = auditList.Count,
+            totalVehicles = vehiclesList.Count
+        });
+    }
+
+    // --- POST: Save new record ---
     if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase))
     {
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
-        string action = data?._action?.ToString() ?? "";
+        string dataType = data?.type?.ToString() ?? "";
 
-        if (action == "validate") return HandleValidate(data, referralsList, log);
-        else if (action == "redeem") return HandleRedeem(data, referralsList, redemptionsList, referralsFilePath, redemptionsFilePath, log);
-        else return HandleRegister(data, referralsList, referralsFilePath, log);
+        // Handle booking_data
+        if (dataType == "booking_data")
+        {
+            dynamic bookingData = data.data;
+            bookingData.savedAt = DateTime.UtcNow.ToString("o");
+            bookingsList.Add(bookingData);
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+
+            string logBookingId = bookingData.bookingId?.ToString() ?? "Unknown";
+            log.LogInformation("Booking saved: " + logBookingId);
+
+            return new OkObjectResult(new { success = true, message = "Booking data saved" });
+        }
+
+        // Handle audit_trail
+        if (dataType == "audit_trail")
+        {
+            dynamic auditRecord = data.data;
+            auditRecord.serverTimestamp = DateTime.UtcNow.ToString("o");
+            auditList.Add(auditRecord);
+            File.WriteAllText(auditFilePath, JsonConvert.SerializeObject(auditList, Formatting.Indented));
+
+            string logAuditType = auditRecord.type?.ToString() ?? "Unknown";
+            log.LogInformation("Audit event saved: " + logAuditType);
+
+            return new OkObjectResult(new { success = true, message = "Audit event saved" });
+        }
+
+        // Handle vehicle_data (add new vehicle)
+        if (dataType == "vehicle_data")
+        {
+            dynamic vehicleData = data.data;
+            vehicleData.savedAt = DateTime.UtcNow.ToString("o");
+            vehiclesList.Add(vehicleData);
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+
+            string logVehicleNum = vehicleData.vehicleNumber?.ToString() ?? "Unknown";
+            log.LogInformation("Vehicle saved: " + logVehicleNum);
+
+            return new OkObjectResult(new { success = true, message = "Vehicle saved" });
+        }
+
+        // Handle booking_confirmation (send confirmation email via SMTP)
+        if (dataType == "booking_confirmation")
+        {
+            try
+            {
+                string smtpUser = Environment.GetEnvironmentVariable("EMAIL_USER_PRATAP");
+                string smtpPass = Environment.GetEnvironmentVariable("EMAIL_PASS_PRATAP");
+                string recipientAddress = data?.email?.ToString();
+                if (string.IsNullOrEmpty(recipientAddress))
+                    return new BadRequestObjectResult(new { error = "Customer email is required" });
+
+                string name = data?.name?.ToString() ?? "Guest";
+                string route = data?.route?.ToString() ?? "-";
+                string date = data?.date?.ToString() ?? "-";
+                string time = data?.time?.ToString() ?? "Not specified";
+                string vehicle = data?.vehicle?.ToString() ?? "-";
+                string driver = data?.driver?.ToString() ?? "-";
+                string pickupAddr = data?.pickup_address?.ToString() ?? "";
+                string bookingIdVal = data?.bookingId?.ToString() ?? "-";
+
+                var smtpClient = new SmtpClient("smtp.gmail.com", 587)
+                {
+                    Credentials = new NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true
+                };
+
+                var message = new MailMessage();
+                message.From = new MailAddress(smtpUser, "Pratap Travels Booking Confirmation");
+                message.To.Add(recipientAddress);
+                message.Subject = "Pratap Travels — Your Booking is Confirmed!";
+                message.IsBodyHtml = true;
+                message.Priority = MailPriority.High;
+
+                string addrSection = !string.IsNullOrEmpty(pickupAddr)
+                    ? $"<p><b>Pickup Address:</b> {pickupAddr}</p>" : "";
+
+                message.Body = $@"
+                    <h2>🚗 Pratap Travels — Booking Confirmed</h2>
+                    <hr/>
+                    <p><b>Hi {name},</b></p>
+                    <p>Your booking has been confirmed!</p>
+                    <p><b>Booking ID:</b> {bookingIdVal}</p>
+                    <p><b>Route:</b> {route}</p>
+                    <p><b>Travel Date:</b> {date}</p>
+                    <p><b>Time:</b> {time}</p>
+                    <p><b>Vehicle:</b> {vehicle}</p>
+                    <p><b>Driver:</b> {driver}</p>
+                    {addrSection}
+                    <br/>
+                    <p>Thank you for choosing Pratap Travels! Call +91 76313 82174 for queries.</p>
+                ";
+
+                smtpClient.Send(message);
+                log.LogInformation($"Confirmation email sent to {recipientAddress} for booking {bookingIdVal}");
+                return new OkObjectResult(new { success = true, message = "Confirmation email sent" });
+            }
+            catch (Exception ex)
+            {
+                log.LogError($"Confirmation email failed: {ex.Message}");
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        // Handle booking_update (update existing booking fields)
+        if (dataType == "booking_update")
+        {
+            string bookingId = data.id?.ToString();
+            dynamic updateData = data.data;
+            if (updateData == null)
+                return new BadRequestObjectResult(new { error = "Booking update data is required" });
+
+            if (string.IsNullOrEmpty(bookingId))
+                return new BadRequestObjectResult(new { error = "Booking id is required for update" });
+
+            int index = -1;
+            for (int i = 0; i < bookingsList.Count; i++)
+            {
+                if (bookingsList[i].bookingId?.ToString() == bookingId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
+
+            // Merge update fields into existing booking
+            var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
+            foreach (var prop in updateObj.Properties())
+            {
+                bookingsList[index][prop.Name] = prop.Value;
+            }
+            bookingsList[index].updatedAt = DateTime.UtcNow.ToString("o");
+
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            log.LogInformation("Booking updated: " + bookingId);
+            return new OkObjectResult(new { success = true, message = "Booking updated" });
+        }
+
+        // Handle vehicle_update (update existing vehicle)
+        if (dataType == "vehicle_update")
+        {
+            string vehicleId = data.id?.ToString();
+            dynamic updateData = data.data;
+            if (updateData == null)
+                return new BadRequestObjectResult(new { error = "Vehicle update data is required" });
+
+            if (string.IsNullOrEmpty(vehicleId))
+                return new BadRequestObjectResult(new { error = "Vehicle id is required for update" });
+
+            int index = -1;
+            for (int i = 0; i < vehiclesList.Count; i++)
+            {
+                if (vehiclesList[i].id?.ToString() == vehicleId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
+
+            // Merge update fields into existing vehicle
+            var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
+            foreach (var prop in updateObj.Properties())
+            {
+                vehiclesList[index][prop.Name] = prop.Value;
+            }
+            vehiclesList[index].updatedAt = DateTime.UtcNow.ToString("o");
+
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            log.LogInformation("Vehicle updated: " + vehicleId);
+            return new OkObjectResult(new { success = true, message = "Vehicle updated" });
+        }
+
+        // Handle vehicle_delete (delete a vehicle)
+        if (dataType == "vehicle_delete")
+        {
+            string vehicleId = data.id?.ToString();
+
+            if (string.IsNullOrEmpty(vehicleId))
+                return new BadRequestObjectResult(new { error = "Vehicle id is required for delete" });
+
+            int removedCount = vehiclesList.RemoveAll(v => v.id?.ToString() == vehicleId);
+
+            if (removedCount == 0)
+                return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
+
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            log.LogInformation("Vehicle deleted: " + vehicleId);
+            return new OkObjectResult(new { success = true, message = "Vehicle deleted" });
+        }
+
+        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data', 'booking_update', 'booking_confirmation', 'audit_trail', 'vehicle_data', 'vehicle_update', or 'vehicle_delete'." });
     }
-    else if (string.Equals(req.Method, "GET", StringComparison.OrdinalIgnoreCase))
-    {
-        string referralCode = req.Query["referral_code"];
-        if (!string.IsNullOrEmpty(referralCode)) return HandleGetStats(referralCode, referralsList, log);
 
-        string functionKey = req.Headers["x-functions-key"].FirstOrDefault() ?? req.Query["code"];
-        string expectedKey = Environment.GetEnvironmentVariable("AZURE_FUNCTION_KEY") ?? "";
-        if (string.IsNullOrEmpty(expectedKey) || functionKey != expectedKey) return new ForbidResult();
-        return HandleGetAll(referralsList, log);
+    // --- PUT: Update existing record ---
+    if (string.Equals(req.Method, "PUT", StringComparison.OrdinalIgnoreCase))
+    {
+        string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+        dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
+        string dataType = data?.type?.ToString() ?? "";
+
+        if (dataType == "booking_data")
+        {
+            dynamic update = data.data;
+            string bookingId = update?.bookingId?.ToString();
+
+            if (string.IsNullOrEmpty(bookingId))
+                return new BadRequestObjectResult(new { error = "bookingId is required for update" });
+
+            int index = -1;
+            for (int i = 0; i < bookingsList.Count; i++)
+            {
+                if (bookingsList[i].bookingId?.ToString() == bookingId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
+
+            var existing = bookingsList[index];
+            if (update.status != null) existing.status = update.status;
+            if (update.remarks != null) existing.remarks = update.remarks;
+            existing.updatedAt = DateTime.UtcNow.ToString("o");
+            bookingsList[index] = existing;
+
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            log.LogInformation("Booking updated: " + bookingId);
+            return new OkObjectResult(new { success = true, message = "Booking updated" });
+        }
+
+        return new BadRequestObjectResult(new { error = "Unknown data type for PUT" });
     }
 
     return new BadRequestObjectResult("Requested HTTP method verb is unsupported.");
 }
 
-private static IActionResult HandleRegister(dynamic data, List<dynamic> referralsList, string filePath, ILogger log)
+public static string FormatDateTime(string isoString)
 {
-    string name = data?.name;
-    string code = data?.code?.ToString().ToUpper();
-    if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(code))
-        return new BadRequestObjectResult(new { error = "Name and code are required" });
+    if (string.IsNullOrWhiteSpace(isoString))
+        return "—";
 
-    var existing = referralsList.FirstOrDefault(r => r.code?.ToString() == code);
-    if (existing != null)
-        return new OkObjectResult(new { success = true, existing = true, code = existing.code?.ToString(), totalReferrals = (int)(existing.totalReferrals ?? 0), totalRewards = (int)(existing.totalRewards ?? 0), rewardBalance = (int)(existing.rewardBalance ?? 0) });
-
-    var newReferral = new Dictionary<string, object>
+    try
     {
-        { "name", name }, { "code", code }, { "totalReferrals", 0 }, { "totalRedemptions", 0 },
-        { "totalRewards", 0 }, { "rewardBalance", 0 },
-        { "createdAt", DateTime.UtcNow.ToString("o") }, { "updatedAt", DateTime.UtcNow.ToString("o") }, { "status", "active" }
-    };
-    referralsList.Add(newReferral);
-    File.WriteAllText(filePath, JsonConvert.SerializeObject(referralsList, Formatting.Indented));
-    return new OkObjectResult(new { success = true, existing = false, code = code, totalReferrals = 0, totalRewards = 0, rewardBalance = 0 });
-}
-
-private static IActionResult HandleValidate(dynamic data, List<dynamic> referralsList, ILogger log)
-{
-    string code = data?.code?.ToString().ToUpper();
-    if (string.IsNullOrEmpty(code)) return new BadRequestObjectResult(new { error = "Code is required" });
-    var referral = referralsList.FirstOrDefault(r => r.code?.ToString() == code);
-    if (referral != null && referral.status?.ToString() == "active")
-        return new OkObjectResult(new { valid = true, code = referral.code?.ToString(), referrerName = referral.name?.ToString(), status = referral.status?.ToString() });
-    return new OkObjectResult(new { valid = false, code = code });
-}
-
-private static IActionResult HandleRedeem(dynamic data, List<dynamic> referralsList, List<dynamic> redemptionsList, string referralsFilePath, string redemptionsFilePath, ILogger log)
-{
-    string code = data?.code?.ToString().ToUpper();
-    string bookingId = data?.bookingId;
-    string newCustomerPhone = data?.newCustomerPhone?.ToString() ?? "";
-    if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(bookingId))
-        return new BadRequestObjectResult(new { error = "Code and bookingId are required" });
-
-    var referralIndex = referralsList.FindIndex(r => r.code?.ToString() == code);
-    if (referralIndex == -1) return new NotFoundObjectResult(new { error = "Invalid referral code" });
-
-    var referral = referralsList[referralIndex];
-    referral.totalReferrals = (int)(referral.totalReferrals ?? 0) + 1;
-    referral.totalRedemptions = (int)(referral.totalRedemptions ?? 0) + 1;
-    referral.totalRewards = (int)(referral.totalRewards ?? 0) + 50;
-    referral.rewardBalance = (int)(referral.rewardBalance ?? 0) + 50;
-    referral.updatedAt = DateTime.UtcNow.ToString("o");
-    referral.lastReferralAt = DateTime.UtcNow.ToString("o");
-    referralsList[referralIndex] = referral;
-    File.WriteAllText(referralsFilePath, JsonConvert.SerializeObject(referralsList, Formatting.Indented));
-
-    var redemption = new Dictionary<string, object>
+        DateTime calculatedDateTime = DateTime.Parse(isoString, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        return calculatedDateTime.ToLocalTime().ToString("d") + " " + calculatedDateTime.ToLocalTime().ToString("T");
+    }
+    catch
     {
-        { "referralCode", code }, { "bookingId", bookingId }, { "newCustomerPhone", newCustomerPhone },
-        { "rewardAmount", 50 }, { "discountAmount", 50 },
-        { "createdAt", DateTime.UtcNow.ToString("o") }, { "status", "completed" }
-    };
-    redemptionsList.Add(redemption);
-    File.WriteAllText(redemptionsFilePath, JsonConvert.SerializeObject(redemptionsList, Formatting.Indented));
-    return new OkObjectResult(new { success = true, rewardCredited = 50, discountApplied = 50, newBalance = (int)referral.rewardBalance });
-}
-
-private static IActionResult HandleGetStats(string referralCode, List<dynamic> referralsList, ILogger log)
-{
-    var referral = referralsList.FirstOrDefault(r => r.code?.ToString() == referralCode.ToUpper());
-    if (referral == null) return new NotFoundObjectResult(new { error = "Code not found" });
-    return new OkObjectResult(new { code = referral.code?.ToString(), name = referral.name?.ToString(), totalReferrals = (int)(referral.totalReferrals ?? 0), totalRedemptions = (int)(referral.totalRedemptions ?? 0), totalRewards = (int)(referral.totalRewards ?? 0), rewardBalance = (int)(referral.rewardBalance ?? 0), createdAt = referral.createdAt?.ToString(), lastReferralAt = referral.lastReferralAt?.ToString() });
-}
-
-private static IActionResult HandleGetAll(List<dynamic> referralsList, ILogger log)
-{
-    var result = referralsList.Select(r => new { code = r.code?.ToString(), name = r.name?.ToString(), totalReferrals = (int)(r.totalReferrals ?? 0), totalRewards = (int)(r.totalRewards ?? 0), rewardBalance = (int)(r.rewardBalance ?? 0), createdAt = r.createdAt?.ToString(), status = r.status?.ToString() }).ToList();
-    return new OkObjectResult(new { total = result.Count, referrals = result });
+        return isoString;
+    }
 }
 ```
 
@@ -914,7 +1129,12 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
 
     string origin = req.Headers["Origin"].FirstOrDefault();
 
+    // Allowed origins
     var allowedOrigins = new[] {
+        "https://localhost:3000",
+        "https://localhost:8000",
+        "https://localhost:8001",
+        "https://localhost:8080",
         "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
     };
 
@@ -930,40 +1150,46 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
     Directory.CreateDirectory(dataDir);
 
     string bookingsFilePath = Path.Combine(dataDir, "bookings.json");
-    string auditFilePath    = Path.Combine(dataDir, "audit_trail.json");
+    string auditFilePath = Path.Combine(dataDir, "audit_trail.json");
     string vehiclesFilePath = Path.Combine(dataDir, "vehicles.json");
 
     if (!File.Exists(bookingsFilePath)) File.WriteAllText(bookingsFilePath, "[]");
-    if (!File.Exists(auditFilePath))    File.WriteAllText(auditFilePath, "[]");
+    if (!File.Exists(auditFilePath)) File.WriteAllText(auditFilePath, "[]");
     if (!File.Exists(vehiclesFilePath)) File.WriteAllText(vehiclesFilePath, "[]");
 
     var bookingsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(bookingsFilePath));
-    var auditList    = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
+    var auditList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
     var vehiclesList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(vehiclesFilePath));
 
-    // --- GET ---
+    // --- GET: Fetch all records ---
     if (string.Equals(req.Method, "GET", StringComparison.OrdinalIgnoreCase))
     {
         string dataType = req.Query["type"];
+
+        // Admin endpoint: require function key
         string functionKey = req.Headers["x-functions-key"].FirstOrDefault() ?? req.Query["code"];
-        string expectedKey = Environment.GetEnvironmentVariable("DATA_FUNCTION_KEY") ?? "";
+        string expectedKey = Environment.GetEnvironmentVariable("PRATAP_DATA_FUNCTION_KEY") ?? "";
         if (string.IsNullOrEmpty(expectedKey) || functionKey != expectedKey)
             return new ForbidResult();
 
         if (dataType == "booking")
         {
-            var sorted = bookingsList.OrderByDescending(b => b.createdAt).ToList();
-            return new OkObjectResult(new { total = sorted.Count, bookings = sorted });
+            var sortedBookings = bookingsList.OrderByDescending(b => b.createdAt).ToList();
+            return new OkObjectResult(new { total = sortedBookings.Count, bookings = sortedBookings });
         }
+
         if (dataType == "audit_trail")
         {
-            var sorted = auditList.OrderByDescending(a => a.timestamp).ToList();
-            return new OkObjectResult(new { total = sorted.Count, events = sorted });
+            var sortedAudit = auditList.OrderByDescending(a => a.timestamp).ToList();
+            return new OkObjectResult(new { total = sortedAudit.Count, events = sortedAudit });
         }
+
         if (dataType == "vehicle")
         {
             return new OkObjectResult(new { total = vehiclesList.Count, vehicles = vehiclesList });
         }
+
+        // Default: return summary counts
         return new OkObjectResult(new {
             totalBookings = bookingsList.Count,
             totalAuditEvents = auditList.Count,
@@ -971,107 +1197,275 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
         });
     }
 
-    // --- POST ---
+    // --- POST: Save new record ---
     if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase))
     {
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
         string dataType = data?.type?.ToString() ?? "";
 
+        // Handle booking_data
         if (dataType == "booking_data")
         {
             dynamic bookingData = data.data;
             bookingData.savedAt = DateTime.UtcNow.ToString("o");
             bookingsList.Add(bookingData);
             File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+
+            // 🟢 FIXED: Explicitly cast dynamic expression to string
+            string logBookingId = bookingData.bookingId?.ToString() ?? "Unknown";
+            log.LogInformation("Booking saved: " + logBookingId);
+
             return new OkObjectResult(new { success = true, message = "Booking data saved" });
         }
+
+        // Handle audit_trail
         if (dataType == "audit_trail")
         {
             dynamic auditRecord = data.data;
             auditRecord.serverTimestamp = DateTime.UtcNow.ToString("o");
             auditList.Add(auditRecord);
             File.WriteAllText(auditFilePath, JsonConvert.SerializeObject(auditList, Formatting.Indented));
+
+            // 🟢 FIXED: Explicitly cast dynamic expression to string
+            string logAuditType = auditRecord.type?.ToString() ?? "Unknown";
+            log.LogInformation("Audit event saved: " + logAuditType);
+
             return new OkObjectResult(new { success = true, message = "Audit event saved" });
         }
+
+        // Handle vehicle_data (add new vehicle)
         if (dataType == "vehicle_data")
         {
             dynamic vehicleData = data.data;
             vehicleData.savedAt = DateTime.UtcNow.ToString("o");
             vehiclesList.Add(vehicleData);
             File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+
+            // 🟢 FIXED: Explicitly cast dynamic expression to string
+            string logVehicleNum = vehicleData.vehicleNumber?.ToString() ?? "Unknown";
+            log.LogInformation("Vehicle saved: " + logVehicleNum);
+
             return new OkObjectResult(new { success = true, message = "Vehicle saved" });
         }
+
+        // Handle booking_confirmation (send confirmation email via SMTP)
+        if (dataType == "booking_confirmation")
+        {
+            try
+            {
+                string smtpUser = Environment.GetEnvironmentVariable("EMAIL_USER_PRATAP");
+                string smtpPass = Environment.GetEnvironmentVariable("EMAIL_PASS_PRATAP");
+                string recipientAddress = data?.email?.ToString();
+                if (string.IsNullOrEmpty(recipientAddress))
+                    return new BadRequestObjectResult(new { error = "Customer email is required" });
+
+                string name = data?.name?.ToString() ?? "Guest";
+                string route = data?.route?.ToString() ?? "-";
+                string date = data?.date?.ToString() ?? "-";
+                string time = data?.time?.ToString() ?? "Not specified";
+                string vehicle = data?.vehicle?.ToString() ?? "-";
+                string driver = data?.driver?.ToString() ?? "-";
+                string pickupAddr = data?.pickup_address?.ToString() ?? "";
+                string bookingIdVal = data?.bookingId?.ToString() ?? "-";
+
+                var smtpClient = new SmtpClient("smtp.gmail.com", 587)
+                {
+                    Credentials = new NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true
+                };
+
+                var message = new MailMessage();
+                message.From = new MailAddress(smtpUser, "Pratap Travels Booking Confirmation");
+                message.To.Add(recipientAddress);
+                message.Subject = "Pratap Travels — Your Booking is Confirmed!";
+                message.IsBodyHtml = true;
+                message.Priority = MailPriority.High;
+
+                string addrSection = !string.IsNullOrEmpty(pickupAddr) ? $"<p><b>Pickup Address:</b> {pickupAddr}</p>" : "";
+
+                message.Body = $@"
+                    <h2>🚔 Pratap Travels — Booking Confirmed</h2>
+                    <hr/>
+                    <p><b>Hi {name},</b></p>
+                    <p>Your booking has been confirmed!</p>
+                    <p><b>Booking ID:</b> {bookingIdVal}</p>
+                    <p><b>Route:</b> {route}</p>
+                    <p><b>Travel Date:</b> {date}</p>
+                    <p><b>Time:</b> {time}</p>
+                    <p><b>Vehicle:</b> {vehicle}</p>
+                    <p><b>Driver:</b> {driver}</p>
+                    {addrSection}
+                    <br/>
+                    <p>Thank you for choosing Pratap Travels! Call +91 76313 82174 for queries.</p>
+                ";
+                message.Priority = MailPriority.High;
+
+                smtpClient.Send(message);
+                log.LogInformation($"Confirmation email sent to {recipientAddress} for booking {bookingIdVal}");
+                return new OkObjectResult(new { success = true, message = "Confirmation email sent" });
+            }
+            catch (Exception ex)
+            {
+                log.LogError($"Confirmation email failed: {ex.Message}");
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        // Handle booking_update (update existing booking fields like notification_sent)
+        if (dataType == "booking_update")
+        {
+            string bookingId = data.id?.ToString();
+            dynamic updateData = data.data;
+            if (updateData == null)
+                return new BadRequestObjectResult(new { error = "Booking update data is required" });
+
+            if (string.IsNullOrEmpty(bookingId))
+                return new BadRequestObjectResult(new { error = "Booking id is required for update" });
+
+            int index = -1;
+            for (int i = 0; i < bookingsList.Count; i++)
+            {
+                if (bookingsList[i].bookingId?.ToString() == bookingId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
+
+            // Merge update fields into existing booking
+            var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
+            foreach (var prop in updateObj.Properties())
+            {
+                bookingsList[index][prop.Name] = prop.Value;
+            }
+            bookingsList[index].updatedAt = DateTime.UtcNow.ToString("o");
+
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            log.LogInformation("Booking updated: " + bookingId);
+            return new OkObjectResult(new { success = true, message = "Booking updated" });
+        }
+
+        // Handle vehicle_update (update existing vehicle)
         if (dataType == "vehicle_update")
         {
             string vehicleId = data.id?.ToString();
             dynamic updateData = data.data;
             if (updateData == null)
                 return new BadRequestObjectResult(new { error = "Vehicle update data is required" });
+
             if (string.IsNullOrEmpty(vehicleId))
-                return new BadRequestObjectResult(new { error = "Vehicle id is required" });
+                return new BadRequestObjectResult(new { error = "Vehicle id is required for update" });
 
             int index = -1;
             for (int i = 0; i < vehiclesList.Count; i++)
             {
-                if (vehiclesList[i].id?.ToString() == vehicleId) { index = i; break; }
+                if (vehiclesList[i].id?.ToString() == vehicleId)
+                {
+                    index = i;
+                    break;
+                }
             }
+
             if (index == -1)
                 return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
 
+            // Merge update fields into existing vehicle
             var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
             foreach (var prop in updateObj.Properties())
+            {
                 vehiclesList[index][prop.Name] = prop.Value;
+            }
             vehiclesList[index].updatedAt = DateTime.UtcNow.ToString("o");
 
             File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            log.LogInformation("Vehicle updated: " + vehicleId);
             return new OkObjectResult(new { success = true, message = "Vehicle updated" });
         }
+
+        // Handle vehicle_delete (delete a vehicle)
         if (dataType == "vehicle_delete")
         {
             string vehicleId = data.id?.ToString();
+
             if (string.IsNullOrEmpty(vehicleId))
-                return new BadRequestObjectResult(new { error = "Vehicle id is required" });
-            int removed = vehiclesList.RemoveAll(v => v.id?.ToString() == vehicleId);
-            if (removed == 0)
+                return new BadRequestObjectResult(new { error = "Vehicle id is required for delete" });
+
+            int removedCount = vehiclesList.RemoveAll(v => v.id?.ToString() == vehicleId);
+
+            if (removedCount == 0)
                 return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
+
             File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            log.LogInformation("Vehicle deleted: " + vehicleId);
             return new OkObjectResult(new { success = true, message = "Vehicle deleted" });
         }
-        return new BadRequestObjectResult(new { error = "Unknown data type. Expected booking_data, audit_trail, vehicle_data, vehicle_update, or vehicle_delete." });
+
+        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data', 'booking_update', 'audit_trail', 'vehicle_data', 'vehicle_update', or 'vehicle_delete'." });
     }
 
-    // --- PUT ---
+    // --- PUT: Update existing record ---
     if (string.Equals(req.Method, "PUT", StringComparison.OrdinalIgnoreCase))
     {
         string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
         dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
         string dataType = data?.type?.ToString() ?? "";
+
         if (dataType == "booking_data")
         {
             dynamic update = data.data;
             string bookingId = update?.bookingId?.ToString();
+
             if (string.IsNullOrEmpty(bookingId))
-                return new BadRequestObjectResult(new { error = "bookingId is required" });
+                return new BadRequestObjectResult(new { error = "bookingId is required for update" });
+
             int index = -1;
             for (int i = 0; i < bookingsList.Count; i++)
             {
-                if (bookingsList[i].bookingId?.ToString() == bookingId) { index = i; break; }
+                if (bookingsList[i].bookingId?.ToString() == bookingId)
+                {
+                    index = i;
+                    break;
+                }
             }
+
             if (index == -1)
                 return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
+
             var existing = bookingsList[index];
             if (update.status != null) existing.status = update.status;
             if (update.remarks != null) existing.remarks = update.remarks;
             existing.updatedAt = DateTime.UtcNow.ToString("o");
             bookingsList[index] = existing;
+
             File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            log.LogInformation("Booking updated: " + bookingId);
             return new OkObjectResult(new { success = true, message = "Booking updated" });
         }
+
         return new BadRequestObjectResult(new { error = "Unknown data type for PUT" });
     }
 
     return new BadRequestObjectResult("Requested HTTP method verb is unsupported.");
+}
+
+public static string FormatDateTime(string isoString)
+{
+    if (string.IsNullOrWhiteSpace(isoString))
+        return "—";
+
+    try
+    {
+        DateTime calculatedDateTime = DateTime.Parse(isoString, null, System.Globalization.DateTimeStyles.RoundtripKind);
+        return calculatedDateTime.ToLocalTime().ToString("d") + " " + calculatedDateTime.ToLocalTime().ToString("T");
+    }
+    catch
+    {
+        return isoString;
+    }
 }
 ```
 
