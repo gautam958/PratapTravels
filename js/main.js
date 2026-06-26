@@ -236,12 +236,12 @@ document.addEventListener("DOMContentLoaded", function () {
       var nameVal = name.value.trim();
       var phoneVal = phone.value.trim();
       var emailVal = email.value.trim();
-      var routeVal = route.options[route.selectedIndex].text;
+      var routeVal = route.value;
       var dateVal = date.value;
       var timeVal =
         document.getElementById("bookTime").value || "Not specified";
       var passengersVal = document.getElementById("bookPassengers").value;
-      var typeVal = type.options[type.selectedIndex].text;
+      var typeVal = type.value;
       var remarksVal = document.getElementById("bookRemarks").value.trim();
 
       // Show loading state
@@ -263,7 +263,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
       // Self-referral prevention: check if booking phone matches code owner's phone
       if (referralVal) {
-        var codeOwnerData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+        var codeOwnerData = _referralDataCache;
         if (codeOwnerData && codeOwnerData.phone && codeOwnerData.phone === phoneVal) {
           showToast("You cannot use your own referral code!", "error");
           referralVal = "";
@@ -577,8 +577,7 @@ function _refreshCurrentDashboard() {
     fetchAuditFromApi().then(function() { renderAuditTable(); updateAuditKPIs(); });
   }
   if (document.getElementById("vehicleTableBody")) {
-    renderVehicleTable();
-    updateVehicleKPIs();
+    fetchVehiclesFromApi().then(function() { renderVehicleTable(); updateVehicleKPIs(); });
   }
 }
 
@@ -640,6 +639,16 @@ var PT_LOCAL_REDEMPTIONS_KEY = "pt_local_redemptions";
 var PT_BOOKINGS_KEY = "pt_bookings";
 var PT_AUDIT_KEY = "pt_audit_trail";
 
+// ---------- In-memory cache (replaces localStorage for data storage) ----------
+var _bookingsCache = [];
+var _auditCache = [];
+var _vehiclesCache = [];
+var _visitorRecordsCache = [];
+var _referralDataCache = null;
+var _allReferralsCache = [];
+var _redemptionsCache = {};
+var _localRedemptionsCache = [];
+
 // ---------- Get Referral API URL ----------
 function getReferralApiUrl() {
   if (typeof PT_CONFIG !== "undefined" && PT_CONFIG.REFERRAL_API_URL) {
@@ -686,7 +695,7 @@ async function generateReferralCode() {
   if (phoneInput) phoneInput.style.borderColor = "";
 
   // Check if code already exists for this phone
-  var existing = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var existing = _referralDataCache;
   var code;
   if (existing && existing.phone === phone) {
     code = existing.code;
@@ -728,7 +737,7 @@ async function generateReferralCode() {
     totalRewards: (existing && existing.phone === phone) ? (existing.totalRewards || 0) : 0,
     rewardBalance: (existing && existing.phone === phone) ? (existing.rewardBalance || 0) : 0,
   };
-  localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+  _referralDataCache = refData;
 
   codeDisplay.textContent = code;
   outputDiv.classList.remove("hidden");
@@ -770,7 +779,7 @@ function copyReferralCode() {
 
 // ---------- Share referral on WhatsApp ----------
 function shareReferralWhatsApp() {
-  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var refData = _referralDataCache;
   if (!refData || !refData.code) {
     showToast("Please generate a code first.", "error");
     return;
@@ -800,7 +809,7 @@ function shareReferralWhatsApp() {
 
 // ---------- Load existing referral code on page ----------
 document.addEventListener("DOMContentLoaded", async function () {
-  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var refData = _referralDataCache;
   if (refData && refData.code) {
     var nameInput = document.getElementById("referNameInput");
     var phoneInput = document.getElementById("referPhoneInput");
@@ -821,7 +830,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // ---------- Update referral stats display ----------
 function updateReferralStatsDisplay() {
-  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var refData = _referralDataCache;
   if (!refData) return;
 
   var statsEl = document.getElementById("referStats");
@@ -849,17 +858,11 @@ function validateReferralCode(code) {
 
 // ---------- Local Redemption Storage (localStorage fallback) ----------
 function getLocalRedemptions() {
-  try {
-    return JSON.parse(localStorage.getItem(PT_LOCAL_REDEMPTIONS_KEY) || "[]");
-  } catch (e) {
-    return [];
-  }
+  return _localRedemptionsCache;
 }
 
 function storeLocalRedemption(redemption) {
-  var redemptions = getLocalRedemptions();
-  redemptions.push(redemption);
-  localStorage.setItem(PT_LOCAL_REDEMPTIONS_KEY, JSON.stringify(redemptions));
+  _localRedemptionsCache.push(redemption);
 }
 
 // ---------- Validate referral code against backend ----------
@@ -915,7 +918,7 @@ async function recordReferralRedemption(code, bookingId, customerPhone) {
 
 // ---------- Fetch referral stats for current user ----------
 async function fetchReferralStats() {
-  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var refData = _referralDataCache;
   if (!refData || !refData.code) return;
 
   var apiUrl = getReferralApiUrl();
@@ -938,7 +941,7 @@ async function fetchReferralStats() {
       refData.totalRedemptions = stats.totalRedemptions || 0;
       refData.totalRewards = stats.totalRewards || 0;
       refData.rewardBalance = stats.rewardBalance || 0;
-      localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+      _referralDataCache = refData;
     }
   } catch (e) {
     console.warn("Referral stats API failed:", e.message);
@@ -1052,23 +1055,14 @@ function getDataApiUrl() {
 
 // ---------- Read / Write Visitor Records (localStorage fallback) ----------
 function getVisitorRecords() {
-  try {
-    var data = localStorage.getItem(VISITOR_RECORDS_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
+  return _visitorRecordsCache;
 }
 
 function saveVisitorRecords(records) {
-  try {
-    if (records.length > MAX_VISITOR_RECORDS) {
-      records = records.slice(0, MAX_VISITOR_RECORDS);
-    }
-    localStorage.setItem(VISITOR_RECORDS_KEY, JSON.stringify(records));
-  } catch (e) {
-    console.error("Error saving visitor records:", e);
+  if (records.length > MAX_VISITOR_RECORDS) {
+    records = records.slice(0, MAX_VISITOR_RECORDS);
   }
+  _visitorRecordsCache = records;
 }
 
 // ---------- Track Visit (fires on every page load) ----------
@@ -1196,12 +1190,11 @@ async function fetchVisitorRecordsFromApi() {
     var data = await resp.json();
 
     if (Array.isArray(data)) {
-      // Cache in localStorage
-      saveVisitorRecords(data);
+      _visitorRecordsCache = data;
       return data;
     }
   } catch (e) {
-    console.warn("Visitor API GET failed, using localStorage:", e.message);
+    console.warn("Visitor API GET failed:", e.message);
   }
 
   return null;
@@ -1516,7 +1509,7 @@ function clearVisitorLog() {
       "Are you sure you want to clear all visitor records? This cannot be undone.",
     )
   ) {
-    localStorage.removeItem(VISITOR_RECORDS_KEY);
+    _visitorRecordsCache = [];
     renderVisitorTable();
     updateKPIs();
     showToast("Visitor log cleared.", "info");
@@ -1573,7 +1566,7 @@ async function fetchAllReferrals() {
 
     // Handle both array and object responses
     var referrals = Array.isArray(data) ? data : (data.referrals || []);
-    localStorage.setItem(REFERRAL_ALL_KEY, JSON.stringify(referrals));
+    _allReferralsCache = referrals;
     return { data: mergeLocalRedemptions(referrals), fromServer: true };
   } catch (e) {
     console.warn("Referral admin API failed, using cached data:", e.message);
@@ -1583,12 +1576,7 @@ async function fetchAllReferrals() {
 
 // ---------- Get cached referral data ----------
 function getAllReferralRecords() {
-  try {
-    var data = localStorage.getItem(REFERRAL_ALL_KEY);
-    return data ? JSON.parse(data) : [];
-  } catch (e) {
-    return [];
-  }
+  return _allReferralsCache;
 }
 
 // ---------- Update Referral KPI Cards ----------
@@ -1754,19 +1742,19 @@ async function fetchRedemptionsForCode(code) {
     if (!Array.isArray(redemptions)) redemptions = [];
 
     // Cache in localStorage
-    localStorage.setItem(REDEMPTION_CACHE_KEY + code, JSON.stringify({
+    _redemptionsCache[code] = {
       redemptions: redemptions,
       totalReferrals: data.totalReferrals || 0,
       totalRewards: data.totalRewards || 0,
       rewardBalance: data.rewardBalance || 0,
       fetchedAt: new Date().toISOString(),
-    }));
+    };
 
     return redemptions;
   } catch (e) {
     console.warn("Redemption fetch failed for code " + code + ":", e.message);
     // Try cache
-    var cached = JSON.parse(localStorage.getItem(REDEMPTION_CACHE_KEY + code) || "null");
+    var cached = _redemptionsCache[code] || null;
     return cached ? cached.redemptions : null;
   }
 }
@@ -1813,7 +1801,7 @@ async function openRedemptionHistory(code) {
   // Get cached stats for the summary
   var cachedStats = null;
   try {
-    cachedStats = JSON.parse(localStorage.getItem(REDEMPTION_CACHE_KEY + code) || "null");
+    cachedStats = _redemptionsCache[code] || null;
   } catch (e) { /* ignore */ }
 
   // Update summary stats
@@ -1903,22 +1891,22 @@ document.addEventListener("DOMContentLoaded", function () {
 /* ============================================
    UPDATE REFERRER STATS ON REDEMPTION
    When someone uses a referral code, update
-   the code owner's stats in localStorage
+   the code owner's stats in cache
    ============================================ */
 
 function updateReferrerStatsOnRedemption(referralCode, customerPhone, bookingId) {
   // Update the local referral data if this is the current user's code
-  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  var refData = _referralDataCache;
   if (refData && refData.code === referralCode) {
     refData.totalReferrals = (refData.totalReferrals || 0) + 1;
     refData.totalRewards = (refData.totalRewards || 0) + 50;
     refData.rewardBalance = (refData.rewardBalance || 0) + 50;
-    localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+    _referralDataCache = refData;
     updateReferralStatsDisplay();
   }
 
   // Also update the all-referrals cache used by the admin dashboard
-  var allReferrals = JSON.parse(localStorage.getItem(REFERRAL_ALL_KEY) || "[]");
+  var allReferrals = _allReferralsCache;
   var found = false;
   for (var i = 0; i < allReferrals.length; i++) {
     if (allReferrals[i].code === referralCode) {
@@ -1942,24 +1930,21 @@ function updateReferrerStatsOnRedemption(referralCode, customerPhone, bookingId)
       createdAt: new Date().toISOString()
     });
   }
-  localStorage.setItem(REFERRAL_ALL_KEY, JSON.stringify(allReferrals));
+  _allReferralsCache = allReferrals;
 }
 
 /* ============================================
    BOOKING DATA STORAGE
-   Save all bookings to localStorage for
+   Save all bookings via API / cache for
    admin dashboard viewing
    ============================================ */
 
 function saveBookingLocally(booking) {
-  var bookings = [];
-  try {
-    bookings = JSON.parse(localStorage.getItem(PT_BOOKINGS_KEY) || "[]");
-  } catch (e) { bookings = []; }
+  var bookings = _bookingsCache;
   bookings.unshift(booking);
   // Keep max 2000 bookings
   if (bookings.length > 2000) bookings = bookings.slice(0, 2000);
-  localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+  _bookingsCache = bookings;
 
   // Try to save to PratapTravels-Data Azure Function API (fire-and-forget)
   var apiUrl = getDataApiUrl();
@@ -1976,9 +1961,7 @@ function saveBookingLocally(booking) {
 }
 
 function getBookings() {
-  try {
-    return JSON.parse(localStorage.getItem(PT_BOOKINGS_KEY) || "[]");
-  } catch (e) { return []; }
+  return _bookingsCache;
 }
 
 // ---------- Fetch Bookings from PratapTravels-Data Azure Function API ----------
@@ -2001,31 +1984,28 @@ async function fetchBookingsFromApi() {
     // Response format: { total: N, bookings: [...] }
     var bookings = Array.isArray(result) ? result : (result.bookings || []);
 
-    if (bookings.length > 0) {
-      // Merge with existing localStorage: prefer server data, but keep local-only records
-      var localBookings = getBookings();
-      var serverIds = {};
-      for (var i = 0; i < bookings.length; i++) {
-        serverIds[bookings[i].bookingId] = true;
-      }
-      // Add any local bookings not on server (pending submissions, etc.)
-      for (var i = 0; i < localBookings.length; i++) {
-        if (!serverIds[localBookings[i].bookingId]) {
-          bookings.push(localBookings[i]);
-        }
-      }
-      // Sort by createdAt descending
-      bookings.sort(function (a, b) {
-        return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
-      });
-      localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
-      return bookings;
+    // Merge: prefer server data, keep any local-only records
+    var localBookings = getBookings();
+    var serverIds = {};
+    for (var i = 0; i < bookings.length; i++) {
+      serverIds[bookings[i].bookingId] = true;
     }
+    for (var i = 0; i < localBookings.length; i++) {
+      if (!serverIds[localBookings[i].bookingId]) {
+        bookings.push(localBookings[i]);
+      }
+    }
+    // Sort by createdAt descending
+    bookings.sort(function (a, b) {
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    });
+    _bookingsCache = bookings;
+    return bookings;
   } catch (e) {
-    console.warn("Booking API GET failed, using localStorage:", e.message);
+    console.warn("Booking API GET failed:", e.message);
   }
 
-  return null;
+  return getBookings().length > 0 ? getBookings() : null;
 }
 
 // ---------- Fetch Audit Trail from PratapTravels-Data Azure Function API ----------
@@ -2047,28 +2027,26 @@ async function fetchAuditFromApi() {
 
     var events = Array.isArray(result) ? result : (result.events || []);
 
-    if (events.length > 0) {
-      var localAudit = getAuditTrail();
-      var serverIds = {};
-      for (var i = 0; i < events.length; i++) {
-        serverIds[events[i].id] = true;
-      }
-      for (var i = 0; i < localAudit.length; i++) {
-        if (!serverIds[localAudit[i].id]) {
-          events.push(localAudit[i]);
-        }
-      }
-      events.sort(function (a, b) {
-        return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
-      });
-      localStorage.setItem(PT_AUDIT_KEY, JSON.stringify(events));
-      return events;
+    var localAudit = getAuditTrail();
+    var serverIds = {};
+    for (var i = 0; i < events.length; i++) {
+      serverIds[events[i].id] = true;
     }
+    for (var i = 0; i < localAudit.length; i++) {
+      if (!serverIds[localAudit[i].id]) {
+        events.push(localAudit[i]);
+      }
+    }
+    events.sort(function (a, b) {
+      return new Date(b.timestamp || 0) - new Date(a.timestamp || 0);
+    });
+    _auditCache = events;
+    return events;
   } catch (e) {
-    console.warn("Audit API GET failed, using localStorage:", e.message);
+    console.warn("Audit API GET failed:", e.message);
   }
 
-  return null;
+  return getAuditTrail().length > 0 ? getAuditTrail() : null;
 }
 
 /* ============================================
@@ -2086,14 +2064,11 @@ function recordAuditTrail(activityType, details) {
     visitorId: getVisitorId()
   };
 
-  var auditLog = [];
-  try {
-    auditLog = JSON.parse(localStorage.getItem(PT_AUDIT_KEY) || "[]");
-  } catch (e) { auditLog = []; }
+  var auditLog = _auditCache;
   auditLog.unshift(record);
   // Keep max 5000 records
   if (auditLog.length > 5000) auditLog = auditLog.slice(0, 5000);
-  localStorage.setItem(PT_AUDIT_KEY, JSON.stringify(auditLog));
+  _auditCache = auditLog;
 
   // Try to send to PratapTravels-Data Azure Function API (fire-and-forget)
   var apiUrl = getDataApiUrl();
@@ -2110,9 +2085,7 @@ function recordAuditTrail(activityType, details) {
 }
 
 function getAuditTrail() {
-  try {
-    return JSON.parse(localStorage.getItem(PT_AUDIT_KEY) || "[]");
-  } catch (e) { return []; }
+  return _auditCache;
 }
 
 /* ============================================
@@ -2375,13 +2348,11 @@ function exportAuditCSV() {
 var PT_VEHICLES_KEY = "pt_vehicles";
 
 function getVehicles() {
-  try {
-    return JSON.parse(localStorage.getItem(PT_VEHICLES_KEY) || "[]");
-  } catch (e) { return []; }
+  return _vehiclesCache;
 }
 
 function saveVehicles(vehicles) {
-  localStorage.setItem(PT_VEHICLES_KEY, JSON.stringify(vehicles));
+  _vehiclesCache = vehicles;
 }
 
 function addVehicle(vehicle) {
@@ -2392,6 +2363,7 @@ function addVehicle(vehicle) {
   vehicles.unshift(vehicle);
   saveVehicles(vehicles);
   recordAuditTrail("vehicle_add", { vehicleId: vehicle.id, vehicleNumber: vehicle.vehicleNumber, driverName: vehicle.driverName });
+  saveVehicleToApi(vehicle);
   return vehicle;
 }
 
@@ -2405,6 +2377,7 @@ function updateVehicle(id, updates) {
       vehicles[i].updatedAt = new Date().toISOString();
       saveVehicles(vehicles);
       recordAuditTrail("vehicle_update", { vehicleId: id, changes: updates });
+      updateVehicleOnApi(id, updates);
       return vehicles[i];
     }
   }
@@ -2416,6 +2389,7 @@ function deleteVehicle(id) {
   var filtered = vehicles.filter(function (v) { return v.id !== id; });
   saveVehicles(filtered);
   recordAuditTrail("vehicle_delete", { vehicleId: id });
+  deleteVehicleFromApi(id);
 }
 
 function getVehicleById(id) {
@@ -2694,6 +2668,89 @@ function closeQuickVehicleModal() {
   }
 }
 
+
+// ---------- Fetch Vehicles from PratapTravels-Data API ----------
+async function fetchVehiclesFromApi() {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return null;
+
+  try {
+    var separator = apiUrl.indexOf("?") !== -1 ? "&" : "?";
+    var fetchUrl = apiUrl + separator + "type=vehicle";
+    var resp = await fetch(fetchUrl, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+    });
+
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    var result = await resp.json();
+    var vehicles = Array.isArray(result) ? result : (result.vehicles || []);
+
+    _vehiclesCache = vehicles;
+    return vehicles;
+  } catch (e) {
+    console.warn("Vehicle API GET failed:", e.message);
+  }
+  return null;
+}
+
+// ---------- Save Vehicle to PratapTravels-Data API ----------
+function saveVehicleToApi(vehicle) {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return;
+  try {
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ type: "vehicle_data", data: vehicle }),
+    }).catch(function () { /* fire-and-forget */ });
+  } catch (e) { /* ignore */ }
+}
+
+// ---------- Update Vehicle on PratapTravels-Data API ----------
+function updateVehicleOnApi(id, data) {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return;
+  try {
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ type: "vehicle_update", id: id, data: data }),
+    }).catch(function () { /* fire-and-forget */ });
+  } catch (e) { /* ignore */ }
+}
+
+// ---------- Delete Vehicle from PratapTravels-Data API ----------
+function deleteVehicleFromApi(id) {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return;
+  try {
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ type: "vehicle_delete", id: id }),
+    }).catch(function () { /* fire-and-forget */ });
+  } catch (e) { /* ignore */ }
+}
+
+// ---------- Save Booking to PratapTravels-Data API ----------
+function saveBookingToApi(booking) {
+  var apiUrl = getDataApiUrl();
+  if (!apiUrl) return;
+  try {
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      mode: "cors",
+      body: JSON.stringify({ type: "booking_data", data: booking }),
+    }).catch(function () { /* fire-and-forget */ });
+  } catch (e) { /* ignore */ }
+}
+
 // ---------- Assign vehicle to booking ----------
 function assignVehicleToBooking(bookingId, vehicleId) {
   if (!bookingId || !vehicleId) return;
@@ -2705,7 +2762,7 @@ function assignVehicleToBooking(bookingId, vehicleId) {
       break;
     }
   }
-  localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+  _bookingsCache = bookings;
 
   // Update vehicle status to booked
   updateVehicle(vehicleId, { status: "booked" });
@@ -2724,7 +2781,7 @@ function releaseVehicleFromBooking(bookingId) {
       break;
     }
   }
-  localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+  _bookingsCache = bookings;
   if (vehicleId) {
     updateVehicle(vehicleId, { status: "available" });
     recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
@@ -2742,7 +2799,7 @@ function changeBookingStatus(bookingId, newStatus) {
         updateVehicle(vehicleId, { status: "available" });
         recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
       }
-      localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+      _bookingsCache = bookings;
       recordAuditTrail("booking_status_change", { bookingId: bookingId, newStatus: newStatus });
       break;
     }
@@ -2911,7 +2968,7 @@ function initConfirmBookingForm() {
         break;
       }
     }
-    localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(updatedBookings));
+    _bookingsCache = updatedBookings;
 
     closeConfirmBookingModal();
     renderBookingTable();
@@ -3003,8 +3060,16 @@ document.addEventListener("DOMContentLoaded", async function () {
   // Init booking dashboard (booking.html)
   if (document.getElementById("bookingTableBody")) {
     await fetchBookingsFromApi();
+    await fetchVehiclesFromApi();
     renderBookingTable();
     updateBookingKPIs();
+  }
+
+  // Init vehicle dashboard (vehicle.html)
+  if (document.getElementById("vehicleTableBody")) {
+    await fetchVehiclesFromApi();
+    renderVehicleTable();
+    updateVehicleKPIs();
   }
 
   // Init audit trail dashboard (audit-trail.html)

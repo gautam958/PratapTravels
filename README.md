@@ -15,6 +15,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - [Referral Tracking](#referral-tracking)
 - [Booking Dashboard](#booking-dashboard)
 - [Audit Trail](#audit-trail)
+- [Vehicle Master](#vehicle-master)
 - [PratapTravels-Data Azure Function](#prataptravels-data-azure-function)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
@@ -54,6 +55,8 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Visitor Tracking** — Automatically tracks page views and sends data to Azure Function API
 - **Self-Referral Prevention** — Users cannot use their own referral code in a booking
 - **Audit Trail** — All user interactions on the website are logged for admin review
+- **Hindi/English Language Toggle** — Full i18n support; data always saves in English regardless of UI language
+- **API-First Architecture** — All data stored via Azure Function APIs (no localStorage for data storage)
 
 ### 👥 Visitors Dashboard (`visitors.html`)
 
@@ -74,7 +77,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Filters** — Status (All/Confirmed/Pending/Cancelled), Date (All/Today/7 Days/30 Days)
 - **Table** — Booking ID, Name, Phone, Route, Date, Time, Trip Type, Passengers, Referral, Status, Created
 - **Export CSV** — Download all bookings as CSV
-- **Data source:** localStorage (`pt_bookings`) + PratapTravels-Data Azure Function API
+- **Data source:** PratapTravels-Data Azure Function API (in-memory cache)
 - Protected by **Google Sign-In**
 
 ### 📜 Audit Trail (`audit-trail.html`)
@@ -86,7 +89,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Table** — Event ID, Type (color-coded badges), Details, Page, Timestamp, Visitor
 - **Export CSV** — Download all audit events as CSV
 - **Auto-tracked events:** page visits, booking submissions, referral code generation
-- **Data source:** localStorage (`pt_audit_trail`) + PratapTravels-Data Azure Function API
+- **Data source:** PratapTravels-Data Azure Function API (in-memory cache)
 - Protected by **Google Sign-In**
 
 ### 🎨 Design
@@ -716,11 +719,11 @@ The admin can view all customer bookings in a dedicated dashboard at `booking.ht
   "name": "Customer Name",
   "phone": "7991182086",
   "email": "customer@example.com",
-  "route": "Deoghar → Basukinath",
+  "route": "Basukinath",  // Always saved in English
   "date": "2026-07-01",
   "time": "08:00",
   "passengers": "4",
-  "trip_type": "One-Way",
+  "trip_type": "One Way",  // Always saved in English
   "remarks": "Airport pickup needed",
   "referral_code": "PTABC1234",
   "createdAt": "2026-06-26T...",
@@ -784,6 +787,61 @@ The admin can view all user activities on the website in a dedicated dashboard a
 - **Export CSV** — Download filtered events as CSV
 - Protected by **Google Sign-In**
 
+
+---
+
+## Vehicle Master
+
+The admin can manage vehicles and drivers in a dedicated dashboard at `vehicle.html`. Vehicles are assigned to bookings during the confirmation workflow.
+
+### How It Works
+
+- Admin adds vehicles with number, type, seats, driver name, and driver phone
+- Vehicles have status: Available, Booked, or Maintenance
+- When a booking is confirmed, the admin assigns a vehicle from the dropdown (or adds a new one inline)
+- Vehicle status auto-updates to "Booked" on assignment and "Available" on release/cancellation
+- Vehicle schedule view shows all upcoming bookings for a specific vehicle
+
+### Vehicle Data Structure
+
+```json
+{
+  "id": "VH1719720000000_abc1",
+  "vehicleNumber": "JH 01 AB 1234",
+  "vehicleType": "Sedan",
+  "seats": "4",
+  "driverName": "Ramesh Kumar",
+  "driverPhone": "7991182086",
+  "notes": "Well-maintained Swift Dzire",
+  "status": "available",
+  "createdAt": "2026-06-26T..."
+}
+```
+
+### Admin Dashboard (`vehicle.html`)
+
+- **KPI Cards:** Total Vehicles, Available, Booked, Maintenance
+- **Search** by vehicle number, driver name, type
+- **Filters** — Status (All / Available / Booked / Maintenance)
+- **Actions** — Edit, View Schedule, Delete
+- **Quick Add** — Add a new vehicle directly from the booking confirmation modal
+- **Export CSV** — Download all vehicles as CSV
+- Protected by **Google Sign-In**
+
+### Booking Confirmation Workflow
+
+1. New bookings appear with status "pending" on the bookings dashboard
+2. Admin clicks the ✅ button to open the confirm modal
+3. Selects a vehicle from the dropdown (or adds a new one)
+4. Sets pickup date, time, address, and admin notes
+5. On confirm: vehicle status → Booked, booking status → Confirmed
+6. On cancellation: vehicle status → Available (auto-released)
+
+### Data Source
+
+- **API:** PratapTravels-Data Azure Function (`type=vehicle`)
+- **Cache:** In-memory cache (`_vehiclesCache`) for fast reads
+- **Note:** Vehicle API support (`type=vehicle_data`, `type=vehicle_update`, `type=vehicle_delete`) must be implemented in the PratapTravels-Data Azure Function backend. Until then, vehicle data exists only in the browser's in-memory cache and is lost on page refresh.
 ---
 
 ## PratapTravels-Data Azure Function
@@ -802,9 +860,13 @@ https://communication-fn.azurewebsites.net/api/PratapTravels-Data?code=<FUNCTION
 | -------- | ------------------ | -------------------------------------------- |
 | **POST** | `booking_data`     | Save a new booking record                    |
 | **POST** | `audit_trail`      | Save a new audit trail event                 |
+| **POST** | `vehicle_data`     | Save a new vehicle record                    |
+| **POST** | `vehicle_update`   | Update an existing vehicle                   |
+| **POST** | `vehicle_delete`   | Delete a vehicle                             |
 | **PUT**  | `booking_data`     | Update an existing booking (by bookingId)    |
 | **GET**  | `type=booking`     | Get all bookings (requires function key)     |
 | **GET**  | `type=audit_trail` | Get all audit events (requires function key) |
+| **GET**  | `type=vehicle`     | Get all vehicles (requires function key)     |
 | **GET**  | (default)          | Get summary counts (requires function key)   |
 
 ### CORS
@@ -1015,6 +1077,7 @@ PratapTravels/
 ├── visitors.html                      # Admin visitor analytics dashboard
 ├── referral.html                      # Admin referral codes & redemptions dashboard
 ├── booking.html                       # Admin bookings dashboard (search, filters, export)
+├── vehicle.html                        # Admin vehicle master dashboard (CRUD + schedule)
 ├── audit-trail.html                   # Admin audit trail dashboard (activity log)
 ├── Booking.json                       # Booking data seed file
 ├── AuditTrail.json                    # Audit trail data seed file
