@@ -13,6 +13,11 @@ var PT_CONFIG = {
     "https://communication-fn.azurewebsites.net/api/PratapTravels-Referral",
   REFERRAL_API_KEY: "kakdkOqqtrdfcGM6TKFRPp8muzHwh4FPgod3r_5MQ8mWAzFuqCGwgQ==",
 
+  // Azure Function API for bookings & audit trail (PratapTravels-Data)
+  DATA_API_URL:
+    "https://communication-fn.azurewebsites.net/api/PratapTravels-Data",
+  DATA_API_KEY: "_krvSWc_J0LIViJK7qhfsE1HA776dnziTQKrO_3_LAs-AzFuRHoZ-A==",
+
   // Google OAuth Client ID for admin access
   GOOGLE_CLIENT_ID:
     "529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com",

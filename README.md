@@ -13,6 +13,9 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - [Features](#features)
 - [Visitor Tracking](#visitor-tracking)
 - [Referral Tracking](#referral-tracking)
+- [Booking Dashboard](#booking-dashboard)
+- [Audit Trail](#audit-trail)
+- [PratapTravels-Data Azure Function](#prataptravels-data-azure-function)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup & Usage](#setup--usage)
@@ -49,6 +52,8 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Back-to-Top Button** — Appears on scroll, smooth scrolls to top
 - **Favicon** — Custom logo (`prataplog.jpeg`)
 - **Visitor Tracking** — Automatically tracks page views and sends data to Azure Function API
+- **Self-Referral Prevention** — Users cannot use their own referral code in a booking
+- **Audit Trail** — All user interactions on the website are logged for admin review
 
 ### 👥 Visitors Dashboard (`visitors.html`)
 
@@ -61,6 +66,29 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Data source:** Azure Function API with localStorage fallback
 - Protected by **Google Sign-In** — only authorized Google accounts can access (via `ALLOWED_EMAILS` env var)
 
+### 📋 Bookings Dashboard (`booking.html`)
+
+- **Google Sign-In** — Same admin auth as visitors dashboard
+- **KPI Cards** — Total Bookings, Confirmed, Pending, With Referral
+- **Search** by name, phone, route, referral code
+- **Filters** — Status (All/Confirmed/Pending/Cancelled), Date (All/Today/7 Days/30 Days)
+- **Table** — Booking ID, Name, Phone, Route, Date, Time, Trip Type, Passengers, Referral, Status, Created
+- **Export CSV** — Download all bookings as CSV
+- **Data source:** localStorage (`pt_bookings`) + PratapTravels-Data Azure Function API
+- Protected by **Google Sign-In**
+
+### 📜 Audit Trail (`audit-trail.html`)
+
+- **Google Sign-In** — Same admin auth as visitors dashboard
+- **KPI Cards** — Total Events, Bookings, Referral Events, Today's Events
+- **Search** across event type, details, page, visitor ID
+- **Filters** — Type (All/Page Visits/Bookings/Referral Generated/Referral Redeemed/Clicks), Date (All/Today/7 Days/30 Days)
+- **Table** — Event ID, Type (color-coded badges), Details, Page, Timestamp, Visitor
+- **Export CSV** — Download all audit events as CSV
+- **Auto-tracked events:** page visits, booking submissions, referral code generation
+- **Data source:** localStorage (`pt_audit_trail`) + PratapTravels-Data Azure Function API
+- Protected by **Google Sign-In**
+
 ### 🎨 Design
 
 - Fully responsive (mobile, tablet, desktop)
@@ -68,6 +96,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - Smooth transitions and hover effects throughout
 - Gold (`#f39c12`) accent color on navy (`#1a5276`) primary
 - AES-GCM encryption module (`crypto.js`) for secure data handling
+- 4-column admin cards grid on desktop, 2-column on tablet, 1-column on mobile
 
 ---
 
@@ -445,13 +474,15 @@ The site includes a **Refer & Win** program that rewards referrers and gives dis
 
 ### How It Works
 
-- Users generate a unique referral code (format: `PT` + 3 letters + 4 digits)
+- Users generate a unique referral code by entering **name** and **phone number** (format: `PT` + 3 letters + 4 digits)
+- Phone number is required to prevent **self-referral** — a user cannot use their own code in a booking
 - Share the code via WhatsApp or clipboard
 - When a new customer uses the code in the booking form, both parties benefit:
-  - **Referrer:** ₹50 reward balance
+  - **Referrer:** ₹50 reward balance (updated locally via `updateReferrerStatsOnRedemption()`)
   - **New Customer:** ₹50 discount on first booking
 - Code is pre-filled via `?ref=CODE` URL parameter
-- Stats (total referrals, rewards, balance) are fetched from the backend
+- Stats (total referrals, rewards, balance) are fetched from the backend and updated in localStorage
+- **Self-referral prevention:** During booking, if the customer's phone matches the code owner's phone, the referral code is rejected with a toast message
 
 ### Referral Data Structure
 
@@ -667,21 +698,311 @@ private static IActionResult HandleGetAll(List<dynamic> referralsList, ILogger l
 
 ---
 
+## Booking Dashboard
+
+The admin can view all customer bookings in a dedicated dashboard at `booking.html`.
+
+### How It Works
+
+- When a user submits the booking form, the data is saved to localStorage (`pt_bookings`) and sent to the **PratapTravels-Data** Azure Function
+- The admin dashboard loads bookings from localStorage, with search and filter support
+- Each booking includes: ID, name, phone, email, route, date, time, passengers, trip type, referral code, status, and timestamp
+
+### Booking Data Structure
+
+```json
+{
+  "bookingId": "BK17197200000002086",
+  "name": "Customer Name",
+  "phone": "7991182086",
+  "email": "customer@example.com",
+  "route": "Deoghar → Basukinath",
+  "date": "2026-07-01",
+  "time": "08:00",
+  "passengers": "4",
+  "trip_type": "One-Way",
+  "remarks": "Airport pickup needed",
+  "referral_code": "PTABC1234",
+  "createdAt": "2026-06-26T...",
+  "status": "confirmed"
+}
+```
+
+### Admin Dashboard (`booking.html`)
+
+- **KPI Cards:** Total Bookings, Confirmed, Pending, With Referral
+- **Search** by name, phone, route, referral code
+- **Filters** — Status (All / Confirmed / Pending / Cancelled), Date (All / Today / Last 7 Days / Last 30 Days)
+- **Export CSV** — Download filtered bookings as CSV
+- Protected by **Google Sign-In**
+
+---
+
+## Audit Trail
+
+The admin can view all user activities on the website in a dedicated dashboard at `audit-trail.html`.
+
+### How It Works
+
+- Every page visit, booking submission, and referral code generation is recorded via `recordAuditTrail()`
+- Records are saved to localStorage (`pt_audit_trail`) and sent to the **PratapTravels-Data** Azure Function
+- Each event includes: event ID, activity type, details (JSON), page, timestamp, and visitor ID
+
+### Tracked Activity Types
+
+| Type                | Description                                                 |
+| ------------------- | ----------------------------------------------------------- |
+| `page_visit`        | Fires on every page load (index.html only, not admin pages) |
+| `booking_submit`    | Fires when a booking form is submitted                      |
+| `referral_generate` | Fires when a user generates a new referral code             |
+| `click`             | Fires on tracked button clicks (extensible)                 |
+
+### Audit Data Structure
+
+```json
+{
+  "id": "AUD1719720000000_abc1",
+  "type": "booking_submit",
+  "details": {
+    "bookingId": "BK...",
+    "name": "Customer",
+    "phone": "7991182086",
+    "route": "Deoghar → Basukinath",
+    "referral_code": "PTABC1234"
+  },
+  "page": "index.html",
+  "timestamp": "2026-06-26T...",
+  "visitorId": "vid_xxxxx"
+}
+```
+
+### Admin Dashboard (`audit-trail.html`)
+
+- **KPI Cards:** Total Events, Bookings, Referral Events, Today's Events
+- **Search** across event type, details, page, visitor ID
+- **Filters** — Type (All / Page Visits / Bookings / Referral Generated / Referral Redeemed / Clicks), Date (All / Today / Last 7 Days / Last 30 Days)
+- **Export CSV** — Download filtered events as CSV
+- Protected by **Google Sign-In**
+
+---
+
+## PratapTravels-Data Azure Function
+
+A dedicated Azure Function that handles **bookings data** and **audit trail** storage. This runs alongside the existing `visitors` and `PratapTravels-Referral` functions in the same `communication-fn` Function App.
+
+### Function URL
+
+```
+https://communication-fn.azurewebsites.net/api/PratapTravels-Data?code=<FUNCTION_KEY>
+```
+
+### Supported HTTP Methods
+
+| Method   | Type               | Description                                  |
+| -------- | ------------------ | -------------------------------------------- |
+| **POST** | `booking_data`     | Save a new booking record                    |
+| **POST** | `audit_trail`      | Save a new audit trail event                 |
+| **PUT**  | `booking_data`     | Update an existing booking (by bookingId)    |
+| **GET**  | `type=booking`     | Get all bookings (requires function key)     |
+| **GET**  | `type=audit_trail` | Get all audit events (requires function key) |
+| **GET**  | (default)          | Get summary counts (requires function key)   |
+
+### CORS
+
+Requests from the following origins are allowed:
+
+- `https://gautam958web.in`
+- `https://agreeable-meadow-041d69800.7.azurestaticapps.net`
+
+### Data Storage
+
+Booking and audit trail records are stored in JSON files on the Azure Function's temp filesystem:
+
+- `bookings.json` — All customer booking records
+- `audit_trail.json` — All user activity events
+
+> **⚠️ Note:** Data is ephemeral and will be lost on function restart.
+
+### Environment Variables
+
+| Variable            | Description                          |
+| ------------------- | ------------------------------------ |
+| `DATA_FUNCTION_KEY` | Function key for admin GET endpoints |
+
+### Function Source Code (`run.csx`)
+
+```csharp
+#r "Microsoft.Azure.WebJobs.Extensions.Http"
+#r "Microsoft.AspNetCore.Http"
+#r "Microsoft.AspNetCore.Mvc"
+#r "Newtonsoft.Json"
+
+using System.Net;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using System.IO;
+using System.Net.Http;
+using System.Linq;
+using System.Text;
+using System.Collections.Generic;
+using System;
+
+public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
+{
+    log.LogInformation($"PratapTravels-Data function triggered. Method: {req.Method}");
+
+    string origin = req.Headers["Origin"].FirstOrDefault();
+
+    // Allowed origins — same as referral function
+    var allowedOrigins = new[] {
+        "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
+    };
+
+    if (string.IsNullOrEmpty(origin) || !allowedOrigins.Contains(origin))
+    {
+        log.LogWarning($"Blocked request from unauthorized origin: {origin}");
+        return new StatusCodeResult(StatusCodes.Status403Forbidden);
+    }
+
+    // --- JSON file storage — same pattern as referral function ---
+    string bookingsJsonFile = "bookings.json";
+    string auditJsonFile = "audit_trail.json";
+
+    string rootPath = Environment.GetEnvironmentVariable("HOME") ?? "D:\\home";
+    string bookingsFilePath = Path.Combine(rootPath, "data", bookingsJsonFile);
+    string auditFilePath = Path.Combine(rootPath, "data", auditJsonFile);
+    Directory.CreateDirectory(Path.GetDirectoryName(bookingsFilePath));
+
+    if (!File.Exists(bookingsFilePath)) File.WriteAllText(bookingsFilePath, "[]");
+    if (!File.Exists(auditFilePath)) File.WriteAllText(auditFilePath, "[]");
+
+    var bookingsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(bookingsFilePath));
+    var auditList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
+
+    // --- GET: Fetch all records ---
+    if (string.Equals(req.Method, "GET", StringComparison.OrdinalIgnoreCase))
+    {
+        string dataType = req.Query["type"];
+
+        // Admin endpoint: require function key
+        string functionKey = req.Headers["x-functions-key"].FirstOrDefault() ?? req.Query["code"];
+        string expectedKey = Environment.GetEnvironmentVariable("DATA_FUNCTION_KEY") ?? "";
+        if (string.IsNullOrEmpty(expectedKey) || functionKey != expectedKey)
+            return new ForbidResult();
+
+        if (dataType == "booking")
+        {
+            var sortedBookings = bookingsList.OrderByDescending(b => b.createdAt).ToList();
+            return new OkObjectResult(new { total = sortedBookings.Count, bookings = sortedBookings });
+        }
+
+        if (dataType == "audit_trail")
+        {
+            var sortedAudit = auditList.OrderByDescending(a => a.timestamp).ToList();
+            return new OkObjectResult(new { total = sortedAudit.Count, events = sortedAudit });
+        }
+
+        // Default: return summary counts
+        return new OkObjectResult(new { totalBookings = bookingsList.Count, totalAuditEvents = auditList.Count });
+    }
+
+    // --- POST: Save new record ---
+    if (string.Equals(req.Method, "POST", StringComparison.OrdinalIgnoreCase))
+    {
+        string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+        dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
+        string dataType = data?.type?.ToString() ?? "";
+
+        // Handle booking_data (from frontend saveBookingLocally)
+        if (dataType == "booking_data")
+        {
+            dynamic bookingData = data.data;
+            bookingData.savedAt = DateTime.UtcNow.ToString("o");
+            bookingsList.Add(bookingData);
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            log.LogInformation($"Booking saved: {bookingData.bookingId}");
+            return new OkObjectResult(new { success = true, message = "Booking data saved" });
+        }
+
+        // Handle audit_trail (from frontend recordAuditTrail)
+        if (dataType == "audit_trail")
+        {
+            dynamic auditRecord = data.data;
+            auditRecord.serverTimestamp = DateTime.UtcNow.ToString("o");
+            auditList.Add(auditRecord);
+            File.WriteAllText(auditFilePath, JsonConvert.SerializeObject(auditList, Formatting.Indented));
+            log.LogInformation($"Audit event saved: {auditRecord.type}");
+            return new OkObjectResult(new { success = true, message = "Audit event saved" });
+        }
+
+        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data' or 'audit_trail'." });
+    }
+
+    // --- PUT: Update existing record ---
+    if (string.Equals(req.Method, "PUT", StringComparison.OrdinalIgnoreCase))
+    {
+        string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+        dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
+        string dataType = data?.type?.ToString() ?? "";
+
+        if (dataType == "booking_data")
+        {
+            dynamic update = data.data;
+            string bookingId = update?.bookingId?.ToString();
+
+            if (string.IsNullOrEmpty(bookingId))
+                return new BadRequestObjectResult(new { error = "bookingId is required for update" });
+
+            int index = -1;
+            for (int i = 0; i < bookingsList.Count; i++)
+            {
+                if (bookingsList[i].bookingId?.ToString() == bookingId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = $"Booking {bookingId} not found" });
+
+            var existing = bookingsList[index];
+            if (update.status != null) existing.status = update.status;
+            if (update.remarks != null) existing.remarks = update.remarks;
+            existing.updatedAt = DateTime.UtcNow.ToString("o");
+            bookingsList[index] = existing;
+
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            log.LogInformation($"Booking updated: {bookingId}");
+            return new OkObjectResult(new { success = true, message = "Booking updated" });
+        }
+
+        return new BadRequestObjectResult(new { error = "Unknown data type for PUT" });
+    }
+
+    return new BadRequestObjectResult("Requested HTTP method verb is unsupported.");
+}
+```
+
+> **⚠️ Note:** This function uses the Azure Function temp filesystem for storage. Data is ephemeral and will be lost on function restart.
+
+---
+
 ## Tech Stack
 
-| Category            | Technology                                                                 |
-| ------------------- | -------------------------------------------------------------------------- |
-| **Frontend**        | HTML5, CSS3, JavaScript (ES5+/ES6+)                                        |
-| **JS Files**        | `main.js` (portfolio + visitor tracking), `crypto.js` (AES-GCM encryption) |
-| **Styling**         | CSS Custom Properties, Flexbox, CSS Grid                                   |
-| **Fonts**           | System (`Segoe UI`)                                                        |
-| **Icons**           | Emoji + Inline SVGs                                                        |
-| **Backend API**     | Azure Functions (Visitor Tracking)                                         |
-| **Auth**            | Google Identity Services (OAuth 2.0)                                       |
-| **Email**           | Azure Function (SMTP via Gmail)                                             |
-| **Hosting**         | Azure Static Web Apps                                                      |
-| **CI/CD**           | GitHub Actions                                                             |
-| **Version Control** | Git & GitHub                                                               |
+| Category            | Technology                                                                                      |
+| ------------------- | ----------------------------------------------------------------------------------------------- |
+| **Frontend**        | HTML5, CSS3, JavaScript (ES5+/ES6+)                                                             |
+| **JS Files**        | `main.js` (all logic + dashboards), `crypto.js` (AES-GCM encryption), `i18n.js` (Hindi/English) |
+| **Styling**         | CSS Custom Properties, Flexbox, CSS Grid                                                        |
+| **Fonts**           | System (`Segoe UI`)                                                                             |
+| **Icons**           | Emoji + Inline SVGs                                                                             |
+| **Backend API**     | Azure Functions (Visitors, Referrals, Bookings & Audit Trail)                                   |
+| **Auth**            | Google Identity Services (OAuth 2.0)                                                            |
+| **Email**           | Azure Function (SMTP via Gmail)                                                                 |
+| **Hosting**         | Azure Static Web Apps                                                                           |
+| **CI/CD**           | GitHub Actions                                                                                  |
+| **Version Control** | Git & GitHub                                                                                    |
 
 ---
 
@@ -689,15 +1010,22 @@ private static IActionResult HandleGetAll(List<dynamic> referralsList, ILogger l
 
 ```
 PratapTravels/
-├── index.html                         # Main landing page
-├── visitors.html                      # Admin visitor dashboard
+├── index.html                         # Main landing page (booking modal + refer & win)
+├── admin.html                         # Admin dashboard entry (links to all dashboards)
+├── visitors.html                      # Admin visitor analytics dashboard
+├── referral.html                      # Admin referral codes & redemptions dashboard
+├── booking.html                       # Admin bookings dashboard (search, filters, export)
+├── audit-trail.html                   # Admin audit trail dashboard (activity log)
+├── Booking.json                       # Booking data seed file
+├── AuditTrail.json                    # Audit trail data seed file
 ├── config.js                          # Azure Function + Google OAuth config
 ├── config.example.js                  # Config template (reference)
 ├── css/
 │   └── style.css                      # All styles (responsive, animations, components)
 ├── js/
-│   ├── main.js                        # Portfolio JS + visitor tracking + dashboard
-│   └── crypto.js                      # AES-GCM encryption module (Web Crypto API)
+│   ├── main.js                        # All JS: referral, booking, audit, dashboards, tracking
+│   ├── crypto.js                      # AES-GCM encryption module (Web Crypto API)
+│   └── i18n.js                        # Hindi/English language support
 ├── images/
 │   ├── hero/                          # Hero banner + logo
 │   │   ├── pratapHeroImage.jpeg
@@ -753,9 +1081,19 @@ cp config.example.js config.js
 
 ```javascript
 var PT_CONFIG = {
-  // Azure Function API
+  // Azure Function API — Visitor Tracking
   AZURE_FUNCTION_URL: "https://communication-fn.azurewebsites.net/api/visitors",
   AZURE_FUNCTION_KEY: "YOUR_FUNCTION_KEY_HERE",
+
+  // Azure Function API — Referral Tracking (PratapTravels-Referral)
+  REFERRAL_API_URL:
+    "https://communication-fn.azurewebsites.net/api/PratapTravels-Referral",
+  REFERRAL_API_KEY: "YOUR_FUNCTION_KEY_HERE",
+
+  // Azure Function API — Bookings & Audit Trail (PratapTravels-Data)
+  DATA_API_URL:
+    "https://communication-fn.azurewebsites.net/api/PratapTravels-Data",
+  DATA_API_KEY: "YOUR_FUNCTION_KEY_HERE",
 
   // Google OAuth
   GOOGLE_CLIENT_ID: "YOUR_CLIENT_ID.apps.googleusercontent.com",
@@ -789,7 +1127,8 @@ The booking form sends data to the **same visitors Azure Function** that already
 1. User fills booking form and submits
 2. Frontend POSTs booking data to the `visitors` Azure Function with `type: "booking"` in the payload
 3. Azure Function detects the `type` field, sends a formatted HTML booking email to `prempratap7455@gmail.com`
-4. If the API fails, opens WhatsApp with the booking details as fallback
+4. Booking data is also saved to the **PratapTravels-Data** Azure Function (via `saveBookingLocally()`) for the admin bookings dashboard
+5. If the API fails, opens WhatsApp with the booking details as fallback
 
 ### Request Body
 

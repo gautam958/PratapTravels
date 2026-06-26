@@ -261,6 +261,16 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
+      // Self-referral prevention: check if booking phone matches code owner's phone
+      if (referralVal) {
+        var codeOwnerData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+        if (codeOwnerData && codeOwnerData.phone && codeOwnerData.phone === phoneVal) {
+          showToast("You cannot use your own referral code!", "error");
+          referralVal = "";
+          if (referralInput) referralInput.value = "";
+        }
+      }
+
       // Send booking to Azure Function API (same visitors endpoint)
       var bookingPayload = {
         type: "booking",
@@ -315,6 +325,8 @@ document.addEventListener("DOMContentLoaded", function () {
             createdAt: new Date().toISOString(),
             status: "completed"
           });
+          // Update referrer's stats locally
+          updateReferrerStatsOnRedemption(referralVal, phoneVal, bookingId);
         }
       }
 
@@ -335,11 +347,45 @@ document.addEventListener("DOMContentLoaded", function () {
           .then(function () {
             showBookingSuccess(false);
             handleReferralRedemption(bookingId);
+            // Save booking locally and to audit trail
+            saveBookingLocally({
+              bookingId: bookingId,
+              name: nameVal,
+              phone: phoneVal,
+              email: emailVal,
+              route: routeVal,
+              date: dateVal,
+              time: timeVal,
+              passengers: passengersVal,
+              trip_type: typeVal,
+              remarks: remarksVal,
+              referral_code: referralVal,
+              createdAt: new Date().toISOString(),
+              status: "confirmed"
+            });
+            recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
           })
           .catch(function (error) {
             console.error("Booking API failed:", error);
             showBookingSuccess(true);
             handleReferralRedemption(bookingId);
+            // Save booking locally even on API failure
+            saveBookingLocally({
+              bookingId: bookingId,
+              name: nameVal,
+              phone: phoneVal,
+              email: emailVal,
+              route: routeVal,
+              date: dateVal,
+              time: timeVal,
+              passengers: passengersVal,
+              trip_type: typeVal,
+              remarks: remarksVal,
+              referral_code: referralVal,
+              createdAt: new Date().toISOString(),
+              status: "confirmed"
+            });
+            recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
           })
           .finally(function () {
             if (submitBtn) {
@@ -351,6 +397,22 @@ document.addEventListener("DOMContentLoaded", function () {
         // No API configured: fallback to WhatsApp directly
         showBookingSuccess(true);
         handleReferralRedemption(bookingId);
+        saveBookingLocally({
+          bookingId: bookingId,
+          name: nameVal,
+          phone: phoneVal,
+          email: emailVal,
+          route: routeVal,
+          date: dateVal,
+          time: timeVal,
+          passengers: passengersVal,
+          trip_type: typeVal,
+          remarks: remarksVal,
+          referral_code: referralVal,
+          createdAt: new Date().toISOString(),
+          status: "confirmed"
+        });
+        recordAuditTrail("booking_submit", { bookingId: bookingId, name: nameVal, phone: phoneVal, route: routeVal, referral_code: referralVal });
         if (submitBtn) {
           submitBtn.textContent = "🚗 Submit Booking Request";
           submitBtn.disabled = false;
@@ -551,6 +613,8 @@ function openBookingModal() {
 var PT_REFER_KEY = "pt_referral";
 var PT_REFER_STATS_KEY = "pt_referral_stats";
 var PT_LOCAL_REDEMPTIONS_KEY = "pt_local_redemptions";
+var PT_BOOKINGS_KEY = "pt_bookings";
+var PT_AUDIT_KEY = "pt_audit_trail";
 
 // ---------- Get Referral API URL ----------
 function getReferralApiUrl() {
@@ -567,15 +631,18 @@ function getReferralApiUrl() {
   return null;
 }
 
-// ---------- Generate a unique referral code from name ----------
+// ---------- Generate a unique referral code from name + phone ----------
 async function generateReferralCode() {
   var nameInput = document.getElementById("referNameInput");
+  var phoneInput = document.getElementById("referPhoneInput");
   var outputDiv = document.getElementById("referCodeOutput");
   var codeDisplay = document.getElementById("referCodeDisplay");
 
   if (!nameInput || !outputDiv || !codeDisplay) return;
 
   var name = nameInput.value.trim();
+  var phone = phoneInput ? phoneInput.value.trim().replace(/\s/g, "") : "";
+
   if (!name) {
     nameInput.style.borderColor = "var(--danger)";
     nameInput.focus();
@@ -583,10 +650,21 @@ async function generateReferralCode() {
   }
   nameInput.style.borderColor = "";
 
-  // Check if code already exists in localStorage
+  // Validate phone (required for self-referral prevention)
+  if (!phone || !/^[6-9]\d{9}$/.test(phone)) {
+    if (phoneInput) {
+      phoneInput.style.borderColor = "var(--danger)";
+      phoneInput.focus();
+    }
+    showToast("Please enter a valid 10-digit phone number", "error");
+    return;
+  }
+  if (phoneInput) phoneInput.style.borderColor = "";
+
+  // Check if code already exists for this phone
   var existing = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
   var code;
-  if (existing && existing.name === name) {
+  if (existing && existing.phone === phone) {
     code = existing.code;
   } else {
     var prefix = name.replace(/\s+/g, "").substring(0, 3).toUpperCase();
@@ -602,23 +680,13 @@ async function generateReferralCode() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         mode: "cors",
-        body: JSON.stringify({ name: name, code: code }),
+        body: JSON.stringify({ name: name, phone: phone, code: code }),
       });
 
       if (resp.ok) {
         var data = await resp.json();
         if (data.success) {
           code = data.code;
-          // Store locally with backend data
-          var refData = {
-            name: name,
-            code: code,
-            createdAt: new Date().toISOString(),
-            totalReferrals: data.totalReferrals || 0,
-            totalRewards: data.totalRewards || 0,
-            rewardBalance: data.rewardBalance || 0,
-          };
-          localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
         }
       }
     } catch (e) {
@@ -626,22 +694,24 @@ async function generateReferralCode() {
     }
   }
 
-  // Fallback: store locally if backend failed
-  if (!localStorage.getItem(PT_REFER_KEY)) {
-    var refData = {
-      name: name,
-      code: code,
-      createdAt: new Date().toISOString(),
-      totalReferrals: 0,
-      totalRewards: 0,
-      rewardBalance: 0,
-    };
-    localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
-  }
+  // Store locally with phone for self-referral prevention
+  var refData = {
+    name: name,
+    phone: phone,
+    code: code,
+    createdAt: new Date().toISOString(),
+    totalReferrals: (existing && existing.phone === phone) ? (existing.totalReferrals || 0) : 0,
+    totalRewards: (existing && existing.phone === phone) ? (existing.totalRewards || 0) : 0,
+    rewardBalance: (existing && existing.phone === phone) ? (existing.rewardBalance || 0) : 0,
+  };
+  localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
 
   codeDisplay.textContent = code;
   outputDiv.classList.remove("hidden");
   showToast("Referral code generated!", "success");
+
+  // Audit: referral code generated
+  recordAuditTrail("referral_generate", { code: code, name: name, phone: phone });
 }
 
 // ---------- Copy referral code to clipboard ----------
@@ -709,9 +779,11 @@ document.addEventListener("DOMContentLoaded", async function () {
   var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
   if (refData && refData.code) {
     var nameInput = document.getElementById("referNameInput");
+    var phoneInput = document.getElementById("referPhoneInput");
     var outputDiv = document.getElementById("referCodeOutput");
     var codeDisplay = document.getElementById("referCodeDisplay");
     if (nameInput) nameInput.value = refData.name;
+    if (phoneInput && refData.phone) phoneInput.value = refData.phone;
     if (codeDisplay) codeDisplay.textContent = refData.code;
     if (outputDiv) outputDiv.classList.remove("hidden");
 
@@ -924,7 +996,7 @@ function parseUA(ua) {
   return { device: device, browser: browser, os: os };
 }
 
-// ---------- Get Azure Function URL ----------
+// ---------- Get Azure Function URL (visitors) ----------
 function getVisitorApiUrl() {
   if (typeof PT_CONFIG !== "undefined" && PT_CONFIG.AZURE_FUNCTION_URL) {
     var url = PT_CONFIG.AZURE_FUNCTION_URL;
@@ -933,6 +1005,21 @@ function getVisitorApiUrl() {
       PT_CONFIG.AZURE_FUNCTION_KEY !== "YOUR_FUNCTION_KEY_HERE"
     ) {
       url += "?code=" + encodeURIComponent(PT_CONFIG.AZURE_FUNCTION_KEY);
+    }
+    return url;
+  }
+  return null;
+}
+
+// ---------- Get PratapTravels-Data Azure Function URL ----------
+function getDataApiUrl() {
+  if (typeof PT_CONFIG !== "undefined" && PT_CONFIG.DATA_API_URL) {
+    var url = PT_CONFIG.DATA_API_URL;
+    if (
+      PT_CONFIG.DATA_API_KEY &&
+      PT_CONFIG.DATA_API_KEY !== "YOUR_FUNCTION_KEY_HERE"
+    ) {
+      url += "?code=" + encodeURIComponent(PT_CONFIG.DATA_API_KEY);
     }
     return url;
   }
@@ -1789,7 +1876,377 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 });
 
-// ---------- Init Visitor Dashboard ----------
+/* ============================================
+   UPDATE REFERRER STATS ON REDEMPTION
+   When someone uses a referral code, update
+   the code owner's stats in localStorage
+   ============================================ */
+
+function updateReferrerStatsOnRedemption(referralCode, customerPhone, bookingId) {
+  // Update the local referral data if this is the current user's code
+  var refData = JSON.parse(localStorage.getItem(PT_REFER_KEY) || "null");
+  if (refData && refData.code === referralCode) {
+    refData.totalReferrals = (refData.totalReferrals || 0) + 1;
+    refData.totalRewards = (refData.totalRewards || 0) + 50;
+    refData.rewardBalance = (refData.rewardBalance || 0) + 50;
+    localStorage.setItem(PT_REFER_KEY, JSON.stringify(refData));
+    updateReferralStatsDisplay();
+  }
+
+  // Also update the all-referrals cache used by the admin dashboard
+  var allReferrals = JSON.parse(localStorage.getItem(REFERRAL_ALL_KEY) || "[]");
+  var found = false;
+  for (var i = 0; i < allReferrals.length; i++) {
+    if (allReferrals[i].code === referralCode) {
+      allReferrals[i].totalReferrals = (allReferrals[i].totalReferrals || 0) + 1;
+      allReferrals[i].totalRewards = (allReferrals[i].totalRewards || 0) + 50;
+      allReferrals[i].rewardBalance = (allReferrals[i].rewardBalance || 0) + 50;
+      allReferrals[i].totalRedemptions = (allReferrals[i].totalRedemptions || 0) + 1;
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    allReferrals.push({
+      code: referralCode,
+      name: refData && refData.code === referralCode ? refData.name : "-",
+      phone: refData && refData.code === referralCode ? refData.phone : "",
+      totalReferrals: 1,
+      totalRedemptions: 1,
+      totalRewards: 50,
+      rewardBalance: 50,
+      createdAt: new Date().toISOString()
+    });
+  }
+  localStorage.setItem(REFERRAL_ALL_KEY, JSON.stringify(allReferrals));
+}
+
+/* ============================================
+   BOOKING DATA STORAGE
+   Save all bookings to localStorage for
+   admin dashboard viewing
+   ============================================ */
+
+function saveBookingLocally(booking) {
+  var bookings = [];
+  try {
+    bookings = JSON.parse(localStorage.getItem(PT_BOOKINGS_KEY) || "[]");
+  } catch (e) { bookings = []; }
+  bookings.unshift(booking);
+  // Keep max 2000 bookings
+  if (bookings.length > 2000) bookings = bookings.slice(0, 2000);
+  localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+
+  // Try to save to PratapTravels-Data Azure Function API (fire-and-forget)
+  var apiUrl = getDataApiUrl();
+  if (apiUrl) {
+    try {
+      fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify({ type: "booking_data", data: booking }),
+      }).catch(function () { /* fire-and-forget */ });
+    } catch (e) { /* ignore */ }
+  }
+}
+
+function getBookings() {
+  try {
+    return JSON.parse(localStorage.getItem(PT_BOOKINGS_KEY) || "[]");
+  } catch (e) { return []; }
+}
+
+/* ============================================
+   AUDIT TRAIL
+   Record all user activities on index.html
+   ============================================ */
+
+function recordAuditTrail(activityType, details) {
+  var record = {
+    id: "AUD" + Date.now() + "_" + Math.random().toString(36).substring(2, 6),
+    type: activityType,
+    details: details || {},
+    page: window.location.pathname.split('/').pop() || 'index.html',
+    timestamp: new Date().toISOString(),
+    visitorId: getVisitorId()
+  };
+
+  var auditLog = [];
+  try {
+    auditLog = JSON.parse(localStorage.getItem(PT_AUDIT_KEY) || "[]");
+  } catch (e) { auditLog = []; }
+  auditLog.unshift(record);
+  // Keep max 5000 records
+  if (auditLog.length > 5000) auditLog = auditLog.slice(0, 5000);
+  localStorage.setItem(PT_AUDIT_KEY, JSON.stringify(auditLog));
+
+  // Try to send to PratapTravels-Data Azure Function API (fire-and-forget)
+  var apiUrl = getDataApiUrl();
+  if (apiUrl) {
+    try {
+      fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify({ type: "audit_trail", data: record }),
+      }).catch(function () { /* fire-and-forget */ });
+    } catch (e) { /* ignore */ }
+  }
+}
+
+function getAuditTrail() {
+  try {
+    return JSON.parse(localStorage.getItem(PT_AUDIT_KEY) || "[]");
+  } catch (e) { return []; }
+}
+
+/* ============================================
+   BOOKING ADMIN DASHBOARD
+   ============================================ */
+
+function renderBookingTable() {
+  var tbody = document.getElementById("bookingTableBody");
+  var emptyState = document.getElementById("emptyBookingState");
+  if (!tbody) return;
+
+  var bookings = getBookings();
+  var searchInput = document.getElementById("bookingSearch");
+  var query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+  // Status filter
+  var statusFilter = document.getElementById("bookingStatusFilter");
+  var statusVal = statusFilter ? statusFilter.value : "all";
+
+  // Date filter
+  var dateFilter = document.getElementById("bookingDateFilter");
+  var dateVal = dateFilter ? dateFilter.value : "all";
+
+  tbody.innerHTML = "";
+
+  var filtered = bookings;
+  if (query) {
+    filtered = filtered.filter(function (b) {
+      var haystack = [b.bookingId, b.name, b.phone, b.email, b.route, b.referral_code, b.trip_type]
+        .join(" ").toLowerCase();
+      return haystack.indexOf(query) !== -1;
+    });
+  }
+  if (statusVal && statusVal !== "all") {
+    filtered = filtered.filter(function (b) { return b.status === statusVal; });
+  }
+  if (dateVal && dateVal !== "all") {
+    var now = new Date();
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    filtered = filtered.filter(function (b) {
+      var bt = new Date(b.createdAt).getTime();
+      if (dateVal === "today") return bt >= todayStart;
+      if (dateVal === "week") return bt >= todayStart - 7 * 86400000;
+      if (dateVal === "month") return bt >= todayStart - 30 * 86400000;
+      return true;
+    });
+  }
+
+  // Update count
+  var countEl = document.getElementById("bookingCount");
+  if (countEl) countEl.textContent = filtered.length + " bookings";
+
+  if (filtered.length === 0) {
+    if (emptyState) {
+      var emptyMsg = emptyState.querySelector("p");
+      if (bookings.length === 0) {
+        emptyMsg.textContent = "No bookings yet. Bookings will appear here as users submit them.";
+      } else {
+        emptyMsg.textContent = "No results found.";
+      }
+      emptyState.classList.remove("hidden");
+    }
+    return;
+  }
+  if (emptyState) emptyState.classList.add("hidden");
+
+  filtered.forEach(function (b) {
+    var tr = document.createElement("tr");
+    var statusClass = b.status === "confirmed" ? "status-confirmed" : b.status === "cancelled" ? "status-cancelled" : "status-pending";
+    tr.innerHTML =
+      '<td><code class="vid-code">' + escapeHtml(b.bookingId || "-") + '</code></td>' +
+      '<td>' + escapeHtml(b.name || "-") + '</td>' +
+      '<td>' + escapeHtml(b.phone || "-") + '</td>' +
+      '<td>' + escapeHtml(b.route || "-") + '</td>' +
+      '<td>' + escapeHtml(b.date || "-") + '</td>' +
+      '<td>' + escapeHtml(b.time || "-") + '</td>' +
+      '<td>' + escapeHtml(b.trip_type || "-") + '</td>' +
+      '<td>' + escapeHtml(b.passengers || "-") + '</td>' +
+      '<td>' + (b.referral_code ? '<code class="vid-code">' + escapeHtml(b.referral_code) + '</code>' : '<span style="color:#999">-</span>') + '</td>' +
+      '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>' +
+      '<td><small>' + formatDate(b.createdAt) + '</small></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function updateBookingKPIs() {
+  var bookings = getBookings();
+  var total = bookings.length;
+  var confirmed = 0, pending = 0, withReferral = 0;
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].status === "confirmed") confirmed++;
+    else pending++;
+    if (bookings[i].referral_code) withReferral++;
+  }
+  var elTotal = document.getElementById("bkKpiTotal");
+  var elConfirmed = document.getElementById("bkKpiConfirmed");
+  var elPending = document.getElementById("bkKpiPending");
+  var elReferral = document.getElementById("bkKpiReferral");
+  if (elTotal) elTotal.textContent = total;
+  if (elConfirmed) elConfirmed.textContent = confirmed;
+  if (elPending) elPending.textContent = pending;
+  if (elReferral) elReferral.textContent = withReferral;
+}
+
+function exportBookingsCSV() {
+  var bookings = getBookings();
+  if (bookings.length === 0) { showToast("No data to export.", "error"); return; }
+  var headers = ["Booking ID","Name","Phone","Email","Route","Date","Time","Passengers","Trip Type","Referral Code","Status","Created"];
+  var rows = bookings.map(function (b) {
+    return [b.bookingId,b.name,b.phone,b.email,b.route,b.date,b.time,b.passengers,b.trip_type,b.referral_code,b.status,b.createdAt];
+  });
+  var csv = headers.join(",") + "\n" + rows.map(function (row) {
+    return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
+  }).join("\n");
+  downloadFile(csv, "pratap-travels-bookings.csv", "text/csv");
+  showToast("CSV exported.", "success");
+}
+
+/* ============================================
+   AUDIT TRAIL ADMIN DASHBOARD
+   ============================================ */
+
+function renderAuditTable() {
+  var tbody = document.getElementById("auditTableBody");
+  var emptyState = document.getElementById("emptyAuditState");
+  if (!tbody) return;
+
+  var records = getAuditTrail();
+  var searchInput = document.getElementById("auditSearch");
+  var query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+  var typeFilter = document.getElementById("auditTypeFilter");
+  var typeVal = typeFilter ? typeFilter.value : "all";
+
+  var dateFilter = document.getElementById("auditDateFilter");
+  var dateVal = dateFilter ? dateFilter.value : "all";
+
+  tbody.innerHTML = "";
+
+  var filtered = records;
+  if (query) {
+    filtered = filtered.filter(function (r) {
+      var haystack = [r.id, r.type, r.page, JSON.stringify(r.details)].join(" ").toLowerCase();
+      return haystack.indexOf(query) !== -1;
+    });
+  }
+  if (typeVal && typeVal !== "all") {
+    filtered = filtered.filter(function (r) { return r.type === typeVal; });
+  }
+  if (dateVal && dateVal !== "all") {
+    var now = new Date();
+    var todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    filtered = filtered.filter(function (r) {
+      var rt = new Date(r.timestamp).getTime();
+      if (dateVal === "today") return rt >= todayStart;
+      if (dateVal === "week") return rt >= todayStart - 7 * 86400000;
+      if (dateVal === "month") return rt >= todayStart - 30 * 86400000;
+      return true;
+    });
+  }
+
+  var countEl = document.getElementById("auditCount");
+  if (countEl) countEl.textContent = filtered.length + " events";
+
+  if (filtered.length === 0) {
+    if (emptyState) {
+      emptyState.classList.remove("hidden");
+    }
+    return;
+  }
+  if (emptyState) emptyState.classList.add("hidden");
+
+  filtered.forEach(function (r) {
+    var tr = document.createElement("tr");
+    var typeLabel = r.type.replace(/_/g, " ");
+    var detailsStr = r.details ? JSON.stringify(r.details) : "-";
+    if (detailsStr.length > 80) detailsStr = detailsStr.substring(0, 80) + "...";
+    var typeClass = "audit-type-info";
+    if (r.type.indexOf("booking") !== -1) typeClass = "audit-type-booking";
+    else if (r.type.indexOf("referral") !== -1) typeClass = "audit-type-referral";
+    else if (r.type.indexOf("visit") !== -1) typeClass = "audit-type-visit";
+    else if (r.type.indexOf("click") !== -1) typeClass = "audit-type-click";
+
+    tr.innerHTML =
+      '<td><code class="vid-code">' + escapeHtml(r.id || "-") + '</code></td>' +
+      '<td><span class="audit-type-badge ' + typeClass + '">' + escapeHtml(typeLabel) + '</span></td>' +
+      '<td><small title="' + escapeHtml(detailsStr) + '">' + escapeHtml(detailsStr) + '</small></td>' +
+      '<td>' + escapeHtml(r.page || "-") + '</td>' +
+      '<td><small>' + formatDate(r.timestamp) + '</small></td>' +
+      '<td><code class="vid-code">' + escapeHtml(shortId(r.visitorId)) + '</code></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function updateAuditKPIs() {
+  var records = getAuditTrail();
+  var total = records.length;
+  var bookings = 0, referrals = 0, visits = 0, clicks = 0;
+  var todayCount = 0;
+  var todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  var todayMs = todayStart.getTime();
+
+  for (var i = 0; i < records.length; i++) {
+    var r = records[i];
+    if (r.type.indexOf("booking") !== -1) bookings++;
+    if (r.type.indexOf("referral") !== -1) referrals++;
+    if (r.type.indexOf("visit") !== -1) visits++;
+    if (r.type.indexOf("click") !== -1) clicks++;
+    if (new Date(r.timestamp).getTime() >= todayMs) todayCount++;
+  }
+  var elTotal = document.getElementById("audKpiTotal");
+  var elBookings = document.getElementById("audKpiBookings");
+  var elReferrals = document.getElementById("audKpiReferrals");
+  var elToday = document.getElementById("audKpiToday");
+  if (elTotal) elTotal.textContent = total;
+  if (elBookings) elBookings.textContent = bookings;
+  if (elReferrals) elReferrals.textContent = referrals;
+  if (elToday) elToday.textContent = todayCount;
+}
+
+function exportAuditCSV() {
+  var records = getAuditTrail();
+  if (records.length === 0) { showToast("No data to export.", "error"); return; }
+  var headers = ["ID","Type","Details","Page","Timestamp","Visitor ID"];
+  var rows = records.map(function (r) {
+    return [r.id, r.type, JSON.stringify(r.details), r.page, r.timestamp, r.visitorId];
+  });
+  var csv = headers.join(",") + "\n" + rows.map(function (row) {
+    return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
+  }).join("\n");
+  downloadFile(csv, "pratap-travels-audit-trail.csv", "text/csv");
+  showToast("CSV exported.", "success");
+}
+
+/* ============================================
+   TRACK USER INTERACTIONS ON INDEX.HTML
+   ============================================ */
+
+function trackUserClick(element, action) {
+  recordAuditTrail("click", {
+    action: action,
+    element: element,
+    page: window.location.pathname.split('/').pop() || 'index.html'
+  });
+}
+
+// ---------- Init All Dashboards ----------
 document.addEventListener("DOMContentLoaded", async function () {
   // Init visitor dashboard if on visitors page
   if (document.getElementById("visitorTableBody")) {
@@ -1810,15 +2267,29 @@ document.addEventListener("DOMContentLoaded", async function () {
     updateReferralStatsDisplay();
   }
 
+  // Init booking dashboard (booking.html)
+  if (document.getElementById("bookingTableBody")) {
+    renderBookingTable();
+    updateBookingKPIs();
+  }
+
+  // Init audit trail dashboard (audit-trail.html)
+  if (document.getElementById("auditTableBody")) {
+    renderAuditTable();
+    updateAuditKPIs();
+  }
+
   // Auto-track this page visit (fires on every page that loads main.js)
   // Skip tracking on admin-only pages (admin.html, visitors.html, referral.html)
   if (typeof trackVisit === "function") {
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    var adminPages = ['admin.html', 'visitors.html', 'referral.html'];
+    var adminPages = ['admin.html', 'visitors.html', 'referral.html', 'booking.html', 'audit-trail.html'];
     if (adminPages.indexOf(currentPage) === -1) {
       trackVisit().catch(function () {
         /* fire-and-forget tracking */
       });
+      // Record audit trail for page visit
+      recordAuditTrail("page_visit", { page: currentPage });
     }
   }
 });
