@@ -548,13 +548,40 @@ function handleLogout() {
 document.addEventListener("DOMContentLoaded", function () {
   if (sessionStorage.getItem("pt_logged_in") === "true") {
     var user = JSON.parse(sessionStorage.getItem("pt_user"));
-    if (user && document.getElementById("authSection")) {
-      document.getElementById("authSection").classList.add("hidden");
-      document.getElementById("dashboardSection").classList.remove("hidden");
-      document.getElementById("userName").textContent = user.name;
-      document.getElementById("userEmail").textContent = user.email;
-      document.getElementById("userAvatar").textContent = user.initial;
-    }
+    if (user && document.getElementById("authSection")) {    document.getElementById("authSection").classList.add("hidden");
+  document.getElementById("dashboardSection").classList.remove("hidden");
+
+  document.getElementById("userName").textContent = user.name;
+  document.getElementById("userEmail").textContent = user.email;
+  document.getElementById("userAvatar").textContent = user.initial;
+
+  // Re-render dashboards after auth so tables show fresh data
+  _refreshCurrentDashboard();
+}
+
+// ---------- Refresh dashboard tables after login ----------
+function _refreshCurrentDashboard() {
+  if (document.getElementById("visitorTableBody")) {
+    renderVisitorTable();
+    updateKPIs();
+  }
+  if (document.getElementById("referralDashboardPanel")) {
+    renderReferralTable();
+    updateReferralKPIs();
+  }
+  if (document.getElementById("bookingTableBody")) {
+    renderBookingTable();
+    updateBookingKPIs();
+  }
+  if (document.getElementById("auditTableBody")) {
+    renderAuditTable();
+    updateAuditKPIs();
+  }
+  if (document.getElementById("vehicleTableBody")) {
+    renderVehicleTable();
+    updateVehicleKPIs();
+  }
+}
   }
 });
 
@@ -2068,6 +2095,21 @@ function renderBookingTable() {
   filtered.forEach(function (b) {
     var tr = document.createElement("tr");
     var statusClass = b.status === "confirmed" ? "status-confirmed" : b.status === "cancelled" ? "status-cancelled" : "status-pending";
+    var vehicleInfo = "-";
+    var driverInfo = "-";
+    if (b.vehicleId) {
+      var v = getVehicleById(b.vehicleId);
+      if (v) {
+        vehicleInfo = '<code class="vid-code">' + escapeHtml(v.vehicleNumber) + '</code>';
+        driverInfo = escapeHtml(v.driverName);
+      }
+    }
+    var actionBtn = '';
+    if (b.status !== "confirmed" && b.status !== "cancelled") {
+      actionBtn = '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle">✅</button>';
+    } else if (b.status === "confirmed" && b.vehicleId) {
+      actionBtn = '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Update">✏️</button>';
+    }
     tr.innerHTML =
       '<td><code class="vid-code">' + escapeHtml(b.bookingId || "-") + '</code></td>' +
       '<td>' + escapeHtml(b.name || "-") + '</td>' +
@@ -2077,9 +2119,11 @@ function renderBookingTable() {
       '<td>' + escapeHtml(b.time || "-") + '</td>' +
       '<td>' + escapeHtml(b.trip_type || "-") + '</td>' +
       '<td>' + escapeHtml(b.passengers || "-") + '</td>' +
+      '<td>' + vehicleInfo + '</td>' +
+      '<td>' + driverInfo + '</td>' +
       '<td>' + (b.referral_code ? '<code class="vid-code">' + escapeHtml(b.referral_code) + '</code>' : '<span style="color:#999">-</span>') + '</td>' +
       '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>' +
-      '<td><small>' + formatDate(b.createdAt) + '</small></td>';
+      '<td>' + actionBtn + '</td>';
     tbody.appendChild(tr);
   });
 }
@@ -2106,9 +2150,11 @@ function updateBookingKPIs() {
 function exportBookingsCSV() {
   var bookings = getBookings();
   if (bookings.length === 0) { showToast("No data to export.", "error"); return; }
-  var headers = ["Booking ID","Name","Phone","Email","Route","Date","Time","Passengers","Trip Type","Referral Code","Status","Created"];
+  var headers = ["Booking ID","Name","Phone","Email","Route","Date","Time","Passengers","Trip Type","Vehicle","Driver","Referral Code","Status","Created"];
   var rows = bookings.map(function (b) {
-    return [b.bookingId,b.name,b.phone,b.email,b.route,b.date,b.time,b.passengers,b.trip_type,b.referral_code,b.status,b.createdAt];
+    var vName = "", dName = "";
+    if (b.vehicleId) { var v = getVehicleById(b.vehicleId); if (v) { vName = v.vehicleNumber; dName = v.driverName; } }
+    return [b.bookingId,b.name,b.phone,b.email,b.route,b.date,b.time,b.passengers,b.trip_type,vName,dName,b.referral_code,b.status,b.createdAt];
   });
   var csv = headers.join(",") + "\n" + rows.map(function (row) {
     return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
@@ -2233,6 +2279,606 @@ function exportAuditCSV() {
   downloadFile(csv, "pratap-travels-audit-trail.csv", "text/csv");
   showToast("CSV exported.", "success");
 }
+
+/* ============================================
+   VEHICLE MASTER MANAGEMENT
+   CRUD for vehicles with availability tracking
+   ============================================ */
+
+var PT_VEHICLES_KEY = "pt_vehicles";
+
+function getVehicles() {
+  try {
+    return JSON.parse(localStorage.getItem(PT_VEHICLES_KEY) || "[]");
+  } catch (e) { return []; }
+}
+
+function saveVehicles(vehicles) {
+  localStorage.setItem(PT_VEHICLES_KEY, JSON.stringify(vehicles));
+}
+
+function addVehicle(vehicle) {
+  var vehicles = getVehicles();
+  vehicle.id = "VH" + Date.now() + "_" + Math.random().toString(36).substring(2, 6);
+  vehicle.status = vehicle.status || "available";
+  vehicle.createdAt = new Date().toISOString();
+  vehicles.unshift(vehicle);
+  saveVehicles(vehicles);
+  recordAuditTrail("vehicle_add", { vehicleId: vehicle.id, vehicleNumber: vehicle.vehicleNumber, driverName: vehicle.driverName });
+  return vehicle;
+}
+
+function updateVehicle(id, updates) {
+  var vehicles = getVehicles();
+  for (var i = 0; i < vehicles.length; i++) {
+    if (vehicles[i].id === id) {
+      for (var key in updates) {
+        if (updates.hasOwnProperty(key)) vehicles[i][key] = updates[key];
+      }
+      vehicles[i].updatedAt = new Date().toISOString();
+      saveVehicles(vehicles);
+      recordAuditTrail("vehicle_update", { vehicleId: id, changes: updates });
+      return vehicles[i];
+    }
+  }
+  return null;
+}
+
+function deleteVehicle(id) {
+  var vehicles = getVehicles();
+  var filtered = vehicles.filter(function (v) { return v.id !== id; });
+  saveVehicles(filtered);
+  recordAuditTrail("vehicle_delete", { vehicleId: id });
+}
+
+function getVehicleById(id) {
+  var vehicles = getVehicles();
+  for (var i = 0; i < vehicles.length; i++) {
+    if (vehicles[i].id === id) return vehicles[i];
+  }
+  return null;
+}
+
+function getAvailableVehicles() {
+  return getVehicles().filter(function (v) { return v.status === "available"; });
+}
+
+function renderVehicleTable() {
+  var tbody = document.getElementById("vehicleTableBody");
+  var emptyState = document.getElementById("emptyVehicleState");
+  if (!tbody) return;
+
+  var vehicles = getVehicles();
+  var searchInput = document.getElementById("vehicleSearch");
+  var query = searchInput ? searchInput.value.toLowerCase().trim() : "";
+  var statusFilter = document.getElementById("vehicleStatusFilter");
+  var statusVal = statusFilter ? statusFilter.value : "all";
+
+  tbody.innerHTML = "";
+  var filtered = vehicles;
+  if (query) {
+    filtered = filtered.filter(function (v) {
+      var haystack = [v.vehicleNumber, v.driverName, v.vehicleType, v.driverPhone].join(" ").toLowerCase();
+      return haystack.indexOf(query) !== -1;
+    });
+  }
+  if (statusVal && statusVal !== "all") {
+    filtered = filtered.filter(function (v) { return v.status === statusVal; });
+  }
+
+  var countEl = document.getElementById("vehicleCount");
+  if (countEl) countEl.textContent = filtered.length + " vehicles";
+
+  if (filtered.length === 0) {
+    if (emptyState) {
+      var emptyMsg = emptyState.querySelector("p");
+      if (vehicles.length === 0) {
+        emptyMsg.textContent = "No vehicles yet. Add vehicles to start assigning them to bookings.";
+      } else {
+        emptyMsg.textContent = "No results found.";
+      }
+      emptyState.classList.remove("hidden");
+    }
+    return;
+  }
+  if (emptyState) emptyState.classList.add("hidden");
+
+  filtered.forEach(function (v) {
+    var tr = document.createElement("tr");
+    var statusClass = v.status === "available" ? "vehicle-available" : v.status === "booked" ? "vehicle-booked" : "vehicle-maintenance";
+    var statusText = v.status === "available" ? "Available" : v.status === "booked" ? "Booked" : "Maintenance";
+    tr.innerHTML =
+      '<td><code class="vid-code">' + escapeHtml(v.vehicleNumber || "-") + '</code></td>' +
+      '<td>' + escapeHtml(v.vehicleType || "-") + '</td>' +
+      '<td>' + escapeHtml(v.driverName || "-") + '</td>' +
+      '<td>' + escapeHtml(v.driverPhone || "-") + '</td>' +
+      '<td>' + escapeHtml(v.seats || "-") + '</td>' +
+      '<td><span class="vehicle-status-badge ' + statusClass + '">' + statusText + '</span></td>' +
+      '<td><small>' + formatDate(v.createdAt) + '</small></td>' +
+      '<td>' +
+        '<button class="btn-action-edit" onclick="editVehicle(\'' + v.id + '\')" title="Edit">✏️</button> ' +
+        '<button class="btn-action-confirm" onclick="renderVehicleSchedule(\'' + v.id + '\')" title="View Schedule">📅</button> ' +
+        '<button class="btn-action-delete" onclick="deleteVehicleConfirm(\'' + v.id + '\')" title="Delete">🗑️</button>' +
+      '</td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function updateVehicleKPIs() {
+  var vehicles = getVehicles();
+  var total = vehicles.length;
+  var available = 0, booked = 0, maintenance = 0;
+  for (var i = 0; i < vehicles.length; i++) {
+    if (vehicles[i].status === "available") available++;
+    else if (vehicles[i].status === "booked") booked++;
+    else maintenance++;
+  }
+  var elTotal = document.getElementById("vhKpiTotal");
+  var elAvailable = document.getElementById("vhKpiAvailable");
+  var elBooked = document.getElementById("vhKpiBooked");
+  var elMaintenance = document.getElementById("vhKpiMaintenance");
+  if (elTotal) elTotal.textContent = total;
+  if (elAvailable) elAvailable.textContent = available;
+  if (elBooked) elBooked.textContent = booked;
+  if (elMaintenance) elMaintenance.textContent = maintenance;
+}
+
+function openAddVehicleModal() {
+  var modal = document.getElementById("vehicleModal");
+  var title = document.getElementById("vehicleModalTitle");
+  var form = document.getElementById("vehicleForm");
+  var idField = document.getElementById("vehicleEditId");
+  if (!modal || !form) return;
+  if (title) title.textContent = "➕ Add Vehicle";
+  form.reset();
+  if (idField) idField.value = "";
+  var statusField = document.getElementById("vehicleStatus");
+  if (statusField) statusField.value = "available";
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function editVehicle(id) {
+  var vehicle = getVehicleById(id);
+  if (!vehicle) return;
+  var modal = document.getElementById("vehicleModal");
+  var title = document.getElementById("vehicleModalTitle");
+  var form = document.getElementById("vehicleForm");
+  var idField = document.getElementById("vehicleEditId");
+  if (!modal || !form) return;
+  if (title) title.textContent = "✏️ Edit Vehicle";
+  if (idField) idField.value = id;
+  document.getElementById("vehicleNumber").value = vehicle.vehicleNumber || "";
+  document.getElementById("vehicleType").value = vehicle.vehicleType || "";
+  document.getElementById("vehicleSeats").value = vehicle.seats || "4";
+  document.getElementById("vehicleDriverName").value = vehicle.driverName || "";
+  document.getElementById("vehicleDriverPhone").value = vehicle.driverPhone || "";
+  document.getElementById("vehicleNotes").value = vehicle.notes || "";
+  var statusField = document.getElementById("vehicleStatus");
+  if (statusField) statusField.value = vehicle.status || "available";
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function saveVehicleForm(e) {
+  if (e) e.preventDefault();
+  var editId = document.getElementById("vehicleEditId").value;
+  var vehicleNumber = document.getElementById("vehicleNumber").value.trim();
+  var vehicleType = document.getElementById("vehicleType").value.trim();
+  var seats = document.getElementById("vehicleSeats").value;
+  var driverName = document.getElementById("vehicleDriverName").value.trim();
+  var driverPhone = document.getElementById("vehicleDriverPhone").value.trim();
+  var notes = document.getElementById("vehicleNotes").value.trim();
+  var status = document.getElementById("vehicleStatus").value;
+
+  if (!vehicleNumber || !driverName) {
+    showToast("Vehicle number and driver name are required.", "error");
+    return;
+  }
+
+  var data = {
+    vehicleNumber: vehicleNumber,
+    vehicleType: vehicleType,
+    seats: seats,
+    driverName: driverName,
+    driverPhone: driverPhone,
+    notes: notes,
+    status: status
+  };
+
+  if (editId) {
+    updateVehicle(editId, data);
+    showToast("Vehicle updated successfully.", "success");
+  } else {
+    addVehicle(data);
+    showToast("Vehicle added successfully.", "success");
+  }
+
+  closeVehicleModal();
+  renderVehicleTable();
+  updateVehicleKPIs();
+  updateVehicleDropdowns();
+}
+
+function deleteVehicleConfirm(id) {
+  if (confirm("Are you sure you want to delete this vehicle? This cannot be undone.")) {
+    deleteVehicle(id);
+    renderVehicleTable();
+    updateVehicleKPIs();
+    updateVehicleDropdowns();
+    showToast("Vehicle deleted.", "info");
+  }
+}
+
+function closeVehicleModal() {
+  var modal = document.getElementById("vehicleModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+}
+
+function exportVehiclesCSV() {
+  var vehicles = getVehicles();
+  if (vehicles.length === 0) { showToast("No data to export.", "error"); return; }
+  var headers = ["Vehicle Number","Type","Seats","Driver Name","Driver Phone","Status","Notes","Created"];
+  var rows = vehicles.map(function (v) {
+    return [v.vehicleNumber, v.vehicleType, v.seats, v.driverName, v.driverPhone, v.status, v.notes, v.createdAt];
+  });
+  var csv = headers.join(",") + "\n" + rows.map(function (row) {
+    return row.map(function (c) { return '"' + String(c || "").replace(/"/g, '""') + '"'; }).join(",");
+  }).join("\n");
+  downloadFile(csv, "pratap-travels-vehicles.csv", "text/csv");
+  showToast("CSV exported.", "success");
+}
+
+// ---------- Vehicle dropdown for booking confirmation ----------
+function updateVehicleDropdowns() {
+  var selects = document.querySelectorAll(".vehicle-select-dropdown");
+  var available = getAvailableVehicles();
+  selects.forEach(function (sel) {
+    var currentVal = sel.value;
+    sel.innerHTML = '<option value="">-- Select Vehicle --</option>';
+    available.forEach(function (v) {
+      var opt = document.createElement("option");
+      opt.value = v.id;
+      opt.textContent = v.vehicleNumber + " (" + v.vehicleType + ") - " + v.driverName;
+      sel.appendChild(opt);
+    });
+    // Also add 'Add New' option
+    var addOpt = document.createElement("option");
+    addOpt.value = "__new__";
+    addOpt.textContent = "+ Add New Vehicle";
+    sel.appendChild(addOpt);
+    if (currentVal) sel.value = currentVal;
+  });
+}
+
+// Handle 'Add New Vehicle' selection from dropdown
+function handleVehicleSelectChange(sel) {
+  if (sel.value === "__new__") {
+    sel.value = "";
+    // Open quick-add modal
+    var quickModal = document.getElementById("quickVehicleModal");
+    if (quickModal) {
+      quickModal.classList.remove("hidden");
+      document.body.style.overflow = "hidden";
+    }
+  }
+}
+
+function saveQuickVehicle(e) {
+  if (e) e.preventDefault();
+  var vehicleNumber = document.getElementById("quickVehicleNumber").value.trim();
+  var driverName = document.getElementById("quickVehicleDriverName").value.trim();
+  var vehicleType = document.getElementById("quickVehicleType").value.trim();
+  var driverPhone = document.getElementById("quickVehicleDriverPhone").value.trim();
+
+  if (!vehicleNumber || !driverName) {
+    showToast("Vehicle number and driver name are required.", "error");
+    return;
+  }
+
+  var vehicle = addVehicle({
+    vehicleNumber: vehicleNumber,
+    driverName: driverName,
+    vehicleType: vehicleType || "Sedan",
+    driverPhone: driverPhone,
+    seats: "4",
+    status: "available",
+    notes: "Added from booking confirmation"
+  });
+
+  closeQuickVehicleModal();
+  updateVehicleDropdowns();
+  // Auto-select the new vehicle
+  var selects = document.querySelectorAll(".vehicle-select-dropdown");
+  selects.forEach(function (sel) {
+    sel.value = vehicle.id;
+  });
+  showToast("Vehicle added and selected.", "success");
+}
+
+function closeQuickVehicleModal() {
+  var modal = document.getElementById("quickVehicleModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+}
+
+// ---------- Assign vehicle to booking ----------
+function assignVehicleToBooking(bookingId, vehicleId) {
+  if (!bookingId || !vehicleId) return;
+  var bookings = getBookings();
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) {
+      bookings[i].vehicleId = vehicleId;
+      bookings[i].status = "confirmed";
+      break;
+    }
+  }
+  localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+
+  // Update vehicle status to booked
+  updateVehicle(vehicleId, { status: "booked" });
+
+  // Audit
+  recordAuditTrail("vehicle_assigned", { bookingId: bookingId, vehicleId: vehicleId });
+}
+
+function releaseVehicleFromBooking(bookingId) {
+  var bookings = getBookings();
+  var vehicleId = null;
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) {
+      vehicleId = bookings[i].vehicleId;
+      bookings[i].vehicleId = null;
+      break;
+    }
+  }
+  localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+  if (vehicleId) {
+    updateVehicle(vehicleId, { status: "available" });
+    recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
+  }
+}
+
+function changeBookingStatus(bookingId, newStatus) {
+  var bookings = getBookings();
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) {
+      var vehicleId = bookings[i].vehicleId;
+      bookings[i].status = newStatus;
+      if (newStatus === "cancelled" && vehicleId) {
+        bookings[i].vehicleId = null;
+        updateVehicle(vehicleId, { status: "available" });
+        recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
+      }
+      localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(bookings));
+      recordAuditTrail("booking_status_change", { bookingId: bookingId, newStatus: newStatus });
+      break;
+    }
+  }
+  renderBookingTable();
+  updateBookingKPIs();
+}
+
+// ---------- Vehicle Schedule View ----------
+function getVehicleSchedule(vehicleId) {
+  var bookings = getBookings();
+  var schedule = [];
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].vehicleId === vehicleId && bookings[i].status !== "cancelled") {
+      schedule.push(bookings[i]);
+    }
+  }
+  // Sort by date
+  schedule.sort(function (a, b) { return new Date(a.date) - new Date(b.date); });
+  return schedule;
+}
+
+function renderVehicleSchedule(vehicleId) {
+  var tbody = document.getElementById("vehicleScheduleBody");
+  var emptyState = document.getElementById("emptyScheduleState");
+  var panel = document.getElementById("vehicleSchedulePanel");
+  if (!tbody || !panel) return;
+
+  var vehicle = getVehicleById(vehicleId);
+  var titleEl = document.getElementById("vehicleScheduleTitle");
+  if (titleEl && vehicle) {
+    titleEl.textContent = "📅 Schedule: " + vehicle.vehicleNumber + " (" + vehicle.driverName + ")";
+  }
+
+  var schedule = getVehicleSchedule(vehicleId);
+  tbody.innerHTML = "";
+
+  if (schedule.length === 0) {
+    if (emptyState) emptyState.classList.remove("hidden");
+    panel.classList.remove("hidden");
+    return;
+  }
+  if (emptyState) emptyState.classList.add("hidden");
+
+  schedule.forEach(function (b) {
+    var tr = document.createElement("tr");
+    var statusClass = b.status === "confirmed" ? "status-confirmed" : b.status === "cancelled" ? "status-cancelled" : "status-pending";
+    tr.innerHTML =
+      '<td><code class="vid-code">' + escapeHtml(b.bookingId || "-") + '</code></td>' +
+      '<td>' + escapeHtml(b.name || "-") + '</td>' +
+      '<td>' + escapeHtml(b.phone || "-") + '</td>' +
+      '<td>' + escapeHtml(b.route || "-") + '</td>' +
+      '<td>' + escapeHtml(b.date || "-") + '</td>' +
+      '<td>' + escapeHtml(b.time || "-") + '</td>' +
+      '<td>' + escapeHtml(b.passengers || "-") + '</td>' +
+      '<td><span class="booking-status-badge ' + statusClass + '">' + (b.status || "pending") + '</span></td>';
+    tbody.appendChild(tr);
+  });
+
+  panel.classList.remove("hidden");
+}
+
+function closeVehicleSchedule() {
+  var panel = document.getElementById("vehicleSchedulePanel");
+  if (panel) panel.classList.add("hidden");
+}
+
+// ---------- Confirm Booking & Assign Vehicle ----------
+var _confirmBookingData = null;
+
+function openConfirmBooking(bookingId) {
+  var bookings = getBookings();
+  var booking = null;
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
+  }
+  if (!booking) return;
+  _confirmBookingData = booking;
+
+  var modal = document.getElementById("confirmBookingModal");
+  var infoDiv = document.getElementById("confirmBookingInfo");
+  if (!modal || !infoDiv) return;
+
+  document.getElementById("confirmBookingId").value = bookingId;
+
+  // Show booking summary
+  var vName = "-", dName = "-";
+  if (booking.vehicleId) { var v = getVehicleById(booking.vehicleId); if (v) { vName = v.vehicleNumber; dName = v.driverName; } }
+  infoDiv.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:0.9rem;">' +
+    '<div><strong>Name:</strong> ' + escapeHtml(booking.name || "-") + '</div>' +
+    '<div><strong>Phone:</strong> ' + escapeHtml(booking.phone || "-") + '</div>' +
+    '<div><strong>Route:</strong> ' + escapeHtml(booking.route || "-") + '</div>' +
+    '<div><strong>Date:</strong> ' + escapeHtml(booking.date || "-") + '</div>' +
+    '<div><strong>Time:</strong> ' + escapeHtml(booking.time || "-") + '</div>' +
+    '<div><strong>Passengers:</strong> ' + escapeHtml(booking.passengers || "-") + '</div>' +
+    '<div><strong>Trip Type:</strong> ' + escapeHtml(booking.trip_type || "-") + '</div>' +
+    '<div><strong>Current Vehicle:</strong> ' + vName + '</div>' +
+    '</div>';
+
+  // Pre-fill pickup date/time from booking
+  document.getElementById("confirmPickupDate").value = booking.date || "";
+  document.getElementById("confirmPickupTime").value = (booking.time && booking.time !== "Not specified") ? booking.time : "";
+  document.getElementById("confirmPickupAddress").value = booking.pickup_address || "";
+  document.getElementById("confirmAdminNotes").value = booking.admin_notes || "";
+
+  // Populate vehicle dropdown
+  updateVehicleDropdowns();
+  if (booking.vehicleId) {
+    var sel = document.getElementById("vehicleSelect");
+    if (sel) sel.value = booking.vehicleId;
+  }
+
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeConfirmBookingModal() {
+  var modal = document.getElementById("confirmBookingModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+  }
+  _confirmBookingData = null;
+}
+
+function initConfirmBookingForm() {
+  var form = document.getElementById("confirmBookingForm");
+  if (!form) return;
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var bookingId = document.getElementById("confirmBookingId").value;
+    var vehicleId = document.getElementById("vehicleSelect").value;
+    var pickupDate = document.getElementById("confirmPickupDate").value;
+    var pickupTime = document.getElementById("confirmPickupTime").value;
+    var pickupAddress = document.getElementById("confirmPickupAddress").value.trim();
+    var adminNotes = document.getElementById("confirmAdminNotes").value.trim();
+
+    if (!vehicleId) {
+      showToast("Please select a vehicle.", "error");
+      return;
+    }
+
+    // Release old vehicle if reassigning
+    var bookings = getBookings();
+    for (var i = 0; i < bookings.length; i++) {
+      if (bookings[i].bookingId === bookingId) {
+        if (bookings[i].vehicleId && bookings[i].vehicleId !== vehicleId) {
+          releaseVehicleFromBooking(bookingId);
+        }
+        break;
+      }
+    }
+
+    // Assign vehicle and update booking
+    assignVehicleToBooking(bookingId, vehicleId);
+
+    // Update pickup details
+    var updatedBookings = getBookings();
+    for (var i = 0; i < updatedBookings.length; i++) {
+      if (updatedBookings[i].bookingId === bookingId) {
+        updatedBookings[i].pickup_date = pickupDate;
+        updatedBookings[i].pickup_time = pickupTime;
+        updatedBookings[i].pickup_address = pickupAddress;
+        updatedBookings[i].admin_notes = adminNotes;
+        break;
+      }
+    }
+    localStorage.setItem(PT_BOOKINGS_KEY, JSON.stringify(updatedBookings));
+
+    closeConfirmBookingModal();
+    renderBookingTable();
+    updateBookingKPIs();
+    showToast("Booking confirmed and vehicle assigned!", "success");
+  });
+}
+
+// ---------- Init vehicle modal listeners ----------
+document.addEventListener("DOMContentLoaded", function () {
+  var vhForm = document.getElementById("vehicleForm");
+  if (vhForm) vhForm.addEventListener("submit", saveVehicleForm);
+
+  // Init confirm booking form
+  initConfirmBookingForm();
+
+  var cbCloseBtn = document.getElementById("confirmBookingModalClose");
+  var cbOverlay = document.getElementById("confirmBookingModal");
+  if (cbCloseBtn) cbCloseBtn.addEventListener("click", closeConfirmBookingModal);
+  if (cbOverlay) cbOverlay.addEventListener("click", function (e) { if (e.target === cbOverlay) closeConfirmBookingModal(); });
+
+  var vhCloseBtn = document.getElementById("vehicleModalClose");
+  var vhOverlay = document.getElementById("vehicleModal");
+  if (vhCloseBtn) vhCloseBtn.addEventListener("click", closeVehicleModal);
+  if (vhOverlay) vhOverlay.addEventListener("click", function (e) { if (e.target === vhOverlay) closeVehicleModal(); });
+
+  var qvForm = document.getElementById("quickVehicleForm");
+  if (qvForm) qvForm.addEventListener("submit", saveQuickVehicle);
+
+  var qvCloseBtn = document.getElementById("quickVehicleModalClose");
+  var qvOverlay = document.getElementById("quickVehicleModal");
+  if (qvCloseBtn) qvCloseBtn.addEventListener("click", closeQuickVehicleModal);
+  if (qvOverlay) qvOverlay.addEventListener("click", function (e) { if (e.target === qvOverlay) closeQuickVehicleModal(); });
+
+  // Init vehicle dashboard (vehicle.html)
+  if (document.getElementById("vehicleTableBody")) {
+    renderVehicleTable();
+    updateVehicleKPIs();
+  }
+
+  // Update vehicle dropdowns on booking.html
+  if (document.getElementById("vehicleSelect")) {
+    updateVehicleDropdowns();
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      closeVehicleModal();
+      closeQuickVehicleModal();
+      closeVehicleSchedule();
+      closeConfirmBookingModal();
+    }
+  });
+});
 
 /* ============================================
    TRACK USER INTERACTIONS ON INDEX.HTML

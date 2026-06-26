@@ -138,9 +138,11 @@
                   <th data-i18n="booking.table.time">समय</th>
                   <th data-i18n="booking.table.tripType">यात्रा प्रकार</th>
                   <th data-i18n="booking.table.passengers">यात्री</th>
+                  <th data-i18n="booking.table.vehicle">वाहन</th>
+                  <th data-i18n="booking.table.driver">ड्राइवर</th>
                   <th data-i18n="booking.table.referral">रेफ़रल</th>
                   <th data-i18n="booking.table.status">स्थिति</th>
-                  <th data-i18n="booking.table.created">बनाया</th>
+                  <th data-i18n="booking.table.actions">कार्य</th>
                 </tr>
               </thead>
               <tbody id="bookingTableBody"></tbody>
@@ -153,6 +155,50 @@
         </div>
       </div>
     </section>
+
+    <!-- ===== Confirm Booking / Assign Vehicle Modal ===== -->
+    <div class="redemption-modal-overlay hidden" id="confirmBookingModal">
+      <div class="redemption-modal" style="max-width:600px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:2px solid #eef2f7;">
+          <h3 data-i18n="booking.confirm.title">✅ बुकिंग पुष्टि करें</h3>
+          <button id="confirmBookingModalClose" style="background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-light);">✕</button>
+        </div>
+        <div style="padding:20px 24px;">
+          <div id="confirmBookingInfo" style="background:#f8f9fa;border-radius:8px;padding:16px;margin-bottom:16px;"></div>
+          <form id="confirmBookingForm" style="display:flex;flex-direction:column;gap:14px;">
+            <input type="hidden" id="confirmBookingId" value="" />
+            <div class="form-group">
+              <label data-i18n="booking.confirm.vehicle">🚗 वाहन चुनें</label>
+              <select id="vehicleSelect" class="vehicle-select-dropdown" onchange="handleVehicleSelectChange(this)">
+                <option value="">-- Select Vehicle --</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="form-group">
+                <label data-i18n="booking.confirm.pickupDate">📅 पिकअप तिथि</label>
+                <input type="date" id="confirmPickupDate" />
+              </div>
+              <div class="form-group">
+                <label data-i18n="booking.confirm.pickupTime">⏰ पिकअप समय</label>
+                <input type="time" id="confirmPickupTime" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label data-i18n="booking.confirm.pickupAddress">📍 पिकअप पता</label>
+              <input type="text" id="confirmPickupAddress" placeholder="Pickup address (optional)" />
+            </div>
+            <div class="form-group">
+              <label data-i18n="booking.confirm.adminNotes">📝 एडमिन नोट्स</label>
+              <textarea id="confirmAdminNotes" rows="2" placeholder="Internal notes (optional)"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <button type="button" class="btn-refresh" onclick="closeConfirmBookingModal()" data-i18n="booking.confirm.cancel">रद्द करें</button>
+              <button type="submit" class="btn-primary" style="padding:8px 24px;font-size:0.9rem;border-radius:50px;" data-i18n="booking.confirm.submit">✅ पुष्टि करें</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <!-- ===== Toast ===== -->
     <div class="toast-container" id="toastContainer"></div>
