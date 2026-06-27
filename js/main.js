@@ -576,18 +576,7 @@ function _handleAuthSuccess(user) {
   sessionStorage.setItem("pt_user", JSON.stringify(user));
 }
 
-// ---------- Dev Login Bypass (TEMPORARY - remove before production) ----------
-function handleDevLogin() {
-  console.warn(
-    "[DEV BYPASS] Static login used — remove handleDevLogin() before production!",
-  );
-  var devUser = {
-    name: "Dev Admin",
-    email: "dev@prataptravels.local",
-    initial: "D",
-  };
-  _handleAuthSuccess(devUser);
-}
+
 
 // ---------- Logout ----------
 function handleLogout() {
@@ -2447,7 +2436,7 @@ function renderBookingTable() {
             I18N.t("booking.notified.needsAction") +
             "</span>"
           );
-        } else {
+        } else if (b.status === "confirmed") {
           return (
             '<button class="btn-action-confirm" style="padding:3px 8px;font-size:0.75rem;" onclick="sendBookingNotification(\'' +
             b.bookingId +
@@ -2455,6 +2444,8 @@ function renderBookingTable() {
             I18N.t("booking.action.sendEmail") +
             '">\u2709\ufe0f</button>'
           );
+        } else {
+          return '<span style="color:#999;font-size:0.75rem;">—</span>';
         }
       })() +
       "</td>" +
