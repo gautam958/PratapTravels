@@ -16,6 +16,7 @@ var I18N = (function () {
       "nav.rentals": "किराया",
       "nav.hire-driver": "ड्राइवर किराया",
       "nav.contact": "संपर्क",
+      "nav.status": "📋 बुकिंग स्थिति",
       "nav.visitors": "आगंतुक",
 
       // Hero
@@ -491,6 +492,7 @@ var I18N = (function () {
       "nav.rentals": "Rentals",
       "nav.hire-driver": "Hire Driver",
       "nav.contact": "Contact",
+      "nav.status": "📋 Check Status",
       "nav.visitors": "Visitors",
 
       // Hero

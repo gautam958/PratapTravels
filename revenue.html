@@ -12,14 +12,14 @@
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
       <div class="container">
-        <a href="index.html" class="navbar-brand">\ud83d\ude98 <span>PRATAP</span> TRAVELS</a>
-        <button class="navbar-toggle" id="navToggle" aria-label="Menu">\u2630</button>
+        <a href="index.html" class="navbar-brand">🚘 <span>PRATAP</span> TRAVELS</a>
+        <button class="navbar-toggle" id="navToggle" aria-label="Menu">☰</button>
         <div class="navbar-menu" id="navMenu">
-          <a href="index.html" data-i18n="nav.home">\u0939\u094b\u092e</a>
-          <a href="index.html#services" data-i18n="nav.services">\u0938\u0947\u0935\u093e\u090f\u0901</a>
-          <a href="index.html#routes" data-i18n="nav.routes">\u092e\u093e\u0930\u094d\u0917</a>
-          <a href="index.html#contact" data-i18n="nav.contact">\u0938\u0902\u092a\u0930\u094d\u0915</a>
-          <a href="admin.html" class="active">\ud83d\udd12 Admin</a>
+          <a href="index.html" data-i18n="nav.home">होम</a>
+          <a href="index.html#services" data-i18n="nav.services">सेवाएँ</a>
+          <a href="index.html#routes" data-i18n="nav.routes">मार्ग</a>
+          <a href="index.html#contact" data-i18n="nav.contact">संपर्क</a>
+          <a href="admin.html" class="active">🔒 Admin</a>
           <div class="lang-toggle">
             <button class="lang-toggle-btn active" id="langBtnHi">HI</button>
             <button class="lang-toggle-btn" id="langBtnEn">EN</button>
@@ -31,16 +31,16 @@
     <!-- Hero -->
     <section class="visitors-hero">
       <div>
-        <h1>\ud83d\udcc8 Revenue Dashboard</h1>
+        <h1>📈 Revenue Dashboard</h1>
         <p>Track bookings, revenue, and business performance</p>
-        <a href="admin.html" class="admin-back-link">\u2190 Admin Dashboard</a>
+        <a href="admin.html" class="admin-back-link">← Admin Dashboard</a>
       </div>
     </section>
 
     <!-- Auth Section -->
     <section class="auth-section" id="authSection">
       <div class="auth-card">
-        <h2>\ud83d\udd12 Admin Access Required</h2>
+        <h2>🔒 Admin Access Required</h2>
         <p>Sign in with an authorized Google account to view revenue analytics</p>
         <div id="g_id_onload" data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com" data-callback="handleGoogleCredentialResponse" data-use_fedcm_for_prompt="false" data-auto_prompt="false"></div>
         <button class="google-btn" id="googleSignIn" onclick="handleGoogleSignIn()">
@@ -63,7 +63,7 @@
             </div>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-            <a href="admin.html" class="admin-back-btn">\u2190 Admin Dashboard</a>
+            <a href="admin.html" class="admin-back-btn">← Admin Dashboard</a>
             <button class="logout-btn" onclick="handleLogout()">Sign Out</button>
           </div>
         </div>
@@ -71,33 +71,33 @@
         <!-- Revenue KPIs -->
         <div class="referral-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
           <div class="stat-card">
-            <div class="stat-icon">\ud83d\udcc8</div>
+            <div class="stat-icon">📈</div>
             <div class="stat-number" id="revTotalBookings">0</div>
             <div class="stat-label">Total Bookings</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">\u2705</div>
+            <div class="stat-icon">✅</div>
             <div class="stat-number" id="revConfirmed">0</div>
             <div class="stat-label">Confirmed</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">\u23f3</div>
+            <div class="stat-icon">⏳</div>
             <div class="stat-number" id="revPending">0</div>
             <div class="stat-label">Pending</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">\u274c</div>
+            <div class="stat-icon">❌</div>
             <div class="stat-number" id="revCancelled">0</div>
             <div class="stat-label">Cancelled</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">\ud83d\udcb0</div>
-            <div class="stat-number" id="revTotalRevenue">\u20b90</div>
+            <div class="stat-icon">💰</div>
+            <div class="stat-number" id="revTotalRevenue">₹0</div>
             <div class="stat-label">Total Revenue</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">\ud83d\udcca</div>
-            <div class="stat-number" id="revAvgOrder">\u20b90</div>
+            <div class="stat-icon">📊</div>
+            <div class="stat-number" id="revAvgOrder">₹0</div>
             <div class="stat-label">Avg. Order Value</div>
           </div>
         </div>
@@ -105,7 +105,7 @@
         <!-- Revenue by Route -->
         <div class="panel referral-dashboard-panel">
           <div class="panel-header-row">
-            <h3>\ud83d\uddfa\ufe0f Revenue by Route</h3>
+            <h3>🗺️ Revenue by Route</h3>
           </div>
           <div class="visitor-table-wrapper">
             <table class="visitor-table">
@@ -119,14 +119,14 @@
               </thead>
               <tbody id="revenueByRouteBody"></tbody>
             </table>
-            <div class="empty-state" id="emptyRevenueRoute"><div class="empty-icon">\ud83d\uddfa\ufe0f</div><p>No revenue data available yet.</p></div>
+            <div class="empty-state" id="emptyRevenueRoute"><div class="empty-icon">🗺️</div><p>No revenue data available yet.</p></div>
           </div>
         </div>
 
         <!-- Revenue by Month -->
         <div class="panel referral-dashboard-panel">
           <div class="panel-header-row">
-            <h3>\ud83d\udcc5 Monthly Revenue</h3>
+            <h3>📅 Monthly Revenue</h3>
           </div>
           <div class="visitor-table-wrapper">
             <table class="visitor-table">
@@ -139,7 +139,7 @@
               </thead>
               <tbody id="revenueByMonthBody"></tbody>
             </table>
-            <div class="empty-state" id="emptyRevenueMonth"><div class="empty-icon">\ud83d\udcc5</div><p>No monthly data available yet.</p></div>
+            <div class="empty-state" id="emptyRevenueMonth"><div class="empty-icon">📅</div><p>No monthly data available yet.</p></div>
           </div>
         </div>
       </div>
@@ -151,7 +151,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <div class="footer-brand">\ud83d\ude98 <span>PRATAP</span> TRAVELS</div>
+        <div class="footer-brand">🚘 <span>PRATAP</span> TRAVELS</div>
         <p>Belabagan, Deoghar | +91 76313 82174 | +91 87978 71251</p>
         <div class="footer-divider"></div>
         <div class="footer-bottom"><p>&copy; 2026 Pratap Travels. All rights reserved.</p></div>
