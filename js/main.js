@@ -3868,7 +3868,51 @@ document.addEventListener("DOMContentLoaded", function () {
   if (vhForm) vhForm.addEventListener("submit", saveVehicleForm);
 
   // Init confirm booking form
-  initConfirmBookingForm();
+  var confirmForm = document.getElementById('confirmBookingForm');
+  if (confirmForm) {
+    confirmForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var bookingId = document.getElementById('confirmBookingId').value;
+      var vehicleId = document.getElementById('vehicleSelect').value;
+      var pickupDate = document.getElementById('confirmPickupDate').value;
+      var pickupTime = document.getElementById('confirmPickupTime').value;
+      var pickupAddr = document.getElementById('confirmPickupAddress').value;
+      var adminNotes = document.getElementById('confirmAdminNotes').value;
+      if (!vehicleId || vehicleId === '__new__') {
+        showToast('Please select a vehicle', 'error');
+        return;
+      }
+      if (!pickupDate) {
+        showToast('Please select pickup date', 'error');
+        return;
+      }
+      var vehicle = getVehicleById(vehicleId);
+      assignVehicleToBooking(bookingId, vehicleId);
+      var bookings = getBookings();
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].bookingId === bookingId) {
+          bookings[i].pickup_date = pickupDate;
+          bookings[i].pickup_time = pickupTime;
+          bookings[i].pickup_address = pickupAddr;
+          bookings[i].admin_notes = adminNotes;
+          bookings[i].vehicleNumber = vehicle ? vehicle.vehicleNumber : '';
+          bookings[i].vehicleType = vehicle ? vehicle.vehicleType : '';
+          bookings[i].driverName = vehicle ? vehicle.driverName : '';
+          bookings[i].driverPhone = vehicle ? vehicle.driverPhone : '';
+          break;
+        }
+      }
+      persistBookingToApi(bookingId, { status: 'confirmed', vehicleId: vehicleId, pickup_date: pickupDate, pickup_time: pickupTime, pickup_address: pickupAddr, admin_notes: adminNotes });
+      if (vehicle) updateVehicle(vehicleId, { status: 'booked' });
+      recordAuditTrail('booking_confirm', { bookingId: bookingId, vehicleId: vehicleId });
+      closeConfirmBookingModal();
+      renderBookingTable();
+      updateBookingKPIs();
+      renderVehicleTable();
+      updateVehicleKPIs();
+      showToast('Booking confirmed and vehicle assigned!', 'success');
+    });
+  }
 
   var cbCloseBtn = document.getElementById("confirmBookingModalClose");
   var cbOverlay = document.getElementById("confirmBookingModal");
@@ -4003,5 +4047,286 @@ document.addEventListener("DOMContentLoaded", async function () {
       // Record audit trail for page visit
       recordAuditTrail("page_visit", { page: currentPage });
     }
+  }
+});
+
+/* ============================================
+   FEATURE: Google Maps Route Integration
+   ============================================ */
+
+var ROUTE_MAP_DATA = {
+  'Basukinath': 'Basukinath,+Jharkhand',
+  'Tarapith': 'Tarapith,+West+Bengal',
+  'Sultanganj': 'Sultanganj,+Bihar',
+  'Ranchi': 'Ranchi,+Jharkhand',
+  'Patna': 'Patna,+Bihar',
+  'Kolkata': 'Kolkata,+West+Bengal',
+  'Dumka': 'Dumka,+Jharkhand',
+  'Dhanbad': 'Dhanbad,+Jharkhand',
+  'Munger': 'Munger,+Bihar',
+  'Muzaffarpur': 'Muzaffarpur,+Bihar',
+  'AIIMS Deoghar': 'AIIMS+Deoghar',
+  'Waterpark': 'Deoghar+Waterpark,+Jharkhand',
+  'Sarath': 'Sarath,+Jharkhand',
+  'Madhupur': 'Madhupur,+Jharkhand',
+  'Jamtara': 'Jamtara,+Jharkhand',
+  'Budhai': 'Budhai,+Jharkhand'
+};
+
+function getGoogleMapsUrl(destination) {
+  var dest = ROUTE_MAP_DATA[destination] || destination;
+  return 'https://www.google.com/maps/dir/Deoghar,+Jharkhand+India/' + encodeURIComponent(dest);
+}
+
+function initGoogleMapsLinks() {
+  var routeRows = document.querySelectorAll('#routesBody tr');
+  routeRows.forEach(function(row) {
+    var cells = row.querySelectorAll('td');
+    if (cells.length > 1) {
+      var routeText = cells[1].textContent.trim();
+      var match = routeText.match(/→\s*(.+?)(?:\s*$|\s*POPULAR)/);
+      if (match) {
+        var dest = match[1].trim();
+        var mapsUrl = getGoogleMapsUrl(dest);
+        var mapLink = document.createElement('a');
+        mapLink.href = mapsUrl;
+        mapLink.target = '_blank';
+        mapLink.rel = 'noopener';
+        mapLink.className = 'route-map-link';
+        mapLink.title = 'Open route in Google Maps';
+        mapLink.innerHTML = '\ud83d\uddfa\ufe0f';
+        cells[1].insertBefore(mapLink, cells[1].firstChild);
+      }
+    }
+  });
+}
+
+/* ============================================
+   FEATURE: Price Calculator
+   ============================================ */
+
+var ROUTE_PRICES = {
+  'Basukinath': { base: 1200, max: 1500, distance: 43 },
+  'Tarapith': { base: 2800, max: 3200, distance: 110 },
+  'Sultanganj': { base: 3500, max: 4000, distance: 150 },
+  'Ranchi': { base: 5500, max: 6500, distance: 250 },
+  'Patna': { base: 5000, max: 6000, distance: 220 },
+  'Kolkata': { base: 6500, max: 7500, distance: 280 },
+  'Dumka': { base: 1800, max: 2200, distance: 65 },
+  'Dhanbad': { base: 3500, max: 4000, distance: 150 },
+  'Munger': { base: 4000, max: 4500, distance: 170 },
+  'Muzaffarpur': { base: 5000, max: 5500, distance: 220 },
+  'AIIMS Deoghar': { base: 500, max: 700, distance: 10 },
+  'Waterpark': { base: 600, max: 800, distance: 15 },
+  'Sarath': { base: 800, max: 1000, distance: 25 },
+  'Madhupur': { base: 800, max: 1000, distance: 25 },
+  'Jamtara': { base: 1500, max: 1800, distance: 50 },
+  'Budhai': { base: 1000, max: 1200, distance: 30 }
+};
+
+var VEHICLE_MULTIPLIERS = {
+  'sedan': 1.0,
+  'hatchback': 0.85,
+  'suv': 1.3,
+  'innova': 1.5,
+  'tempo': 2.0
+};
+
+var TRIP_MULTIPLIERS = {
+  'one-way': 1.0,
+  'round-trip': 1.8,
+  'full-day': 2.2,
+  'rental': 2.5
+};
+
+function calculateEstimatedPrice() {
+  var routeSelect = document.getElementById('calcRoute');
+  var vehicleSelect = document.getElementById('calcVehicle');
+  var tripSelect = document.getElementById('calcTrip');
+  var resultDiv = document.getElementById('calcResult');
+  if (!routeSelect || !vehicleSelect || !tripSelect || !resultDiv) return;
+  var route = routeSelect.value;
+  var vehicle = vehicleSelect.value;
+  var trip = tripSelect.value;
+  if (!route) {
+    resultDiv.innerHTML = '<p class="calc-placeholder">\ud83d\udccd Select a route to see estimated fare</p>';
+    return;
+  }
+  var routeData = ROUTE_PRICES[route];
+  var vehicleMult = VEHICLE_MULTIPLIERS[vehicle] || 1.0;
+  var tripMult = TRIP_MULTIPLIERS[trip] || 1.0;
+  var minPrice = Math.round(routeData.base * vehicleMult * tripMult);
+  var maxPrice = Math.round(routeData.max * vehicleMult * tripMult);
+  resultDiv.innerHTML =
+    '<div class="calc-result-content">' +
+    '<div class="calc-price-range">\u20b9' + minPrice.toLocaleString() + ' \u2013 \u20b9' + maxPrice.toLocaleString() + '</div>' +
+    '<div class="calc-details">' +
+    '<span>\ud83d\udccd ' + routeData.distance + ' km</span>' +
+    '<span>\ud83d\ude97 ' + vehicleSelect.options[vehicleSelect.selectedIndex].text + '</span>' +
+    '<span>\ud83d\udd04 ' + tripSelect.options[tripSelect.selectedIndex].text + '</span>' +
+    '</div>' +
+    '<p class="calc-note">*Estimated fare. Actual price may vary based on tolls, parking, and seasonal demand.</p>' +
+    '<button class="btn btn-primary" onclick="openBookingModal()" style="margin-top:12px;">\ud83d\udcde Book Now</button>' +
+    '</div>';
+}
+
+/* ============================================
+   FEATURE: Booking Status Tracker
+   ============================================ */
+
+async function lookupBookingStatus() {
+  var input = document.getElementById('statusInput');
+  var resultDiv = document.getElementById('statusResult');
+  if (!input || !resultDiv) return;
+  var query = input.value.trim();
+  if (!query) {
+    showToast('Please enter a Booking ID or Phone Number', 'error');
+    return;
+  }
+  resultDiv.innerHTML = '<div class="status-loading">\u23f3 Looking up your booking...</div>';
+  // Use existing PratapTravels-Data Azure Function with type=status
+  var dataApiUrl = getDataApiUrl();
+  if (!dataApiUrl) {
+    resultDiv.innerHTML = '<div class="status-error">Service temporarily unavailable. Please try again later.</div>';
+    return;
+  }
+  try {
+    var separator = dataApiUrl.indexOf('?') !== -1 ? '&' : '?';
+    var fetchUrl = dataApiUrl + separator + 'type=status&query=' + encodeURIComponent(query);
+    var resp = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    if (!data || !data.bookingId) {
+      resultDiv.innerHTML = '<div class="status-not-found">\u274c No booking found for \"' + escapeHtml(query) + '\". Please check your Booking ID or Phone Number and try again.</div>';
+      return;
+    }
+    var statusClass = data.status === 'confirmed' ? 'status-confirmed' : data.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
+    var statusIcon = data.status === 'confirmed' ? '\u2705' : data.status === 'cancelled' ? '\u274c' : '\u23f3';
+    var vehicleInfo = data.vehicleNumber ? '<p><strong>\ud83d\ude97 Vehicle:</strong> ' + escapeHtml(data.vehicleNumber) + ' (' + escapeHtml(data.vehicleType || '') + ')</p>' : '';
+    var driverInfo = data.driverName ? '<p><strong>\ud83d\udc64 Driver:</strong> ' + escapeHtml(data.driverName) + (data.driverPhone ? ' (' + escapeHtml(data.driverPhone) + ')' : '') + '</p>' : '';
+    var pickupInfo = data.pickup_address ? '<p><strong>\ud83d\udccd Pickup:</strong> ' + escapeHtml(data.pickup_address) + '</p>' : '';
+    resultDiv.innerHTML =
+      '<div class="status-card">' +
+      '<div class="status-header">' +
+      '<span class="status-icon">' + statusIcon + '</span>' +
+      '<span class="booking-status-badge ' + statusClass + '">' + data.status + '</span>' +
+      '</div>' +
+      '<div class="status-details">' +
+      '<p><strong>\ud83d\udccb Booking ID:</strong> ' + escapeHtml(data.bookingId) + '</p>' +
+      '<p><strong>\ud83d\udc64 Name:</strong> ' + escapeHtml(data.name || '-') + '</p>' +
+      '<p><strong>\ud83d\uddfa\ufe0f Route:</strong> ' + escapeHtml(data.route || '-') + '</p>' +
+      '<p><strong>\ud83d\udcc5 Date:</strong> ' + escapeHtml(data.date || '-') + '</p>' +
+      '<p><strong>\u23f0 Time:</strong> ' + escapeHtml(data.time || '-') + '</p>' +
+      '<p><strong>\ud83d\udc65 Passengers:</strong> ' + escapeHtml(data.passengers || '-') + '</p>' +
+      '<p><strong>\ud83d\udd04 Trip Type:</strong> ' + escapeHtml(data.trip_type || '-') + '</p>' +
+      vehicleInfo + driverInfo + pickupInfo +
+      '</div>' +
+      '</div>';
+  } catch (e) {
+    console.error('Status lookup failed:', e);
+    resultDiv.innerHTML = '<div class="status-error">\u26a0\ufe0f Unable to look up booking status. Please try again later or contact us at +91 76313 82174.</div>';
+  }
+}
+
+/* ============================================
+   FEATURE: Revenue Dashboard
+   ============================================ */
+
+async function fetchRevenueData() {
+  var dataApiUrl = getDataApiUrl();
+  if (!dataApiUrl) return null;
+  try {
+    var separator = dataApiUrl.indexOf('?') !== -1 ? '&' : '?';
+    var fetchUrl = dataApiUrl + separator + 'type=revenue';
+    var resp = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return await resp.json();
+  } catch (e) {
+    console.warn('Revenue API failed:', e.message);
+    return null;
+  }
+}
+
+function renderRevenueDashboard(data) {
+  if (!data) return;
+  var elTotal = document.getElementById('revTotalBookings');
+  var elConfirmed = document.getElementById('revConfirmed');
+  var elPending = document.getElementById('revPending');
+  var elCancelled = document.getElementById('revCancelled');
+  var elRevenue = document.getElementById('revTotalRevenue');
+  var elAvg = document.getElementById('revAvgOrder');
+  if (elTotal) elTotal.textContent = data.totalBookings || 0;
+  if (elConfirmed) elConfirmed.textContent = data.confirmedBookings || 0;
+  if (elPending) elPending.textContent = data.pendingBookings || 0;
+  if (elCancelled) elCancelled.textContent = data.cancelledBookings || 0;
+  if (elRevenue) elRevenue.textContent = '\u20b9' + (data.totalRevenue || 0).toLocaleString();
+  if (elAvg) elAvg.textContent = '\u20b9' + (data.averageOrderValue || 0).toLocaleString();
+  var routeBody = document.getElementById('revenueByRouteBody');
+  if (routeBody && data.revenueByRoute) {
+    routeBody.innerHTML = '';
+    data.revenueByRoute.forEach(function(r) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + escapeHtml(r.route || '-') + '</td><td>' + (r.count || 0) + '</td><td>\u20b9' + (r.revenue || 0).toLocaleString() + '</td><td>\u20b9' + (r.average || 0).toLocaleString() + '</td>';
+      routeBody.appendChild(tr);
+    });
+  }
+  var monthBody = document.getElementById('revenueByMonthBody');
+  if (monthBody && data.revenueByMonth) {
+    monthBody.innerHTML = '';
+    data.revenueByMonth.forEach(function(m) {
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + escapeHtml(m.month || '-') + '</td><td>' + (m.count || 0) + '</td><td>\u20b9' + (m.revenue || 0).toLocaleString() + '</td>';
+      monthBody.appendChild(tr);
+    });
+  }
+}
+
+/* ============================================
+   FEATURE: Driver Location Sharing
+   ============================================ */
+
+function shareDriverLocation(bookingId) {
+  var bookings = getBookings();
+  var booking = null;
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
+  }
+  if (!booking) { showToast('Booking not found', 'error'); return; }
+  var msg = '\ud83d\ude98 *PRATAP TRAVELS - Driver Assignment*\n\n';
+  msg += 'Hi ' + (booking.name || 'Customer') + '!\n\n';
+  msg += 'Your booking has been confirmed!\n\n';
+  msg += '\ud83d\udccb *Booking ID:* ' + bookingId + '\n';
+  msg += '\ud83d\uddfa\ufe0f *Route:* ' + (booking.route || '-') + '\n';
+  msg += '\ud83d\udcc5 *Date:* ' + (booking.date || '-') + '\n';
+  msg += '\u23f0 *Time:* ' + (booking.time || '-') + '\n';
+  if (booking.vehicleNumber) msg += '\ud83d\ude97 *Vehicle:* ' + booking.vehicleNumber + '\n';
+  if (booking.driverName) msg += '\ud83d\udc64 *Driver:* ' + booking.driverName + '\n';
+  if (booking.pickup_address) msg += '\ud83d\udccd *Pickup:* ' + booking.pickup_address + '\n';
+  msg += '\n\ud83d\udcde For queries, call +91 76313 82174';
+  var phone = booking.phone ? '91' + booking.phone : '';
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+  showToast('Opening WhatsApp to share driver details...', 'success');
+}
+
+/* ============================================
+   Initialize features on page load
+   ============================================ */
+
+document.addEventListener('DOMContentLoaded', function () {
+  if (document.getElementById('routesBody')) {
+    initGoogleMapsLinks();
+  }
+  if (document.getElementById('calcRoute')) {
+    var calcRoute = document.getElementById('calcRoute');
+    var calcVehicle = document.getElementById('calcVehicle');
+    var calcTrip = document.getElementById('calcTrip');
+    if (calcRoute) calcRoute.addEventListener('change', calculateEstimatedPrice);
+    if (calcVehicle) calcVehicle.addEventListener('change', calculateEstimatedPrice);
+    if (calcTrip) calcTrip.addEventListener('change', calculateEstimatedPrice);
+  }
+  if (document.getElementById('revTotalBookings')) {
+    fetchRevenueData().then(function(data) {
+      renderRevenueDashboard(data);
+    });
   }
 });

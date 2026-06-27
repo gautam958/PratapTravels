@@ -2436,6 +2436,260 @@ img {
   word-wrap: break-word;
 }
 
+/* ============================================
+   PRICE CALCULATOR
+   ============================================ */
+.calculator-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e8f4fd 100%);
+}
+
+.calculator-card {
+  background: var(--bg-white);
+  border-radius: var(--radius);
+  padding: 40px;
+  box-shadow: var(--shadow-lg);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.calculator-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.calc-field label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  margin-bottom: 6px;
+}
+
+.calc-field select {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e0e6ed;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg);
+  transition: var(--transition);
+  outline: none;
+  cursor: pointer;
+}
+
+.calc-field select:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(41, 128, 185, 0.15);
+}
+
+.calc-result {
+  text-align: center;
+  padding: 28px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  border: 2px dashed #e0e6ed;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calc-placeholder {
+  color: var(--text-light);
+  font-size: 1rem;
+}
+
+.calc-result-content {
+  text-align: center;
+}
+
+.calc-price-range {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: var(--success);
+  margin-bottom: 12px;
+}
+
+.calc-details {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.calc-details span {
+  background: var(--bg-white);
+  padding: 6px 16px;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  border: 1px solid #e0e6ed;
+}
+
+.calc-note {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin-top: 8px;
+}
+
+/* ============================================
+   GOOGLE MAPS ROUTE LINK
+   ============================================ */
+.route-map-link {
+  display: inline-block;
+  font-size: 1.1rem;
+  margin-right: 6px;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.route-map-link:hover {
+  transform: scale(1.3);
+}
+
+/* ============================================
+   BOOKING STATUS TRACKER (status.html)
+   ============================================ */
+.status-lookup-card {
+  background: var(--bg-white);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  box-shadow: var(--shadow-lg);
+  max-width: 700px;
+  margin: 0 auto 40px;
+  text-align: center;
+}
+
+.status-lookup-card h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 8px;
+}
+
+.status-lookup-card > p {
+  color: var(--text-light);
+  margin-bottom: 28px;
+}
+
+.status-lookup-form {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.status-loading {
+  text-align: center;
+  padding: 30px;
+  color: var(--primary-light);
+  font-size: 1rem;
+}
+
+.status-error, .status-not-found {
+  text-align: center;
+  padding: 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+}
+
+.status-error {
+  background: #fadbd8;
+  color: #922b21;
+}
+
+.status-not-found {
+  background: #fdebd0;
+  color: #7d6608;
+}
+
+.status-card {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 28px;
+  text-align: left;
+  border: 2px solid #e0e6ed;
+}
+
+.status-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e0e6ed;
+}
+
+.status-icon {
+  font-size: 2rem;
+}
+
+.status-details p {
+  padding: 8px 0;
+  border-bottom: 1px solid #eef2f7;
+  font-size: 0.95rem;
+}
+
+.status-details p:last-child {
+  border-bottom: none;
+}
+
+.status-help {
+  text-align: center;
+  background: var(--bg-white);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: var(--shadow);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.status-help h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  margin-bottom: 12px;
+}
+
+.status-help p {
+  color: var(--text-light);
+  margin-bottom: 6px;
+}
+
+@media (max-width: 768px) {
+  .calculator-form {
+    grid-template-columns: 1fr;
+  }
+
+  .calculator-card {
+    padding: 24px;
+  }
+
+  .calc-price-range {
+    font-size: 1.6rem;
+  }
+
+  .status-lookup-card {
+    padding: 28px 20px;
+  }
+
+  .status-lookup-form {
+    flex-direction: column;
+  }
+
+  .status-lookup-form .visitor-search-input {
+    min-width: auto !important;
+  }
+}
+
 /* ---------- Empty State ---------- */
 .empty-state {
   text-align: center;

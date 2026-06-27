@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pratap Travels – Check Booking Status</title>
+    <meta name="description" content="Check your Pratap Travels booking status online." />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="icon" type="image/jpeg" href="images/hero/prataplog.jpeg" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav class="navbar" id="navbar">
+      <div class="container">
+        <a href="index.html" class="navbar-brand">\ud83d\ude98 <span>PRATAP</span> TRAVELS</a>
+        <button class="navbar-toggle" id="navToggle" aria-label="Menu">\u2630</button>
+        <div class="navbar-menu" id="navMenu">
+          <a href="index.html" data-i18n="nav.home">\u0939\u094b\u092e</a>
+          <a href="index.html#services" data-i18n="nav.services">\u0938\u0947\u0935\u093e\u090f\u0901</a>
+          <a href="index.html#routes" data-i18n="nav.routes">\u092e\u093e\u0930\u094d\u0917</a>
+          <a href="index.html#contact" data-i18n="nav.contact">\u0938\u0902\u092a\u0930\u094d\u0915</a>
+          <a href="admin.html">\ud83d\udd12 Admin</a>
+          <div class="lang-toggle">
+            <button class="lang-toggle-btn active" id="langBtnHi">HI</button>
+            <button class="lang-toggle-btn" id="langBtnEn">EN</button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <section class="visitors-hero">
+      <div>
+        <h1>\ud83d\udccb Track Your Booking</h1>
+        <p>Enter your Booking ID or Phone Number to check your booking status in real-time</p>
+        <a href="index.html" class="admin-back-link">\u2190 Back to Home</a>
+      </div>
+    </section>
+
+    <!-- Status Lookup -->
+    <section class="section" style="padding:60px 0;">
+      <div class="container">
+        <div class="status-lookup-card">
+          <h2>\ud83d\udcdd Enter Your Booking Details</h2>
+          <p>Provide your Booking ID (e.g. BK1234567890) or the Phone Number used during booking</p>
+          <div class="status-lookup-form">
+            <input type="text" id="statusInput" placeholder="Booking ID or Phone Number" class="visitor-search-input" style="min-width:300px;font-size:1rem;padding:14px 20px;" />
+            <button class="btn btn-primary" onclick="lookupBookingStatus()">\ud83d\dd0d Track Booking</button>
+          </div>
+          <div id="statusResult"></div>
+        </div>
+
+        <!-- Help Info -->
+        <div class="status-help">
+          <h3>Need Help?</h3>
+          <p>\ud83d\udcde Call us: <strong>+91 76313 82174</strong> | <strong>+91 87978 71251</strong></p>
+          <p>\ud83d\udcac WhatsApp: <a href="https://wa.me/917991182086?text=Hi, I want to check my booking status." target="_blank" style="color:var(--accent);font-weight:600;">Chat with us</a></p>
+          <p>\ud83d\udce7 Email: prempratap7455@gmail.com</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-brand">\ud83d\ude98 <span>PRATAP</span> TRAVELS</div>
+        <p>Belabagan, Deoghar | +91 76313 82174 | +91 87978 71251</p>
+        <div class="footer-divider"></div>
+        <div class="footer-bottom">
+          <p>&copy; 2026 Pratap Travels. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="js/i18n.js"></script>
+    <script>document.addEventListener("DOMContentLoaded", function () { I18N.init(); });</script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

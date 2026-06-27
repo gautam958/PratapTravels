@@ -16,7 +16,10 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - [Booking Dashboard](#booking-dashboard)
 - [Audit Trail](#audit-trail)
 - [Vehicle Master](#vehicle-master)
+- [Booking Status Tracker](#booking-status-tracker)
+- [Revenue Dashboard](#revenue-dashboard)
 - [PratapTravels-Data Azure Function](#prataptravels-data-azure-function)
+- [Azure Function Changes Required](#azure-function-changes-required)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup & Usage](#setup--usage)
@@ -43,6 +46,8 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **Services Section** — Airport Transfers, Tourism & Pilgrimage, Business Travel cards
 - **Route Image Slider** — Auto-scrolling right-to-left image carousel (pauses on hover, touch swipe support)
 - **Routes & Pricing Table** — 16 routes with thumbnails, distances, durations, prices, and filter buttons (All / Pilgrimage / City / Local)
+- **Google Maps Route Integration** — 🗺️ Map icons on each route linking to Google Maps directions from Deoghar
+- **Price Calculator** — Interactive fare estimator with route, vehicle type, and trip type selectors
 - **Offers Section** — 5 promotional offer cards
 - **Vehicle Rentals Section** — 3 rental packages with a special discount banner
 - **Contact Section** — Phone numbers, address, WhatsApp quick-link
@@ -75,7 +80,10 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - **KPI Cards** — Total Bookings, Confirmed, Pending, With Referral
 - **Search** by name, phone, route, referral code
 - **Filters** — Status (All/Confirmed/Pending/Cancelled), Date (All/Today/7 Days/30 Days)
-- **Table** — Booking ID, Name, Phone, Route, Date, Time, Trip Type, Passengers, Referral, Status, Created
+- **Table** — Booking ID, Name, Phone, Route, Date, Time, Trip Type, Passengers, Vehicle, Driver, Referral, Status, Notification, Actions
+- **Booking Confirmation** — Assign vehicles, set pickup details, send confirmation emails
+- **Driver Location Sharing** — Send booking details + driver info to customer via WhatsApp
+- **Email Notifications** — Send confirmation emails (only for confirmed bookings)
 - **Export CSV** — Download all bookings as CSV
 - **Data source:** PratapTravels-Data Azure Function API (in-memory cache)
 - Protected by **Google Sign-In**
@@ -1124,6 +1132,8 @@ https://communication-fn.azurewebsites.net/api/PratapTravels-Data?code=<FUNCTION
 | **GET**  | `type=booking`     | Get all bookings (requires function key)     |
 | **GET**  | `type=audit_trail` | Get all audit events (requires function key) |
 | **GET**  | `type=vehicle`     | Get all vehicles (requires function key)     |
+| **GET**  | `type=status&query=<value>` | **NEW:** Lookup booking by phone or booking ID |
+| **GET**  | `type=revenue`   | **NEW:** Get revenue analytics summary       |
 | **GET**  | (default)          | Get summary counts (requires function key)   |
 
 ### CORS
@@ -1517,6 +1527,252 @@ public static string FormatDateTime(string isoString)
 
 ---
 
+## Booking Status Tracker
+
+Customers can check their booking status at `status.html` without logging in.
+
+### How It Works
+
+- Customer enters their **Phone Number** or **Booking ID**
+- Frontend calls `PratapTravels-Data` Azure Function with `type=status&query=<value>`
+- Displays booking status, route, date, time, vehicle, driver, and pickup details
+- Shows loading spinner during lookup and error messages for invalid/missing bookings
+
+### Page URL
+
+```
+https://agreeable-meadow-041d69800.7.azurestaticapps.net/status.html
+```
+
+### API Call
+
+```
+GET https://communication-fn.azurewebsites.net/api/PratapTravels-Data?type=status&query=7991182086&code=<FUNCTION_KEY>
+```
+
+### Expected Response
+
+```json
+{
+  "found": true,
+  "bookingId": "BK17197200000002086",
+  "name": "Customer Name",
+  "route": "Basukinath",
+  "date": "2026-07-01",
+  "time": "08:00",
+  "status": "confirmed",
+  "vehicleNumber": "JH 01 AB 1234",
+  "driverName": "Ramesh Kumar",
+  "driverPhone": "7991182086",
+  "pickup_address": "Deoghar Station"
+}
+```
+
+---
+
+## Revenue Dashboard
+
+Admin-only dashboard at `revenue.html` showing revenue analytics and business insights.
+
+### How It Works
+
+- Fetches booking data from `PratapTravels-Data` Azure Function with `type=revenue`
+- Displays KPI cards: Total Bookings, Total Revenue, Confirmed Bookings, Average Booking Value
+- Shows **Revenue by Route** table (route, booking count, total revenue)
+- Shows **Revenue by Month** table (month, booking count, total revenue)
+- Auto-fetches on page load if the dashboard section is visible (after Google Sign-In)
+
+### Page URL
+
+```
+https://agreeable-meadow-041d69800.7.azurestaticapps.net/revenue.html
+```
+
+### API Call
+
+```
+GET https://communication-fn.azurewebsites.net/api/PratapTravels-Data?type=revenue&code=<FUNCTION_KEY>
+```
+
+### Expected Response
+
+```json
+{
+  "totalBookings": 42,
+  "totalRevenue": 125000,
+  "confirmedBookings": 35,
+  "avgBookingValue": 2976,
+  "revenueByRoute": [
+    { "route": "Basukinath", "count": 12, "revenue": 24000 },
+    { "route": "Tarapith", "count": 8, "revenue": 16000 }
+  ],
+  "revenueByMonth": [
+    { "month": "2026-06", "count": 15, "revenue": 45000 },
+    { "month": "2026-05", "count": 12, "revenue": 36000 }
+  ]
+}
+```
+
+---
+
+## Azure Function Changes Required
+
+You need to add **two new GET handlers** to the existing `PratapTravels-Data` Azure Function. No new Azure Function is needed — just add these cases to your existing `run.csx`.
+
+### 1. `type=status` — Booking Status Lookup
+
+**Important:** This handler is called from the public `status.html` page and should be placed **before** the admin auth check in the GET section so it bypasses authentication.
+
+```csharp
+// Handle status lookup (public-facing: search by phone or booking ID)
+if (dataType == "status")
+{
+    string query = req.Query["query"]?.ToString()?.Trim();
+    if (string.IsNullOrEmpty(query))
+    {
+        return new BadRequestObjectResult(new { error = "query parameter is required" });
+    }
+
+    // Search bookings by phone number or booking ID
+    var matched = bookingsList.Where(b =>
+        (b.phone?.ToString()?.Contains(query) == true) ||
+        (b.bookingId?.ToString()?.Contains(query) == true)
+    ).OrderByDescending(b => b.createdAt).ToList();
+
+    if (matched.Count == 0)
+    {
+        return new OkObjectResult(new { found = false, message = "No booking found with this phone number or booking ID" });
+    }
+
+    // Return the most recent matching booking
+    var latest = matched[0];
+    string status = latest.status?.ToString() ?? "pending";
+    string vehicleNumber = "-";
+    string driverName = "-";
+    string driverPhone = "-";
+
+    // Look up vehicle info if assigned
+    if (latest.vehicleId != null)
+    {
+        var vehicle = vehiclesList.FirstOrDefault(v => v.id?.ToString() == latest.vehicleId.ToString());
+        if (vehicle != null)
+        {
+            vehicleNumber = vehicle.vehicleNumber?.ToString() ?? "-";
+            driverName = vehicle.driverName?.ToString() ?? "-";
+            driverPhone = vehicle.driverPhone?.ToString() ?? "-";
+        }
+    }
+
+    return new OkObjectResult(new
+    {
+        found = true,
+        bookingId = latest.bookingId?.ToString(),
+        name = latest.name?.ToString(),
+        route = latest.route?.ToString(),
+        date = latest.date?.ToString(),
+        time = latest.time?.ToString(),
+        trip_type = latest.trip_type?.ToString(),
+        passengers = latest.passengers?.ToString(),
+        status = status,
+        vehicleNumber = vehicleNumber,
+        driverName = driverName,
+        driverPhone = driverPhone,
+        pickup_address = latest.pickup_address?.ToString() ?? "",
+        createdAt = latest.createdAt?.ToString()
+    });
+}
+```
+
+### 2. `type=revenue` — Revenue Analytics
+
+Add this handler in the GET section, after the status handler:
+
+```csharp
+// Handle revenue analytics (aggregated from bookings data)
+// Keep route prices in sync with ROUTE_PRICES in js/main.js
+if (dataType == "revenue")
+{
+    var confirmedBookings = bookingsList.Where(b => b.status?.ToString() == "confirmed").ToList();
+
+    var routePrices = new Dictionary<string, decimal>
+    {
+        { "Basukinath", 1750 }, { "Tarapith", 2200 }, { "Sultanganj", 3200 },
+        { "Ranchi", 3500 }, { "Patna", 3800 }, { "Kolkata", 4500 },
+        { "Dumka", 1500 }, { "Dhanbad", 3200 }, { "Munger", 2800 },
+        { "Muzaffarpur", 4000 }, { "AIIMS Deoghar", 800 }, { "Waterpark", 600 },
+        { "Sarath", 1800 }, { "Madhupur", 1200 }, { "Jamtara", 1400 },
+        { "Budhai", 500 }
+    };
+
+    decimal totalRevenue = 0;
+    var revenueByRoute = new Dictionary<string, object>();
+    var revenueByMonth = new Dictionary<string, object>();
+
+    foreach (var b in confirmedBookings)
+    {
+        string route = b.route?.ToString() ?? "";
+        decimal basePrice = routePrices.ContainsKey(route) ? routePrices[route] : 1500;
+
+        string tripType = b.trip_type?.ToString() ?? "";
+        decimal multiplier = 1.0m;
+        if (tripType.Contains("Round")) multiplier = 1.8m;
+        else if (tripType.Contains("Full Day")) multiplier = 2.5m;
+
+        decimal bookingRevenue = basePrice * multiplier;
+        totalRevenue += bookingRevenue;
+
+        if (!revenueByRoute.ContainsKey(route))
+            revenueByRoute[route] = new { route = route, count = 0, revenue = 0 };
+        var routeData = (Newtonsoft.Json.Linq.JObject)revenueByRoute[route];
+        routeData["count"] = (int)routeData["count"] + 1;
+        routeData["revenue"] = (decimal)routeData["revenue"] + bookingRevenue;
+
+        string createdAt = b.createdAt?.ToString() ?? "";
+        string month = "-";
+        DateTime parsedDate;
+        if (DateTime.TryParse(createdAt, null, System.Globalization.DateTimeStyles.RoundtripKind, out parsedDate))
+            month = parsedDate.ToString("yyyy-MM");
+
+        if (!revenueByMonth.ContainsKey(month))
+            revenueByMonth[month] = new { month = month, count = 0, revenue = 0 };
+        var monthData = (Newtonsoft.Json.Linq.JObject)revenueByMonth[month];
+        monthData["count"] = (int)monthData["count"] + 1;
+        monthData["revenue"] = (decimal)monthData["revenue"] + bookingRevenue;
+    }
+
+    decimal avgBookingValue = confirmedBookings.Count > 0 ? totalRevenue / confirmedBookings.Count : 0;
+
+    return new OkObjectResult(new
+    {
+        totalBookings = bookingsList.Count,
+        totalRevenue = totalRevenue,
+        confirmedBookings = confirmedBookings.Count,
+        avgBookingValue = Math.Round(avgBookingValue, 0),
+        revenueByRoute = revenueByRoute.Values.ToList(),
+        revenueByMonth = revenueByMonth.Values.OrderByDescending(m => m["month"]?.ToString()).ToList()
+    });
+}
+```
+
+### Summary of New Changes
+
+| Data Type | HTTP Method | Description | Status |
+| --------- | ----------- | ----------- | ------ |
+| `type=status` | **GET** | Lookup booking by phone or booking ID | **NEW — Add this** |
+| `type=revenue` | **GET** | Revenue analytics summary | **NEW — Add this** |
+| `type=booking` | **GET** | Get all bookings | ✅ Already exists |
+| `type=audit_trail` | **GET** | Get all audit events | ✅ Already exists |
+| `type=vehicle` | **GET** | Get all vehicles | ✅ Already exists |
+| `booking_data` | **POST** | Save a new booking | ✅ Already exists |
+| `audit_trail` | **POST** | Save audit event | ✅ Already exists |
+| `vehicle_data` | **POST** | Save a new vehicle | ✅ Already exists |
+| `vehicle_update` | **POST** | Update a vehicle | ✅ Already exists |
+| `vehicle_delete` | **POST** | Delete a vehicle | ✅ Already exists |
+| `booking_update` | **POST** | Update a booking | ✅ Already exists |
+| `booking_confirmation` | **POST** | Send confirmation email | ✅ Already exists |
+
+---
+
 ## Tech Stack
 
 | Category            | Technology                                                                                      |
@@ -1541,10 +1797,12 @@ public static string FormatDateTime(string isoString)
 PratapTravels/
 ├── index.html                         # Main landing page (booking modal + refer & win)
 ├── admin.html                         # Admin dashboard entry (links to all dashboards)
+├── status.html                        # 🆕 Public booking status tracker
+├── revenue.html                       # 🆕 Admin revenue analytics dashboard
 ├── visitors.html                      # Admin visitor analytics dashboard
 ├── referral.html                      # Admin referral codes & redemptions dashboard
 ├── booking.html                       # Admin bookings dashboard (search, filters, export)
-├── vehicle.html                        # Admin vehicle master dashboard (CRUD + schedule)
+├── vehicle.html                       # Admin vehicle master dashboard (CRUD + schedule)
 ├── audit-trail.html                   # Admin audit trail dashboard (activity log)
 ├── Booking.json                       # Booking data seed file
 ├── AuditTrail.json                    # Audit trail data seed file
