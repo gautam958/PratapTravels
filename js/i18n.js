@@ -16,14 +16,15 @@ var I18N = (function () {
       "nav.rentals": "किराया",
       "nav.hire-driver": "ड्राइवर किराया",
       "nav.contact": "संपर्क",
-      "nav.status": "📋 बुकिंग स्थिति",
+      "nav.status": "बुकिंग स्थिति",
       "nav.visitors": "आगंतुक",
 
       // Hero
       "hero.badge": "🌟 पीढ़ियों से भरोसेमंद",
       "hero.title1": "आपकी यात्रा,",
       "hero.title2": "हमारी प्राथमिकता",
-      "hero.desc": "PRATAP TRAVELS के साथ प्राइवेट ड्राइवर की सुविधा का अनुभव करें। हवाई अड्डे के ट्रांसफर, व्यापारिक यात्राओं या पर्यटन के लिए, हम हर बार सुरक्षित, भरोसेमंद और शानदार यात्रा प्रदान करते हैं।",
+      "hero.desc":
+        "PRATAP TRAVELS के साथ प्राइवेट ड्राइवर की सुविधा का अनुभव करें। हवाई अड्डे के ट्रांसफर, व्यापारिक यात्राओं या पर्यटन के लिए, हम हर बार सुरक्षित, भरोसेमंद और शानदार यात्रा प्रदान करते हैं।",
       "hero.book-now": "📞 अभी बुक करें",
       "hero.view-packages": "🗺 पैकेज देखें",
 
@@ -31,24 +32,28 @@ var I18N = (function () {
       "services.title": "हमारी सेवाएँ",
       "services.subtitle": "PRATAP TRAVELS के साथ यात्रा आसान",
       "services.airport.title": "हवाई अड्डा ट्रांसफर",
-      "services.airport.desc": "समय पर पिकअप और किसी भी हवाई अड्डे तक बिना किसी परेशानी के ट्रांसफर। पेशेवर ड्राइवर और लक्जरी वाहन।",
+      "services.airport.desc":
+        "समय पर पिकअप और किसी भी हवाई अड्डे तक बिना किसी परेशानी के ट्रांसफर। पेशेवर ड्राइवर और लक्जरी वाहन।",
       "services.airport.li1": "समय पर पिकअप की गारंटी",
       "services.airport.li2": "मीट एंड ग्रीट सेवा",
       "services.airport.li3": "फ़्लाइट ट्रैकिंग शामिल",
       "services.tourism.title": "पर्यटन और तीर्थयात्रा",
-      "services.tourism.desc": "त्वरित डिलीवरी से लेकर लंबी सुंदर ड्राइव तक, हम परिवारों और समूहों के लिए हर यात्रा को सुगम और आनंददायक बनाते हैं।",
+      "services.tourism.desc":
+        "त्वरित डिलीवरी से लेकर लंबी सुंदर ड्राइव तक, हम परिवारों और समूहों के लिए हर यात्रा को सुगम और आनंददायक बनाते हैं।",
       "services.tourism.li1": "बाबा धाम और मंदिर सर्किट",
       "services.tourism.li2": "परिवार के अनुकूल पैकेज",
       "services.tourism.li3": "अनुकूलित यात्रा कार्यक्रम",
       "services.business.title": "व्यापारिक यात्रा",
-      "services.business.desc": "पेशेवरों के लिए स्मार्ट यात्रा समाधान। व्यापारिक बैठकों, कॉर्पोरेट कार्यक्रमों और अन्य के लिए निर्बाध यात्रा।",
+      "services.business.desc":
+        "पेशेवरों के लिए स्मार्ट यात्रा समाधान। व्यापारिक बैठकों, कॉर्पोरेट कार्यक्रमों और अन्य के लिए निर्बाध यात्रा।",
       "services.business.li1": "भरोसेमंद एग्ज़ीक्यूटिव सेवा",
       "services.business.li2": "गोपनीय और पेशेवर ड्राइवर",
       "services.business.li3": "अनुकूलित यात्रा योजनाएँ",
 
       // Slider
       "slider.title": "हमारे गंतव्य खोजें",
-      "slider.subtitle": "हमारे द्वारा दी जाने वाली हर मार्ग की सुंदरता की खोज करें",
+      "slider.subtitle":
+        "हमारे द्वारा दी जाने वाली हर मार्ग की सुंदरता की खोज करें",
 
       // Routes
       "routes.title": "मार्ग और कीमतें",
@@ -69,24 +74,30 @@ var I18N = (function () {
       "offers.title": "आकर्षक ऑफ़र",
       "offers.subtitle": "हर प्रकार के यात्री के लिए विशेष पैकेज",
       "offers.pilgrimage.title": "तीर्थयात्रा कॉम्बो",
-      "offers.pilgrimage.desc": "देवघर → बासुकीनाथ + सुल्तानगंज एक दिन में। विशेष दर्शन सहायता शामिल।",
+      "offers.pilgrimage.desc":
+        "देवघर → बासुकीनाथ + सुल्तानगंज एक दिन में। विशेष दर्शन सहायता शामिल।",
       "offers.pilgrimage.price": "₹3,500 से शुरू",
       "offers.weekend.title": "वीकेंड गेटअवे",
-      "offers.weekend.desc": "देवघर → तारापीठ + नंदन पहाड़ परिवार पैकेज। ताज़गी भरे वीकेंड के लिए एकदम सही।",
+      "offers.weekend.desc":
+        "देवघर → तारापीठ + नंदन पहाड़ परिवार पैकेज। ताज़गी भरे वीकेंड के लिए एकदम सही।",
       "offers.weekend.price": "₹2,800 से शुरू",
       "offers.business.title": "बिज़नेस एक्सप्रेस",
-      "offers.business.desc": "देवघर → रांची / कोलकाता / पटना वाई-फाई इनेबल्ड कार + मुफ़्त पानी की बोतलें।",
+      "offers.business.desc":
+        "देवघर → रांची / कोलकाता / पटना वाई-फाई इनेबल्ड कार + मुफ़्त पानी की बोतलें।",
       "offers.business.price": "₹5,000 से शुरू",
       "offers.family.title": "फैमिली फन डील",
-      "offers.family.desc": "देवघर वॉटरपार्क + तपोवन हिल्स आधे दिन की यात्रा। बच्चों और माता-पिता दोनों के लिए एकदम सही।",
+      "offers.family.desc":
+        "देवघर वॉटरपार्क + तपोवन हिल्स आधे दिन की यात्रा। बच्चों और माता-पिता दोनों के लिए एकदम सही।",
       "offers.family.price": "₹1,200 से शुरू",
       "offers.festival.title": "त्योहार विशेष (श्रावणी मेला)",
-      "offers.festival.desc": "बाबा धाम + बासुकीनाथ पैकेज पर ₹500 की छूट। आसानी से त्योहार मनाएँ!",
+      "offers.festival.desc":
+        "बाबा धाम + बासुकीनाथ पैकेज पर ₹500 की छूट। आसानी से त्योहार मनाएँ!",
       "offers.festival.price": "₹500 छूट",
 
       // Rentals
       "rentals.title": "वाहन किराया",
-      "rentals.subtitle": "छोटी या लंबी यात्राओं के लिए अच्छी तरह से रखरखाव वाले वाहन",
+      "rentals.subtitle":
+        "छोटी या लंबी यात्राओं के लिए अच्छी तरह से रखरखाव वाले वाहन",
       "rentals.card1.title": "पेशेवर और भरोसेमंद",
       "rentals.card1.li1": "अच्छी तरह से रखरखाव वाले वाहन",
       "rentals.card1.li2": "मान्य पहचान पत्र आवश्यक (आधार, डीएल, पासपोर्ट)",
@@ -103,31 +114,43 @@ var I18N = (function () {
       "rentals.card3.li3": "पारदर्शी कीमतें, कोई छिपी लागत नहीं",
       "rentals.card3.btn": "📞 अभी आरक्षित करें",
       "rentals.banner.title": "🎉 3+ दिनों के लिए बुक करें और पाएँ 10% छूट!",
-      "rentals.banner.desc": "लंबे किराये पर विशेष छूट। तीर्थयात्राओं और व्यापारिक यात्राओं के लिए एकदम सही।",
+      "rentals.banner.desc":
+        "लंबे किराये पर विशेष छूट। तीर्थयात्राओं और व्यापारिक यात्राओं के लिए एकदम सही।",
       "rentals.banner.btn": "📞 ऑफ़र का लाभ उठाएँ",
 
       // Hire Driver
       "hire-driver.title": "ड्राइवर किराया सेवा",
-      "hire-driver.subtitle": "आपकी सभी यात्रा आवश्यकताओं के लिए पेशेवर और भरोसेमंद ड्राइवर",
-      "hire-driver.intro": "हम आपकी यात्रा आवश्यकताओं को पूरा करने के लिए पेशेवर और भरोसेमंद ड्राइवर प्रदान करते हैं। चाहे आपको स्थानीय क्षेत्र में छोटी यात्राओं के लिए सहायता चाहिए या दूर के गंतव्यों तक लंबी दूरी की यात्राओं के लिए, हमारे ड्राइवर सुरक्षित, समय पर और आरामदायक यात्रा सुनिश्चित करते हैं।",
+      "hire-driver.subtitle":
+        "आपकी सभी यात्रा आवश्यकताओं के लिए पेशेवर और भरोसेमंद ड्राइवर",
+      "hire-driver.intro":
+        "हम आपकी यात्रा आवश्यकताओं को पूरा करने के लिए पेशेवर और भरोसेमंद ड्राइवर प्रदान करते हैं। चाहे आपको स्थानीय क्षेत्र में छोटी यात्राओं के लिए सहायता चाहिए या दूर के गंतव्यों तक लंबी दूरी की यात्राओं के लिए, हमारे ड्राइवर सुरक्षित, समय पर और आरामदायक यात्रा सुनिश्चित करते हैं।",
       "hire-driver.th.service": "सेवा प्रकार",
       "hire-driver.th.details": "सेवा विवरण",
       "hire-driver.th.charge": "प्रति दिन शुल्क",
       "hire-driver.th.food": "खाना और आवास भत्ता",
       "hire-driver.th.terms": "अतिरिक्त शुल्क / शर्तें",
       "hire-driver.service1.name": "📍 स्थानीय क्षेत्र सेवा",
-      "hire-driver.service1.details": "शहर की यात्राएँ, काम और देवघर जिले के भीतर आसपास की यात्राएँ (8-10 घंटे तक)",
-      "hire-driver.service1.food": "शामिल (ग्राहक को भोजन देना होगा या बुनियादी ₹150-₹200 दैनिक भत्ता)",
-      "hire-driver.service1.terms": "ओवरटाइम: मानक शिफ्ट के बाद प्रति अतिरिक्त घंटा ₹100।",
+      "hire-driver.service1.details":
+        "शहर की यात्राएँ, काम और देवघर जिले के भीतर आसपास की यात्राएँ (8-10 घंटे तक)",
+      "hire-driver.service1.food":
+        "शामिल (ग्राहक को भोजन देना होगा या बुनियादी ₹150-₹200 दैनिक भत्ता)",
+      "hire-driver.service1.terms":
+        "ओवरटाइम: मानक शिफ्ट के बाद प्रति अतिरिक्त घंटा ₹100।",
       "hire-driver.service2.name": "🛣️ दूर की सेवा",
-      "hire-driver.service2.details": "देवघर के बाहर लंबी दूरी की यात्राएँ या बहु-दिवसीय यात्राएँ (जैसे रांची, पटना, या कोलकाता)",
-      "hire-driver.service2.food": "अनिवार्य रात्रि आवास/खाना भत्ता: ग्राहक स्वच्छ आवास और भोजन प्रदान करता है (या अतिरिक्त ₹300/रात भत्ता)।",
-      "hire-driver.service2.terms": "रात्रि ड्राइविंग शुल्क: रात 10:00 बजे से सुबह 5:00 बजे के बीच ड्राइविंग पर ₹200 अतिरिक्त।",
+      "hire-driver.service2.details":
+        "देवघर के बाहर लंबी दूरी की यात्राएँ या बहु-दिवसीय यात्राएँ (जैसे रांची, पटना, या कोलकाता)",
+      "hire-driver.service2.food":
+        "अनिवार्य रात्रि आवास/खाना भत्ता: ग्राहक स्वच्छ आवास और भोजन प्रदान करता है (या अतिरिक्त ₹300/रात भत्ता)।",
+      "hire-driver.service2.terms":
+        "रात्रि ड्राइविंग शुल्क: रात 10:00 बजे से सुबह 5:00 बजे के बीच ड्राइविंग पर ₹200 अतिरिक्त।",
       "hire-driver.service3.name": "⏱️ घंटे के आधार पर",
-      "hire-driver.service3.details": "छोटे स्थानीय ड्रॉप, आपातकालीन दौड़, या मंदिर यात्राएँ (बैद्यनाथ धाम)",
+      "hire-driver.service3.details":
+        "छोटे स्थानीय ड्रॉप, आपातकालीन दौड़, या मंदिर यात्राएँ (बैद्यनाथ धाम)",
       "hire-driver.service3.food": "छोटी अवधि के लिए आवश्यक नहीं।",
-      "hire-driver.service3.terms": "यदि शुरुआती पिकअप स्थान से दूर छोड़ा जाता है तो रिटर्न ट्रांज़िट लागत।",
-      "hire-driver.footer": "हमारे ड्राइवर विनम्र, अच्छी तरह से प्रशिक्षित और स्थानीय और क्षेत्रीय मार्गों से परिचित हैं। वे सुरक्षा प्रथाओं का पालन करते हैं और तनाव-मुक्त यात्रा अनुभव प्रदान करते हैं, चाहे आप एक दिन या कई दिनों के लिए बुकिंग कर रहे हों।",
+      "hire-driver.service3.terms":
+        "यदि शुरुआती पिकअप स्थान से दूर छोड़ा जाता है तो रिटर्न ट्रांज़िट लागत।",
+      "hire-driver.footer":
+        "हमारे ड्राइवर विनम्र, अच्छी तरह से प्रशिक्षित और स्थानीय और क्षेत्रीय मार्गों से परिचित हैं। वे सुरक्षा प्रथाओं का पालन करते हैं और तनाव-मुक्त यात्रा अनुभव प्रदान करते हैं, चाहे आप एक दिन या कई दिनों के लिए बुकिंग कर रहे हों।",
       "hire-driver.btn": "📞 ड्राइवर किराया पर लें",
 
       // Refer & Win
@@ -135,11 +158,14 @@ var I18N = (function () {
       "refer.title": "🎁 रेफ़र करें, जीतें!",
       "refer.subtitle": "दोस्तों को रेफ़र करें और दोनों को ₹50 का इनाम पाएँ",
       "refer.step1.title": "अपना रेफ़रल कोड शेयर करें",
-      "refer.step1.desc": "अपना यूनीक रेफ़रल कोड या लिंक दोस्तों और परिवार के साथ शेयर करें",
+      "refer.step1.desc":
+        "अपना यूनीक रेफ़रल कोड या लिंक दोस्तों और परिवार के साथ शेयर करें",
       "refer.step2.title": "दोस्ता बुकिंग करें",
-      "refer.step2.desc": "आपका दोस्त अपनी पहली यात्रा बुक करते समय रेफ़रल कोड का उपयोग करता है",
+      "refer.step2.desc":
+        "आपका दोस्त अपनी पहली यात्रा बुक करते समय रेफ़रल कोड का उपयोग करता है",
       "refer.step3.title": "दोनों जीतें!",
-      "refer.step3.desc": "आपको ₹50 और आपके दोस्त को पहली बुकिंग पर ₹50 की छूट मिलती है",
+      "refer.step3.desc":
+        "आपको ₹50 और आपके दोस्त को पहली बुकिंग पर ₹50 की छूट मिलती है",
       "refer.card.referrer.title": "आपके लिए (रेफ़रर)",
       "refer.card.referrer.desc": "हर सफल रेफ़रल पर ₹50 का तुरंत इनाम",
       "refer.card.referrer.li1": "कोई सीमा नहीं - जितना चाहें उतना शेयर करें",
@@ -151,7 +177,8 @@ var I18N = (function () {
       "refer.card.friend.li2": "बस रेफ़रल कोड दर्ज करें",
       "refer.card.friend.li3": "कोई न्यूनतम राशि आवश्यक नहीं",
       "refer.generate.title": "अपना रेफ़रल कोड बनाएँ",
-      "refer.generate.desc": "नीचे अपना नाम दर्ज करें और अपना यूनीक रेफ़रल कोड प्राप्त करें",
+      "refer.generate.desc":
+        "नीचे अपना नाम दर्ज करें और अपना यूनीक रेफ़रल कोड प्राप्त करें",
       "refer.generate.placeholder": "अपना नाम दर्ज करें",
       "refer.generate.btn": "🎁 मेरा कोड बनाएँ",
       "refer.output.yourCode": "आपका यूनीक रेफ़रल कोड:",
@@ -159,17 +186,21 @@ var I18N = (function () {
       "refer.share.copy": "कोड कॉपी करें",
       "refer.faq.title": "अक्सर पूछे जाने वाले सवाल",
       "refer.faq.q1": "रेफ़रल इनाम कैसे काम करता है?",
-      "refer.faq.a1": "जब आपका दोस्त आपके रेफ़रल कोड का उपयोग करके अपनी पहली बुकिंग करता है और यात्रा पूरी हो जाती है, तो आपको ₹50 का इनाम और आपके दोस्त को बुकिंग में ₹50 की छूट मिलती है।",
+      "refer.faq.a1":
+        "जब आपका दोस्त आपके रेफ़रल कोड का उपयोग करके अपनी पहली बुकिंग करता है और यात्रा पूरी हो जाती है, तो आपको ₹50 का इनाम और आपके दोस्त को बुकिंग में ₹50 की छूट मिलती है।",
       "refer.faq.q2": "क्या रेफ़रल की कोई सीमा है?",
-      "refer.faq.a2": "नहीं! आप जितने चाहें उतने दोस्तों को रेफ़र कर सकते हैं। हर सफल रेफ़रल पर आपको ₹50 मिलते हैं।",
+      "refer.faq.a2":
+        "नहीं! आप जितने चाहें उतने दोस्तों को रेफ़र कर सकते हैं। हर सफल रेफ़रल पर आपको ₹50 मिलते हैं।",
       "refer.faq.q3": "इनाम कैसे मिलेगा?",
-      "refer.faq.a3": "आपका इनाम आपके अकाउंट में क्रेडिट किया जाएगा जिसे आप अपनी अगली यात्रा में उपयोग कर सकते हैं।",
+      "refer.faq.a3":
+        "आपका इनाम आपके अकाउंट में क्रेडिट किया जाएगा जिसे आप अपनी अगली यात्रा में उपयोग कर सकते हैं।",
       "modal.referral": "रेफ़रल कोड",
       "modal.referral.placeholder": "यदि है तो रेफ़रल कोड दर्ज करें",
 
       // Contact
       "contact.title": "संपर्क करें",
-      "contact.subtitle": "हम आपकी सही यात्रा की योजना बनाने में मदद के लिए यहाँ हैं",
+      "contact.subtitle":
+        "हम आपकी सही यात्रा की योजना बनाने में मदद के लिए यहाँ हैं",
       "contact.call.title": "हमें कॉल करें",
       "contact.visit.title": "हमसे मिलें",
       "contact.whatsapp.title": "व्हाट्सएप",
@@ -201,11 +232,14 @@ var I18N = (function () {
       "modal.type.full-day": "पूरा दिन / बहु-दिवसीय",
       "modal.type.rental": "वाहन किराया",
       "modal.remarks": "विशेष अनुरोध / टिप्पणियाँ",
-      "modal.remarks.placeholder": "कोई विशेष आवश्यकताएँ... (हवाई अड्डा पिकअप, कई स्टॉप आदि)",
+      "modal.remarks.placeholder":
+        "कोई विशेष आवश्यकताएँ... (हवाई अड्डा पिकअप, कई स्टॉप आदि)",
       "modal.submit": "🚗 बुकिंग अनुरोध जमा करें",
-      "modal.note": "हम 30 मिनट के भीतर व्हाट्सएप या फ़ोन के माध्यम से आपकी बुकिंग की पुष्टि करेंगे।",
+      "modal.note":
+        "हम 30 मिनट के भीतर व्हाट्सएप या फ़ोन के माध्यम से आपकी बुकिंग की पुष्टि करेंगे।",
       "modal.success.title": "बुकिंग अनुरोध भेजा गया!",
-      "modal.success.desc": "हमें आपका बुकिंग अनुरोध मिल गया है। हम जल्द ही पुष्टि के लिए आपसे संपर्क करेंगे।",
+      "modal.success.desc":
+        "हमें आपका बुकिंग अनुरोध मिल गया है। हम जल्द ही पुष्टि के लिए आपसे संपर्क करेंगे।",
       "modal.success.btn": "एक और यात्रा बुक करें",
 
       // Floating Button
@@ -215,12 +249,15 @@ var I18N = (function () {
       // Visitors page
       "nav.home": "होम",
       "visitors.hero.title": "📊 आगंतुक विश्लेषण",
-      "visitors.hero.desc": "ट्रैक करें कि आपकी वेबसाइट पर कौन आया — स्थान, डिवाइस, पृष्ठ और बहुत कुछ",
+      "visitors.hero.desc":
+        "ट्रैक करें कि आपकी वेबसाइट पर कौन आया — स्थान, डिवाइस, पृष्ठ और बहुत कुछ",
       "visitors.auth.title": "🔒 एडमिन एक्सेस आवश्यक",
-      "visitors.auth.desc": "आगंतुक विश्लेषण देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "visitors.auth.desc":
+        "आगंतुक विश्लेषण देखने के लिए अधिकृत Google खाते से साइन इन करें",
       "visitors.auth.google": "Google से साइन इन करें",
       "visitors.auth.or": "या",
-      "visitors.auth.note": "केवल एडमिन खाते। एक्सेस के लिए साइट मालिक से संपर्क करें।",
+      "visitors.auth.note":
+        "केवल एडमिन खाते। एक्सेस के लिए साइट मालिक से संपर्क करें।",
       "visitors.btn.refresh": "रिफ़्रेश",
       "visitors.btn.signout": "साइन आउट",
       "visitors.kpi.total": "कुल आगंतुक",
@@ -232,7 +269,8 @@ var I18N = (function () {
       "visitors.table.title": "📋 आगंतुक रिकॉर्ड",
       "visitors.table.search": "🔍 स्थान, डिवाइस, पथ से खोजें...",
       "visitors.btn.clearLog": "लॉग साफ़ करें",
-      "visitors.empty": "अभी तक कोई आगंतुक डेटा नहीं। पृष्ठ लोड होने पर ट्रैकिंग स्वचालित रूप से शुरू हो जाती है।",
+      "visitors.empty":
+        "अभी तक कोई आगंतुक डेटा नहीं। पृष्ठ लोड होने पर ट्रैकिंग स्वचालित रूप से शुरू हो जाती है।",
 
       "error.name": "कृपया अपना नाम दर्ज करें",
       "error.phone": "एक मान्य 10 अंकों का फ़ोन नंबर दर्ज करें",
@@ -240,7 +278,7 @@ var I18N = (function () {
       "error.route": "कृपया गंतव्य चुनें",
       "error.date": "कृपया यात्रा की तिथि चुनें",
       "error.type": "कृपया यात्रा प्रकार चुनें",
-      "sending": "⏳ भेजा जा रहा है...",
+      sending: "⏳ भेजा जा रहा है...",
       "submit.booking": "🚗 बुकिंग अनुरोध जमा करें",
 
       // Admin pages — common
@@ -251,21 +289,27 @@ var I18N = (function () {
       // Admin dashboard (admin.html)
       "admin.hero.title": "🔒 एडमिन डैशबोर्ड",
       "admin.hero.desc": "आगंतुक, रेफ़रल और विश्लेषण प्रबंधित करें",
-      "admin.auth.desc": "डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "admin.auth.desc":
+        "डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें",
       "admin.card.visitors.title": "आगंतुक विश्लेषण",
-      "admin.card.visitors.desc": "वेबसाइट आगंतुक, डिवाइस, स्थान और पृष्ठ दृश्य ट्रैक करें",
+      "admin.card.visitors.desc":
+        "वेबसाइट आगंतुक, डिवाइस, स्थान और पृष्ठ दृश्य ट्रैक करें",
       "admin.card.visitors.link": "डैशबोर्ड खोलें →",
       "admin.card.referrals.title": "रेफ़रल डैशबोर्ड",
-      "admin.card.referrals.desc": "रेफ़रल कोड, रिडेम्पशन और इनाम बैलेंस प्रबंधित करें",
+      "admin.card.referrals.desc":
+        "रेफ़रल कोड, रिडेम्पशन और इनाम बैलेंस प्रबंधित करें",
       "admin.card.referrals.link": "डैशबोर्ड खोलें →",
       "admin.card.bookings.title": "बुकिंग डैशबोर्ड",
-      "admin.card.bookings.desc": "सभी ग्राहक बुकिंग फ़िल्टर और खोज के साथ देखें",
+      "admin.card.bookings.desc":
+        "सभी ग्राहक बुकिंग फ़िल्टर और खोज के साथ देखें",
       "admin.card.bookings.link": "डैशबोर्ड खोलें →",
       "admin.card.audit.title": "ऑडिट ट्रेल",
-      "admin.card.audit.desc": "वेबसाइट पर सभी उपयोगकर्ता गतिविधियाँ और इंटरैक्शन ट्रैक करें",
+      "admin.card.audit.desc":
+        "वेबसाइट पर सभी उपयोगकर्ता गतिविधियाँ और इंटरैक्शन ट्रैक करें",
       "admin.card.audit.link": "डैशबोर्ड खोलें →",
       "admin.card.revenue.title": "💰 रेवेन्यू डैशबोर्ड",
-      "admin.card.revenue.desc": "बुकिंग, रेवेन्यू और बिज़नेस प्रदर्शन एनालिटिक्स ट्रैक करें",
+      "admin.card.revenue.desc":
+        "बुकिंग, रेवेन्यू और बिज़नेस प्रदर्शन एनालिटिक्स ट्रैक करें",
       "admin.card.revenue.link": "डैशबोर्ड खोलें →",
 
       // Booking completed status
@@ -289,7 +333,8 @@ var I18N = (function () {
       // Referral dashboard (referral.html)
       "referral.hero.title": "🎁 रेफ़रल डैशबोर्ड",
       "referral.hero.desc": "रेफ़रल कोड, रिडेम्पशन और इनाम बैलेंस ट्रैक करें",
-      "referral.auth.desc": "रेफ़रल डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "referral.auth.desc":
+        "रेफ़रल डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें",
       "referral.kpi.totalCodes": "कुल कोड",
       "referral.kpi.redemptions": "रिडेम्पशन",
       "referral.kpi.rewardsPaid": "भुगतान इनाम",
@@ -304,7 +349,8 @@ var I18N = (function () {
       "referral.table.rewardBalance": "इनाम बैलेंस",
       "referral.table.created": "बनाया",
       "referral.table.status": "स्थिति",
-      "referral.empty": "अभी तक कोई रेफ़रल कोड नहीं। उपयोगकर्ता कोड बनाने पर यहाँ दिखाई देंगे।",
+      "referral.empty":
+        "अभी तक कोई रेफ़रल कोड नहीं। उपयोगकर्ता कोड बनाने पर यहाँ दिखाई देंगे।",
       "referral.modal.title": "🎁 रिडेम्पशन इतिहास",
       "referral.modal.subtitle": "रेफ़रल कोड विवरण",
       "referral.modal.totalRedemptions": "कुल रिडेम्पशन",
@@ -320,7 +366,8 @@ var I18N = (function () {
       // Bookings dashboard (booking.html)
       "booking.hero.title": "📋 बुकिंग डैशबोर्ड",
       "booking.hero.desc": "सभी ग्राहक बुकिंग देखें और प्रबंधित करें",
-      "booking.auth.desc": "बुकिंग डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "booking.auth.desc":
+        "बुकिंग डैशबोर्ड देखने के लिए अधिकृत Google खाते से साइन इन करें",
       "booking.kpi.total": "कुल बुकिंग",
       "booking.kpi.confirmed": "पुष्टि",
       "booking.kpi.pending": "लंबित",
@@ -340,7 +387,8 @@ var I18N = (function () {
       "booking.table.notified": "सूचना",
       "booking.table.status": "स्थिति",
       "booking.table.created": "बनाया",
-      "booking.empty": "अभी तक कोई बुकिंग नहीं। उपयोगकर्ता जमा करने पर बुकिंग यहाँ दिखाई देंगी।",
+      "booking.empty":
+        "अभी तक कोई बुकिंग नहीं। उपयोगकर्ता जमा करने पर बुकिंग यहाँ दिखाई देंगी।",
       "booking.filter.allStatus": "सभी स्थिति",
       "booking.filter.confirmed": "पुष्टि",
       "booking.filter.pending": "लंबित",
@@ -352,8 +400,10 @@ var I18N = (function () {
 
       // Audit trail (audit-trail.html)
       "audit.hero.title": "📜 ऑडिट ट्रेल",
-      "audit.hero.desc": "वेबसाइट पर सभी उपयोगकर्ता गतिविधियाँ और इंटरैक्शन ट्रैक करें",
-      "audit.auth.desc": "ऑडिट ट्रेल देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "audit.hero.desc":
+        "वेबसाइट पर सभी उपयोगकर्ता गतिविधियाँ और इंटरैक्शन ट्रैक करें",
+      "audit.auth.desc":
+        "ऑडिट ट्रेल देखने के लिए अधिकृत Google खाते से साइन इन करें",
       "audit.kpi.total": "कुल इवेंट",
       "audit.kpi.bookings": "बुकिंग",
       "audit.kpi.referrals": "रेफ़रल इवेंट",
@@ -366,7 +416,8 @@ var I18N = (function () {
       "audit.table.page": "पृष्ठ",
       "audit.table.timestamp": "समय",
       "audit.table.visitor": "आगंतुक",
-      "audit.empty": "अभी तक कोई ऑडिट इवेंट नहीं। उपयोगकर्ता साइट से इंटरैक्ट करने पर गतिविधियाँ यहाँ दिखाई देंगी।",
+      "audit.empty":
+        "अभी तक कोई ऑडिट इवेंट नहीं। उपयोगकर्ता साइट से इंटरैक्ट करने पर गतिविधियाँ यहाँ दिखाई देंगी।",
       "audit.filter.allTypes": "सभी प्रकार",
       "audit.filter.pageVisit": "पृष्ठ विज़िट",
       "audit.filter.bookings": "बुकिंग",
@@ -381,7 +432,8 @@ var I18N = (function () {
       // Vehicle master (vehicle.html)
       "vehicle.hero.title": "🚗 वाहन मास्टर",
       "vehicle.hero.desc": "वाहन, ड्राइवर और उपलब्धता प्रबंधित करें",
-      "vehicle.auth.desc": "वाहन मास्टर देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "vehicle.auth.desc":
+        "वाहन मास्टर देखने के लिए अधिकृत Google खाते से साइन इन करें",
       "vehicle.btn.add": "➕ वाहन जोड़ें",
       "vehicle.kpi.total": "कुल वाहन",
       "vehicle.kpi.available": "उपलब्ध",
@@ -397,7 +449,8 @@ var I18N = (function () {
       "vehicle.table.status": "स्थिति",
       "vehicle.table.created": "बनाया",
       "vehicle.table.actions": "कार्य",
-      "vehicle.empty": "अभी तक कोई वाहन नहीं। बुकिंग असाइन करने के लिए वाहन जोड़ें।",
+      "vehicle.empty":
+        "अभी तक कोई वाहन नहीं। बुकिंग असाइन करने के लिए वाहन जोड़ें।",
       "vehicle.filter.all": "सभी",
       "vehicle.filter.available": "उपलब्ध",
       "vehicle.filter.booked": "बुक",
@@ -499,7 +552,8 @@ var I18N = (function () {
       "revenue.kpi.avgOrder": "आनुमाड",
       // Revenue page — auth
       "revenue.auth.title": "🔒 एडमिन एक्सेस आवश्यक",
-      "revenue.auth.desc": "रेवेन्यू एनालिटिक्स देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      "revenue.auth.desc":
+        "रेवेन्यू एनालिटिक्स देखने के लिए अधिकृत Google खाते से साइन इन करें",
       // Revenue page — panel titles
       "revenue.route.title": "🗺️ मार्ग अनुसार रेवेन्यू",
       "revenue.monthly.title": "📅 मासिक रेवेन्यू",
@@ -521,7 +575,7 @@ var I18N = (function () {
       "nav.rentals": "Rentals",
       "nav.hire-driver": "Hire Driver",
       "nav.contact": "Contact",
-      "nav.status": "📋 Booking Status",
+      "nav.status": "Booking Status",
       "nav.visitors": "Visitors",
       "nav.home": "Home",
 
@@ -529,7 +583,8 @@ var I18N = (function () {
       "hero.badge": "🌟 Trusted for Generations",
       "hero.title1": "Your Journey,",
       "hero.title2": "Our Priority",
-      "hero.desc": "Experience the convenience of a private driver with PRATAP TRAVELS. Airport transfers, business trips, or tourism — we deliver safe, reliable, and premium travel every time.",
+      "hero.desc":
+        "Experience the convenience of a private driver with PRATAP TRAVELS. Airport transfers, business trips, or tourism — we deliver safe, reliable, and premium travel every time.",
       "hero.book-now": "📞 Book Now",
       "hero.view-packages": "🗺 View Packages",
 
@@ -537,17 +592,20 @@ var I18N = (function () {
       "services.title": "Our Services",
       "services.subtitle": "Travel Made Easy with PRATAP TRAVELS",
       "services.airport.title": "Airport Transfer",
-      "services.airport.desc": "On-time pickup and hassle-free transfer to any airport. Professional drivers and luxury vehicles.",
+      "services.airport.desc":
+        "On-time pickup and hassle-free transfer to any airport. Professional drivers and luxury vehicles.",
       "services.airport.li1": "On-time pickup guarantee",
       "services.airport.li2": "Meet & greet service",
       "services.airport.li3": "Flight tracking included",
       "services.tourism.title": "Tourism & Pilgrimage",
-      "services.tourism.desc": "From quick deliveries to long scenic drives, we make every trip smooth and enjoyable for families and groups.",
+      "services.tourism.desc":
+        "From quick deliveries to long scenic drives, we make every trip smooth and enjoyable for families and groups.",
       "services.tourism.li1": "Baba Dham & Temple Circuit",
       "services.tourism.li2": "Family-friendly packages",
       "services.tourism.li3": "Customized itineraries",
       "services.business.title": "Business Travel",
-      "services.business.desc": "Smart travel solutions for professionals. Seamless travel for business meetings, corporate events, and more.",
+      "services.business.desc":
+        "Smart travel solutions for professionals. Seamless travel for business meetings, corporate events, and more.",
       "services.business.li1": "Reliable executive service",
       "services.business.li2": "Confidential & professional driver",
       "services.business.li3": "Customized travel plans",
@@ -558,7 +616,8 @@ var I18N = (function () {
 
       // Routes
       "routes.title": "Routes & Pricing",
-      "routes.subtitle": "Affordable private driver services to popular destinations",
+      "routes.subtitle":
+        "Affordable private driver services to popular destinations",
       "routes.filter.all": "All Routes",
       "routes.filter.pilgrimage": "🛕 Pilgrimage",
       "routes.filter.city": "🏙️ City",
@@ -575,19 +634,24 @@ var I18N = (function () {
       "offers.title": "Special Offers",
       "offers.subtitle": "Exclusive packages for every type of traveler",
       "offers.pilgrimage.title": "Pilgrimage Combo",
-      "offers.pilgrimage.desc": "Deoghar → Basukinath + Sultangaj in one day. Special darshan assistance included.",
+      "offers.pilgrimage.desc":
+        "Deoghar → Basukinath + Sultangaj in one day. Special darshan assistance included.",
       "offers.pilgrimage.price": "Starting ₹3,500",
       "offers.weekend.title": "Weekend Getaway",
-      "offers.weekend.desc": "Deoghar → Tarapith + Nandan Pahar family package. Perfect for a refreshing weekend.",
+      "offers.weekend.desc":
+        "Deoghar → Tarapith + Nandan Pahar family package. Perfect for a refreshing weekend.",
       "offers.weekend.price": "Starting ₹2,800",
       "offers.business.title": "Business Express",
-      "offers.business.desc": "Deoghar → Ranchi / Kolkata / Patna WiFi-enabled car + complimentary water bottles.",
+      "offers.business.desc":
+        "Deoghar → Ranchi / Kolkata / Patna WiFi-enabled car + complimentary water bottles.",
       "offers.business.price": "Starting ₹5,000",
       "offers.family.title": "Family Fun Deal",
-      "offers.family.desc": "Deoghar Waterpark + Tapovan Hills half-day trip. Perfect for kids and parents alike.",
+      "offers.family.desc":
+        "Deoghar Waterpark + Tapovan Hills half-day trip. Perfect for kids and parents alike.",
       "offers.family.price": "Starting ₹1,200",
       "offers.festival.title": "Festival Special (Shravani Mela)",
-      "offers.festival.desc": "₹500 off on Baba Dham + Basukinath package. Celebrate the festival hassle-free!",
+      "offers.festival.desc":
+        "₹500 off on Baba Dham + Basukinath package. Celebrate the festival hassle-free!",
       "offers.festival.price": "₹500 Off",
 
       // Rentals
@@ -609,31 +673,43 @@ var I18N = (function () {
       "rentals.card3.li3": "Transparent pricing, no hidden costs",
       "rentals.card3.btn": "📞 Reserve Now",
       "rentals.banner.title": "🎉 Book for 3+ days and get 10% off!",
-      "rentals.banner.desc": "Special discounts on long rentals. Perfect for pilgrimages and business trips.",
+      "rentals.banner.desc":
+        "Special discounts on long rentals. Perfect for pilgrimages and business trips.",
       "rentals.banner.btn": "📞 Grab the Offer",
 
       // Hire Driver
       "hire-driver.title": "Driver Hire Service",
-      "hire-driver.subtitle": "Professional and reliable drivers for all your travel needs",
-      "hire-driver.intro": "We provide professional and reliable drivers to meet your travel needs. Whether you need assistance for short trips within the local area or long-distance travel to distant destinations, our drivers ensure safe, timely, and comfortable journeys.",
+      "hire-driver.subtitle":
+        "Professional and reliable drivers for all your travel needs",
+      "hire-driver.intro":
+        "We provide professional and reliable drivers to meet your travel needs. Whether you need assistance for short trips within the local area or long-distance travel to distant destinations, our drivers ensure safe, timely, and comfortable journeys.",
       "hire-driver.th.service": "Service Type",
       "hire-driver.th.details": "Service Details",
       "hire-driver.th.charge": "Per Day Charge",
       "hire-driver.th.food": "Food & Stay Allowance",
       "hire-driver.th.terms": "Additional Charges / Terms",
       "hire-driver.service1.name": "📍 Local Area Service",
-      "hire-driver.service1.details": "City rides, office runs, and nearby trips within Deoghar district (up to 8-10 hours)",
-      "hire-driver.service1.food": "Included (customer to provide meals or basic ₹150-₹200 daily allowance)",
-      "hire-driver.service1.terms": "Overtime: ₹100 per additional hour beyond standard shift.",
+      "hire-driver.service1.details":
+        "City rides, office runs, and nearby trips within Deoghar district (up to 8-10 hours)",
+      "hire-driver.service1.food":
+        "Included (customer to provide meals or basic ₹150-₹200 daily allowance)",
+      "hire-driver.service1.terms":
+        "Overtime: ₹100 per additional hour beyond standard shift.",
       "hire-driver.service2.name": "🛣️ Long Distance Service",
-      "hire-driver.service2.details": "Long-distance trips outside Deoghar or multi-day trips (e.g., Ranchi, Patna, or Kolkata)",
-      "hire-driver.service2.food": "Mandatory night stay/meals allowance: Customer provides clean accommodation and meals (or additional ₹300/night allowance).",
-      "hire-driver.service2.terms": "Night driving charge: ₹200 extra for driving between 10:00 PM and 5:00 AM.",
+      "hire-driver.service2.details":
+        "Long-distance trips outside Deoghar or multi-day trips (e.g., Ranchi, Patna, or Kolkata)",
+      "hire-driver.service2.food":
+        "Mandatory night stay/meals allowance: Customer provides clean accommodation and meals (or additional ₹300/night allowance).",
+      "hire-driver.service2.terms":
+        "Night driving charge: ₹200 extra for driving between 10:00 PM and 5:00 AM.",
       "hire-driver.service3.name": "⏱️ Hourly Basis",
-      "hire-driver.service3.details": "Short local drops, emergency runs, or temple visits (Baidyanath Dham)",
+      "hire-driver.service3.details":
+        "Short local drops, emergency runs, or temple visits (Baidyanath Dham)",
       "hire-driver.service3.food": "Not required for short durations.",
-      "hire-driver.service3.terms": "Return transit cost if dropped far from initial pickup location.",
-      "hire-driver.footer": "Our drivers are courteous, well-trained, and familiar with local and regional routes. They follow safety practices and provide a stress-free travel experience, whether you are booking for a day or multiple days.",
+      "hire-driver.service3.terms":
+        "Return transit cost if dropped far from initial pickup location.",
+      "hire-driver.footer":
+        "Our drivers are courteous, well-trained, and familiar with local and regional routes. They follow safety practices and provide a stress-free travel experience, whether you are booking for a day or multiple days.",
       "hire-driver.btn": "📞 Hire a Driver",
 
       // Refer & Win
@@ -641,13 +717,17 @@ var I18N = (function () {
       "refer.title": "🎁 Refer & Win!",
       "refer.subtitle": "Refer friends and both earn ₹50 reward",
       "refer.step1.title": "Share Your Referral Code",
-      "refer.step1.desc": "Share your unique referral code or link with friends and family",
+      "refer.step1.desc":
+        "Share your unique referral code or link with friends and family",
       "refer.step2.title": "Friend Books a Trip",
-      "refer.step2.desc": "Your friend uses the referral code on their first booking",
+      "refer.step2.desc":
+        "Your friend uses the referral code on their first booking",
       "refer.step3.title": "Both Win!",
-      "refer.step3.desc": "You get ₹50 and your friend gets ₹50 off on their first booking",
+      "refer.step3.desc":
+        "You get ₹50 and your friend gets ₹50 off on their first booking",
       "refer.card.referrer.title": "For You (Referrer)",
-      "refer.card.referrer.desc": "Instant ₹50 reward for every successful referral",
+      "refer.card.referrer.desc":
+        "Instant ₹50 reward for every successful referral",
       "refer.card.referrer.li1": "No limit — share as much as you want",
       "refer.card.referrer.li2": "Instant reward — after friend's booking",
       "refer.card.referrer.li3": "Use as discount on your next trip",
@@ -657,7 +737,8 @@ var I18N = (function () {
       "refer.card.friend.li2": "Just enter the referral code",
       "refer.card.friend.li3": "No minimum amount required",
       "refer.generate.title": "Generate Your Referral Code",
-      "refer.generate.desc": "Enter your name below and get your unique referral code",
+      "refer.generate.desc":
+        "Enter your name below and get your unique referral code",
       "refer.generate.placeholder": "Enter your name",
       "refer.generate.btn": "🎁 Generate My Code",
       "refer.output.yourCode": "Your Unique Referral Code:",
@@ -665,11 +746,14 @@ var I18N = (function () {
       "refer.share.copy": "Copy Code",
       "refer.faq.title": "Frequently Asked Questions",
       "refer.faq.q1": "How does the referral reward work?",
-      "refer.faq.a1": "When your friend uses your referral code to make their first booking and the trip is completed, you receive a ₹50 reward and your friend gets ₹50 off on the booking.",
+      "refer.faq.a1":
+        "When your friend uses your referral code to make their first booking and the trip is completed, you receive a ₹50 reward and your friend gets ₹50 off on the booking.",
       "refer.faq.q2": "Is there a limit on referrals?",
-      "refer.faq.a2": "No! You can refer as many friends as you want. You earn ₹50 for every successful referral.",
+      "refer.faq.a2":
+        "No! You can refer as many friends as you want. You earn ₹50 for every successful referral.",
       "refer.faq.q3": "How do I receive the reward?",
-      "refer.faq.a3": "Your reward will be credited to your account which you can use on your next trip.",
+      "refer.faq.a3":
+        "Your reward will be credited to your account which you can use on your next trip.",
       "modal.referral": "Referral Code",
       "modal.referral.placeholder": "Enter referral code if you have one",
 
@@ -707,11 +791,14 @@ var I18N = (function () {
       "modal.type.full-day": "Full Day / Multi-Day",
       "modal.type.rental": "Vehicle Rental",
       "modal.remarks": "Special Requests / Notes",
-      "modal.remarks.placeholder": "Any special requirements... (airport pickup, multiple stops, etc.)",
+      "modal.remarks.placeholder":
+        "Any special requirements... (airport pickup, multiple stops, etc.)",
       "modal.submit": "🚗 Submit Booking Request",
-      "modal.note": "We will confirm your booking within 30 minutes via WhatsApp or phone.",
+      "modal.note":
+        "We will confirm your booking within 30 minutes via WhatsApp or phone.",
       "modal.success.title": "Booking Request Sent!",
-      "modal.success.desc": "We have received your booking request. We will contact you shortly for confirmation.",
+      "modal.success.desc":
+        "We have received your booking request. We will contact you shortly for confirmation.",
       "modal.success.btn": "Book Another Trip",
 
       // Floating Button
@@ -720,12 +807,15 @@ var I18N = (function () {
       // Error messages
       // Visitors page
       "visitors.hero.title": "📊 Visitor Analytics",
-      "visitors.hero.desc": "Track who visited your website — location, device, pages, and more",
+      "visitors.hero.desc":
+        "Track who visited your website — location, device, pages, and more",
       "visitors.auth.title": "🔒 Admin Access Required",
-      "visitors.auth.desc": "Sign in with an authorized Google account to view visitor analytics",
+      "visitors.auth.desc":
+        "Sign in with an authorized Google account to view visitor analytics",
       "visitors.auth.google": "Sign in with Google",
       "visitors.auth.or": "or",
-      "visitors.auth.note": "Admin accounts only. Contact the site owner for access.",
+      "visitors.auth.note":
+        "Admin accounts only. Contact the site owner for access.",
       "visitors.btn.refresh": "Refresh",
       "visitors.btn.signout": "Sign Out",
       "visitors.kpi.total": "Total Visitors",
@@ -737,7 +827,8 @@ var I18N = (function () {
       "visitors.table.title": "📋 Visitor Records",
       "visitors.table.search": "🔍 Search by location, device, path...",
       "visitors.btn.clearLog": "Clear Log",
-      "visitors.empty": "No visitor data yet. Tracking starts automatically when the page is loaded.",
+      "visitors.empty":
+        "No visitor data yet. Tracking starts automatically when the page is loaded.",
 
       "error.name": "Please enter your name",
       "error.phone": "Enter a valid 10-digit phone number",
@@ -745,7 +836,7 @@ var I18N = (function () {
       "error.route": "Please select a destination",
       "error.date": "Please select a travel date",
       "error.type": "Please select a trip type",
-      "sending": "⏳ Sending...",
+      sending: "⏳ Sending...",
       "submit.booking": "🚗 Submit Booking Request",
 
       // Admin pages — common
@@ -756,21 +847,27 @@ var I18N = (function () {
       // Admin dashboard (admin.html)
       "admin.hero.title": "🔒 Admin Dashboard",
       "admin.hero.desc": "Manage visitors, referrals, and analytics",
-      "admin.auth.desc": "Sign in with an authorized Google account to view the dashboard",
+      "admin.auth.desc":
+        "Sign in with an authorized Google account to view the dashboard",
       "admin.card.visitors.title": "Visitor Analytics",
-      "admin.card.visitors.desc": "Track website visitors, devices, locations, and page views",
+      "admin.card.visitors.desc":
+        "Track website visitors, devices, locations, and page views",
       "admin.card.visitors.link": "Open Dashboard →",
       "admin.card.referrals.title": "Referral Dashboard",
-      "admin.card.referrals.desc": "Manage referral codes, redemptions, and reward balances",
+      "admin.card.referrals.desc":
+        "Manage referral codes, redemptions, and reward balances",
       "admin.card.referrals.link": "Open Dashboard →",
       "admin.card.bookings.title": "Booking Dashboard",
-      "admin.card.bookings.desc": "View all customer bookings with filters and search",
+      "admin.card.bookings.desc":
+        "View all customer bookings with filters and search",
       "admin.card.bookings.link": "Open Dashboard →",
       "admin.card.audit.title": "Audit Trail",
-      "admin.card.audit.desc": "Track all user activities and interactions on the website",
+      "admin.card.audit.desc":
+        "Track all user activities and interactions on the website",
       "admin.card.audit.link": "Open Dashboard →",
       "admin.card.revenue.title": "💰 Revenue Dashboard",
-      "admin.card.revenue.desc": "Track bookings, revenue, and business performance analytics",
+      "admin.card.revenue.desc":
+        "Track bookings, revenue, and business performance analytics",
       "admin.card.revenue.link": "Open Dashboard →",
 
       // Booking completed status
@@ -793,8 +890,10 @@ var I18N = (function () {
 
       // Referral dashboard (referral.html)
       "referral.hero.title": "🎁 Referral Dashboard",
-      "referral.hero.desc": "Track referral codes, redemptions, and reward balances",
-      "referral.auth.desc": "Sign in with an authorized Google account to view the referral dashboard",
+      "referral.hero.desc":
+        "Track referral codes, redemptions, and reward balances",
+      "referral.auth.desc":
+        "Sign in with an authorized Google account to view the referral dashboard",
       "referral.kpi.totalCodes": "Total Codes",
       "referral.kpi.redemptions": "Redemptions",
       "referral.kpi.rewardsPaid": "Rewards Paid",
@@ -809,7 +908,8 @@ var I18N = (function () {
       "referral.table.rewardBalance": "Reward Balance",
       "referral.table.created": "Created",
       "referral.table.status": "Status",
-      "referral.empty": "No referral codes yet. Codes will appear here as users generate them.",
+      "referral.empty":
+        "No referral codes yet. Codes will appear here as users generate them.",
       "referral.modal.title": "🎁 Redemption History",
       "referral.modal.subtitle": "Referral Code Details",
       "referral.modal.totalRedemptions": "Total Redemptions",
@@ -825,7 +925,8 @@ var I18N = (function () {
       // Bookings dashboard (booking.html)
       "booking.hero.title": "📋 Booking Dashboard",
       "booking.hero.desc": "View and manage all customer bookings",
-      "booking.auth.desc": "Sign in with an authorized Google account to view the booking dashboard",
+      "booking.auth.desc":
+        "Sign in with an authorized Google account to view the booking dashboard",
       "booking.kpi.total": "Total Bookings",
       "booking.kpi.confirmed": "Confirmed",
       "booking.kpi.pending": "Pending",
@@ -845,7 +946,8 @@ var I18N = (function () {
       "booking.table.notified": "Notification",
       "booking.table.status": "Status",
       "booking.table.created": "Created",
-      "booking.empty": "No bookings yet. Bookings will appear here as users submit them.",
+      "booking.empty":
+        "No bookings yet. Bookings will appear here as users submit them.",
       "booking.filter.allStatus": "All Status",
       "booking.filter.confirmed": "Confirmed",
       "booking.filter.pending": "Pending",
@@ -857,8 +959,10 @@ var I18N = (function () {
 
       // Audit trail (audit-trail.html)
       "audit.hero.title": "📜 Audit Trail",
-      "audit.hero.desc": "Track all user activities and interactions on the website",
-      "audit.auth.desc": "Sign in with an authorized Google account to view the audit trail",
+      "audit.hero.desc":
+        "Track all user activities and interactions on the website",
+      "audit.auth.desc":
+        "Sign in with an authorized Google account to view the audit trail",
       "audit.kpi.total": "Total Events",
       "audit.kpi.bookings": "Bookings",
       "audit.kpi.referrals": "Referral Events",
@@ -871,7 +975,8 @@ var I18N = (function () {
       "audit.table.page": "Page",
       "audit.table.timestamp": "Timestamp",
       "audit.table.visitor": "Visitor",
-      "audit.empty": "No audit events yet. Activities will appear here as users interact with the site.",
+      "audit.empty":
+        "No audit events yet. Activities will appear here as users interact with the site.",
       "audit.filter.allTypes": "All Types",
       "audit.filter.pageVisit": "Page Visit",
       "audit.filter.bookings": "Bookings",
@@ -886,7 +991,8 @@ var I18N = (function () {
       // Vehicle master (vehicle.html)
       "vehicle.hero.title": "🚗 Vehicle Master",
       "vehicle.hero.desc": "Manage vehicles, drivers, and availability",
-      "vehicle.auth.desc": "Sign in with an authorized Google account to view the vehicle master",
+      "vehicle.auth.desc":
+        "Sign in with an authorized Google account to view the vehicle master",
       "vehicle.btn.add": "➕ Add Vehicle",
       "vehicle.kpi.total": "Total Vehicles",
       "vehicle.kpi.available": "Available",
@@ -902,7 +1008,8 @@ var I18N = (function () {
       "vehicle.table.status": "Status",
       "vehicle.table.created": "Created",
       "vehicle.table.actions": "Actions",
-      "vehicle.empty": "No vehicles yet. Add vehicles to start assigning them to bookings.",
+      "vehicle.empty":
+        "No vehicles yet. Add vehicles to start assigning them to bookings.",
       "vehicle.filter.all": "All",
       "vehicle.filter.available": "Available",
       "vehicle.filter.booked": "Booked",
@@ -1000,10 +1107,12 @@ var I18N = (function () {
       "revenue.kpi.confirmed": "Confirmed",
       "revenue.kpi.pending": "Pending",
       "revenue.kpi.cancelled": "Cancelled",
-      "revenue.kpi.totalRevenue": "Total Revenue",      "revenue.kpi.avgOrder": "Avg. Order",
+      "revenue.kpi.totalRevenue": "Total Revenue",
+      "revenue.kpi.avgOrder": "Avg. Order",
       // Revenue page — auth
       "revenue.auth.title": "🔒 Admin Access Required",
-      "revenue.auth.desc": "Sign in with an authorized Google account to view revenue analytics",
+      "revenue.auth.desc":
+        "Sign in with an authorized Google account to view revenue analytics",
       // Revenue page — panel titles
       "revenue.route.title": "🗺️ Revenue by Route",
       "revenue.monthly.title": "📅 Monthly Revenue",
@@ -1016,7 +1125,6 @@ var I18N = (function () {
       // Revenue page — empty states
       "revenue.noData": "No revenue data available yet.",
     },
-
   };
 
   function init() {
