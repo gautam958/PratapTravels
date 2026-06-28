@@ -2379,6 +2379,9 @@ function renderBookingTable() {
         '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' +
         b.bookingId +
         '\')" title="Update">✏️</button> ' +
+        '<button class="btn-action-confirm" onclick="completeBooking(\'' +
+        b.bookingId +
+        '\')" title="Mark Trip Completed">✅</button> ' +
         '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
         b.bookingId +
         '\')" title="Cancel Booking">❌</button>';
@@ -2487,10 +2490,12 @@ function updateBookingKPIs() {
   var elTotal = document.getElementById("bkKpiTotal");
   var elConfirmed = document.getElementById("bkKpiConfirmed");
   var elPending = document.getElementById("bkKpiPending");
+  var elCompleted = document.getElementById("bkKpiCompleted");
   var elReferral = document.getElementById("bkKpiReferral");
   if (elTotal) elTotal.textContent = total;
   if (elConfirmed) elConfirmed.textContent = confirmed;
   if (elPending) elPending.textContent = pending;
+  if (elCompleted) elCompleted.textContent = completed;
   if (elReferral) elReferral.textContent = withReferral;
 }
 
@@ -4279,12 +4284,14 @@ function renderRevenueDashboard(data) {
   if (!data) return;
   var elTotal = document.getElementById('revTotalBookings');
   var elConfirmed = document.getElementById('revConfirmed');
+  var elCompleted = document.getElementById('revCompleted');
   var elPending = document.getElementById('revPending');
   var elCancelled = document.getElementById('revCancelled');
   var elRevenue = document.getElementById('revTotalRevenue');
   var elAvg = document.getElementById('revAvgOrder');
   if (elTotal) elTotal.textContent = data.totalBookings || 0;
   if (elConfirmed) elConfirmed.textContent = data.confirmedBookings || 0;
+  if (elCompleted) elCompleted.textContent = data.completedBookings || 0;
   if (elPending) elPending.textContent = data.pendingBookings || 0;
   if (elCancelled) elCancelled.textContent = data.cancelledBookings || 0;
   if (elRevenue) elRevenue.textContent = '\u20b9' + (data.totalRevenue || 0).toLocaleString();

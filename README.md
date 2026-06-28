@@ -1121,20 +1121,20 @@ https://communication-fn.azurewebsites.net/api/PratapTravels-Data?code=<FUNCTION
 
 ### Supported HTTP Methods
 
-| Method   | Type               | Description                                  |
-| -------- | ------------------ | -------------------------------------------- |
-| **POST** | `booking_data`     | Save a new booking record                    |
-| **POST** | `audit_trail`      | Save a new audit trail event                 |
-| **POST** | `vehicle_data`     | Save a new vehicle record                    |
-| **POST** | `vehicle_update`   | Update an existing vehicle                   |
-| **POST** | `vehicle_delete`   | Delete a vehicle                             |
-| **PUT**  | `booking_data`     | Update an existing booking (by bookingId)    |
-| **GET**  | `type=booking`     | Get all bookings (requires function key)     |
-| **GET**  | `type=audit_trail` | Get all audit events (requires function key) |
-| **GET**  | `type=vehicle`     | Get all vehicles (requires function key)     |
+| Method   | Type                        | Description                                    |
+| -------- | --------------------------- | ---------------------------------------------- |
+| **POST** | `booking_data`              | Save a new booking record                      |
+| **POST** | `audit_trail`               | Save a new audit trail event                   |
+| **POST** | `vehicle_data`              | Save a new vehicle record                      |
+| **POST** | `vehicle_update`            | Update an existing vehicle                     |
+| **POST** | `vehicle_delete`            | Delete a vehicle                               |
+| **PUT**  | `booking_data`              | Update an existing booking (by bookingId)      |
+| **GET**  | `type=booking`              | Get all bookings (requires function key)       |
+| **GET**  | `type=audit_trail`          | Get all audit events (requires function key)   |
+| **GET**  | `type=vehicle`              | Get all vehicles (requires function key)       |
 | **GET**  | `type=status&query=<value>` | **NEW:** Lookup booking by phone or booking ID |
-| **GET**  | `type=revenue`   | **NEW:** Get revenue analytics summary       |
-| **GET**  | (default)          | Get summary counts (requires function key)   |
+| **GET**  | `type=revenue`              | **NEW:** Get revenue analytics summary         |
+| **GET**  | (default)                   | Get summary counts (requires function key)     |
 
 ### CORS
 
@@ -1689,10 +1689,15 @@ Add this handler in the GET section, after the status handler:
 
 ```csharp
 // Handle revenue analytics (aggregated from bookings data)
+// Revenue is calculated from only completed bookings
 // Keep route prices in sync with ROUTE_PRICES in js/main.js
 if (dataType == "revenue")
 {
-    var confirmedBookings = bookingsList.Where(b => b.status?.ToString() == "confirmed").ToList();
+    var revenueBookings = bookingsList.Where(b => b.status?.ToString() == "confirmed" || b.status?.ToString() == "completed").ToList();
+    var confirmedCount = bookingsList.Count(b => b.status?.ToString() == "confirmed");
+    var completedCount = bookingsList.Count(b => b.status?.ToString() == "completed");
+    var pendingCount = bookingsList.Count(b => b.status?.ToString() == "pending");
+    var cancelledCount = bookingsList.Count(b => b.status?.ToString() == "cancelled");
 
     var routePrices = new Dictionary<string, decimal>
     {
@@ -1708,7 +1713,7 @@ if (dataType == "revenue")
     var revenueByRoute = new Dictionary<string, object>();
     var revenueByMonth = new Dictionary<string, object>();
 
-    foreach (var b in confirmedBookings)
+    foreach (var b in revenueBookings)
     {
         string route = b.route?.ToString() ?? "";
         decimal basePrice = routePrices.ContainsKey(route) ? routePrices[route] : 1500;
@@ -1740,14 +1745,16 @@ if (dataType == "revenue")
         monthData["revenue"] = (decimal)monthData["revenue"] + bookingRevenue;
     }
 
-    decimal avgBookingValue = confirmedBookings.Count > 0 ? totalRevenue / confirmedBookings.Count : 0;
+    decimal avgBookingValue = revenueBookings.Count > 0 ? totalRevenue / revenueBookings.Count : 0;
 
     return new OkObjectResult(new
     {
         totalBookings = bookingsList.Count,
         totalRevenue = totalRevenue,
-        confirmedBookings = confirmedBookings.Count,
-        avgBookingValue = Math.Round(avgBookingValue, 0),
+        completedBookings = completedCount,
+        pendingBookings = pendingCount,
+        cancelledBookings = cancelledCount,
+        averageOrderValue = Math.Round(avgBookingValue, 0),
         revenueByRoute = revenueByRoute.Values.ToList(),
         revenueByMonth = revenueByMonth.Values.OrderByDescending(m => m["month"]?.ToString()).ToList()
     });
@@ -1756,20 +1763,20 @@ if (dataType == "revenue")
 
 ### Summary of New Changes
 
-| Data Type | HTTP Method | Description | Status |
-| --------- | ----------- | ----------- | ------ |
-| `type=status` | **GET** | Lookup booking by phone or booking ID | **NEW — Add this** |
-| `type=revenue` | **GET** | Revenue analytics summary | **NEW — Add this** |
-| `type=booking` | **GET** | Get all bookings | ✅ Already exists |
-| `type=audit_trail` | **GET** | Get all audit events | ✅ Already exists |
-| `type=vehicle` | **GET** | Get all vehicles | ✅ Already exists |
-| `booking_data` | **POST** | Save a new booking | ✅ Already exists |
-| `audit_trail` | **POST** | Save audit event | ✅ Already exists |
-| `vehicle_data` | **POST** | Save a new vehicle | ✅ Already exists |
-| `vehicle_update` | **POST** | Update a vehicle | ✅ Already exists |
-| `vehicle_delete` | **POST** | Delete a vehicle | ✅ Already exists |
-| `booking_update` | **POST** | Update a booking | ✅ Already exists |
-| `booking_confirmation` | **POST** | Send confirmation email | ✅ Already exists |
+| Data Type              | HTTP Method | Description                           | Status             |
+| ---------------------- | ----------- | ------------------------------------- | ------------------ |
+| `type=status`          | **GET**     | Lookup booking by phone or booking ID | **NEW — Add this** |
+| `type=revenue`         | **GET**     | Revenue analytics summary             | **NEW — Add this** |
+| `type=booking`         | **GET**     | Get all bookings                      | ✅ Already exists  |
+| `type=audit_trail`     | **GET**     | Get all audit events                  | ✅ Already exists  |
+| `type=vehicle`         | **GET**     | Get all vehicles                      | ✅ Already exists  |
+| `booking_data`         | **POST**    | Save a new booking                    | ✅ Already exists  |
+| `audit_trail`          | **POST**    | Save audit event                      | ✅ Already exists  |
+| `vehicle_data`         | **POST**    | Save a new vehicle                    | ✅ Already exists  |
+| `vehicle_update`       | **POST**    | Update a vehicle                      | ✅ Already exists  |
+| `vehicle_delete`       | **POST**    | Delete a vehicle                      | ✅ Already exists  |
+| `booking_update`       | **POST**    | Update a booking                      | ✅ Already exists  |
+| `booking_confirmation` | **POST**    | Send confirmation email               | ✅ Already exists  |
 
 ---
 
