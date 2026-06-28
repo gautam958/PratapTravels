@@ -2,6 +2,16 @@
    PRATAP TRAVELS - Main JavaScript
    ============================================ */
 
+
+// ---------- Lucide Icon Helper ----------
+function lucideIcon(name, size) {
+  size = size || 18;
+  return '<i data-lucide="' + name + '" style="width:' + size + 'px;height:' + size + 'px;vertical-align:middle"></i>';
+}
+function refreshLucideIcons() {
+  if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
+}
+
 // ---------- Navbar Toggle ----------
 document.addEventListener("DOMContentLoaded", function () {
   const navToggle = document.getElementById("navToggle");
@@ -1307,7 +1317,7 @@ function showToast(message, type) {
   toast.className = "toast toast-" + type;
   toast.innerHTML =
     '<span class="toast-icon">' +
-    (type === "success" ? "✅" : type === "error" ? "❌" : "ℹ️") +
+    (type === "success" ? lucideIcon("circle-check",20) : type === "error" ? lucideIcon("circle-x",20) : lucideIcon("info",20)) +
     '</span><span class="toast-message">' +
     escapeHtml(message) +
     "</span>";
@@ -1476,6 +1486,8 @@ function renderVisitorTable() {
 
     tbody.appendChild(tr);
   });
+
+  refreshLucideIcons();
 }
 
 // ---------- Export as CSV ----------
@@ -1782,6 +1794,8 @@ function renderReferralTable() {
 
     tbody.appendChild(tr);
   });
+
+  refreshLucideIcons();
 }
 
 // ---------- Refresh Referral Data ----------
@@ -2343,21 +2357,21 @@ function renderBookingTable() {
       actionBtn =
         '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' +
         b.bookingId +
-        '\')" title="Confirm & Assign Vehicle">✅</button> ' +
+        '\')" title="Confirm & Assign Vehicle"><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
         '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
         b.bookingId +
-        '\')" title="Cancel Booking">❌</button>';
+        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button>';
     } else if (b.status === "confirmed") {
       actionBtn =
         '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' +
         b.bookingId +
-        '\')" title="Update">✏️</button> ' +
+        '\')" title="Update"><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
         '<button class="btn-action-confirm" onclick="completeBooking(\'' +
         b.bookingId +
-        '\')" title="Mark Trip Completed">✅</button> ' +
+        '\')" title="Mark Trip Completed"><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
         '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
         b.bookingId +
-        '\')" title="Cancel Booking">❌</button>';
+        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button>';
     }
     tr.innerHTML =
       '<td><code class="vid-code">' +
@@ -2449,6 +2463,8 @@ function renderBookingTable() {
       "</td>";
     tbody.appendChild(tr);
   });
+
+  refreshLucideIcons();
 }
 
 function updateBookingKPIs() {
@@ -2641,6 +2657,8 @@ function renderAuditTable() {
       "</code></td>";
     tbody.appendChild(tr);
   });
+
+  refreshLucideIcons();
 }
 
 function updateAuditKPIs() {
@@ -2895,16 +2913,18 @@ function renderVehicleTable() {
       "<td>" +
       '<button class="btn-action-edit" onclick="editVehicle(\'' +
       v.id +
-      '\')" title="Edit">✏️</button> ' +
+      '\')" title="Edit"><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-confirm" onclick="renderVehicleSchedule(\'' +
       v.id +
-      '\')" title="View Schedule">📅</button> ' +
+      '\')" title="View Schedule"><i data-lucide="calendar" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-delete" onclick="deleteVehicleConfirm(\'' +
       v.id +
       '\')" title="Delete">🗑️</button>' +
       "</td>";
     tbody.appendChild(tr);
   });
+
+  refreshLucideIcons();
 }
 
 function updateVehicleKPIs() {
@@ -3610,6 +3630,8 @@ function openConfirmBooking(bookingId) {
   if (pickupTimeEl)
     pickupTimeEl.removeEventListener("change", refreshVehicleList);
   if (pickupTimeEl) pickupTimeEl.addEventListener("change", refreshVehicleList);
+
+  refreshLucideIcons();
 }
 
 function closeConfirmBookingModal() {
@@ -3779,6 +3801,8 @@ function openEmailConfirmationModal(booking) {
   if (toRow) toRow.style.display = "";
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+
+  refreshLucideIcons();
 }
 
 function closeEmailConfirmModal() {
@@ -3887,7 +3911,7 @@ function sendEmailConfirmation() {
     })
     .finally(function () {
       if (sendBtn) {
-        sendBtn.textContent = "✉️ Send Confirmation";
+        sendBtn.innerHTML = lucideIcon("mail",16) + " Send Confirmation";
         sendBtn.disabled = false;
       }
     });
@@ -4229,7 +4253,7 @@ async function lookupBookingStatus() {
     showToast('Please enter a Booking ID or Phone Number', 'error');
     return;
   }
-  resultDiv.innerHTML = '<div class="status-loading">\u23f3 Looking up your booking...</div>';
+  resultDiv.innerHTML = '<div class="status-loading"><i data-lucide="loader" style="width:24px;height:24px;vertical-align:middle"></i> Looking up your booking...</div>';
   // Use existing PratapTravels-Data Azure Function with type=status
   var dataApiUrl = getDataApiUrl();
   if (!dataApiUrl) {
@@ -4243,13 +4267,13 @@ async function lookupBookingStatus() {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     var data = await resp.json();
     if (!data || !data.bookingId) {
-      resultDiv.innerHTML = '<div class="status-not-found">\u274c No booking found for \"' + escapeHtml(query) + '\". Please check your Booking ID or Phone Number and try again.</div>';
+      resultDiv.innerHTML = '<div class="status-not-found"><i data-lucide="search-x" style="width:20px;height:20px;vertical-align:middle"></i> No booking found for \"' + escapeHtml(query) + '\". Please check your Booking ID or Phone Number and try again.</div>';
       return;
     }
     var statusClass = data.status === 'confirmed' ? 'status-confirmed' : data.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
-    var statusIcon = data.status === 'confirmed' ? '\u2705' : data.status === 'cancelled' ? '\u274c' : '\u23f3';
-    var vehicleInfo = data.vehicleNumber ? '<p><strong>\ud83d\ude97 Vehicle:</strong> ' + escapeHtml(data.vehicleNumber) + ' (' + escapeHtml(data.vehicleType || '') + ')</p>' : '';
-    var driverInfo = data.driverName ? '<p><strong>\ud83d\udc64 Driver:</strong> ' + escapeHtml(data.driverName) + (data.driverPhone ? ' (' + escapeHtml(data.driverPhone) + ')' : '') + '</p>' : '';
+    var statusIcon = lucideIcon(data.status === "confirmed" ? "circle-check" : data.status === "cancelled" ? "circle-x" : "clock", 32);
+    var vehicleInfo = data.vehicleNumber ? '<p><strong><i data-lucide="car" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.vehicleNumber) + ' (' + escapeHtml(data.vehicleType || '') + ')</p>' : '';
+    var driverInfo = data.driverName ? '<p><strong><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.driverName) + (data.driverPhone ? ' (' + escapeHtml(data.driverPhone) + ')' : '') + '</p>' : '';
     var pickupInfo = data.pickup_address ? '<p><strong>\ud83d\udccd Pickup:</strong> ' + escapeHtml(data.pickup_address) + '</p>' : '';
     resultDiv.innerHTML =
       '<div class="status-card">' +
@@ -4258,19 +4282,19 @@ async function lookupBookingStatus() {
       '<span class="booking-status-badge ' + statusClass + '">' + data.status + '</span>' +
       '</div>' +
       '<div class="status-details">' +
-      '<p><strong>\ud83d\udccb Booking ID:</strong> ' + escapeHtml(data.bookingId) + '</p>' +
-      '<p><strong>\ud83d\udc64 Name:</strong> ' + escapeHtml(data.name || '-') + '</p>' +
-      '<p><strong>\ud83d\uddfa\ufe0f Route:</strong> ' + escapeHtml(data.route || '-') + '</p>' +
-      '<p><strong>\ud83d\udcc5 Date:</strong> ' + escapeHtml(data.date || '-') + '</p>' +
-      '<p><strong>\u23f0 Time:</strong> ' + escapeHtml(data.time || '-') + '</p>' +
-      '<p><strong>\ud83d\udc65 Passengers:</strong> ' + escapeHtml(data.passengers || '-') + '</p>' +
-      '<p><strong>\ud83d\udd04 Trip Type:</strong> ' + escapeHtml(data.trip_type || '-') + '</p>' +
+      '<p><strong><i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.bookingId) + '</p>' +
+      '<p><strong><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.name || '-') + '</p>' +
+      '<p><strong><i data-lucide="map" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.route || '-') + '</p>' +
+      '<p><strong><i data-lucide="calendar" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.date || '-') + '</p>' +
+      '<p><strong><i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.time || '-') + '</p>' +
+      '<p><strong><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.passengers || '-') + '</p>' +
+      '<p><strong><i data-lucide="repeat" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.trip_type || '-') + '</p>' +
       vehicleInfo + driverInfo + pickupInfo +
       '</div>' +
       '</div>';
   } catch (e) {
     console.error('Status lookup failed:', e);
-    resultDiv.innerHTML = '<div class="status-error">\u26a0\ufe0f Unable to look up booking status. Please try again later or contact us at +91 76313 82174.</div>';
+    resultDiv.innerHTML = '<div class="status-error"><i data-lucide="alert-triangle" style="width:20px;height:20px;vertical-align:middle"></i> Unable to look up booking status. Please try again later or contact us at +91 76313 82174.</div>';
   }
 }
 
@@ -4336,11 +4360,11 @@ function calculateLocalRevenue() {
 
 function refreshRevenuePage() {
   var refreshBtn = document.getElementById('revenueRefreshBtn');
-  if (refreshBtn) { refreshBtn.textContent = '⏳ Loading...'; refreshBtn.disabled = true; }
+  if (refreshBtn) { refreshBtn.innerHTML = lucideIcon("loader",14) + " Loading..."; refreshBtn.disabled = true; }
   fetchRevenueData().then(function(data) {
     if (!data) { data = calculateLocalRevenue(); data._fromLocal = true; }
     renderRevenueDashboard(data);
-    if (refreshBtn) { refreshBtn.textContent = '🔄 Refresh'; refreshBtn.disabled = false; }
+    if (refreshBtn) { refreshBtn.innerHTML = lucideIcon("refresh-cw",14) + " Refresh"; refreshBtn.disabled = false; }
     showToast(data._fromLocal ? 'Showing local data (API unavailable)' : 'Revenue data refreshed.', 'success');
   });
 }
@@ -4379,6 +4403,8 @@ function renderRevenueDashboard(data) {
       monthBody.appendChild(tr);
     });
   }
+
+  refreshLucideIcons();
 }
 
 /* ============================================

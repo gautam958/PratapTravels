@@ -16,7 +16,7 @@
     <nav class="navbar" id="navbar">
       <div class="container">
         <a href="index.html" class="navbar-brand"
-          >🚔 <span>PRATAP</span> TRAVELS</a
+          ><i data-lucide="car" style="width:24px;height:24px;color:var(--accent)"></i> <span>PRATAP</span> TRAVELS</a
         >
         <button class="navbar-toggle" id="navToggle" aria-label="Menu">
           ☰
@@ -165,24 +165,24 @@
         <!-- Vehicle KPIs -->
         <div class="referral-kpi-grid">
           <div class="stat-card">
-            <div class="stat-icon">🚗</div>
+            <div class="stat-icon"><i data-lucide="car" style="width:28px;height:28px;color:var(--primary)"></i></div>
             <div class="stat-number" id="vhKpiTotal">0</div>
             <div class="stat-label" data-i18n="vehicle.kpi.total">कुल वाहन</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon"><i data-lucide="check-circle" style="width:28px;height:28px;color:var(--success)"></i></div>
             <div class="stat-number" id="vhKpiAvailable">0</div>
             <div class="stat-label" data-i18n="vehicle.kpi.available">
               उपलब्ध
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">🔴</div>
+            <div class="stat-icon"><i data-lucide="x-circle" style="width:28px;height:28px;color:var(--danger)"></i></div>
             <div class="stat-number" id="vhKpiBooked">0</div>
             <div class="stat-label" data-i18n="vehicle.kpi.booked">बुक</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">🔧</div>
+            <div class="stat-icon"><i data-lucide="wrench" style="width:28px;height:28px;color:var(--warning)"></i></div>
             <div class="stat-number" id="vhKpiMaintenance">0</div>
             <div class="stat-label" data-i18n="vehicle.kpi.maintenance">
               रखरखाव
@@ -592,7 +592,7 @@
     <!-- ===== Footer ===== -->
     <footer class="footer">
       <div class="container">
-        <div class="footer-brand">🚔 <span>PRATAP</span> TRAVELS</div>
+        <div class="footer-brand"><i data-lucide="car" style="width:24px;height:24px;color:var(--accent)"></i> <span>PRATAP</span> TRAVELS</div>
         <p>Belabagan, Deoghar | +91 76313 82174 | +91 87978 71251</p>
         <div class="footer-divider"></div>
         <div class="footer-bottom">
@@ -612,5 +612,7 @@
       });
     </script>
     <script src="js/main.js"></script>
+      <script src="https://unpkg.com/lucide@0.344.0"></script>
+    <script>document.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });</script>
   </body>
 </html>

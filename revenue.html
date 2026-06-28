@@ -12,7 +12,7 @@
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
       <div class="container">
-        <a href="index.html" class="navbar-brand">🚘 <span>PRATAP</span> TRAVELS</a>
+        <a href="index.html" class="navbar-brand"><i data-lucide="car" style="width:24px;height:24px;color:var(--accent)"></i> <span>PRATAP</span> TRAVELS</a>
         <button class="navbar-toggle" id="navToggle" aria-label="Menu">☰</button>
         <div class="navbar-menu" id="navMenu">
           <a href="index.html" data-i18n="nav.home">होम</a>
@@ -82,7 +82,7 @@
         <!-- Revenue KPIs -->
         <div class="referral-kpi-grid" style="grid-template-columns:repeat(3,1fr);">
           <div class="stat-card">
-            <div class="stat-icon">📈</div>
+            <div class="stat-icon"><i data-lucide="trending-up" style="width:28px;height:28px;color:var(--primary)"></i></div>
             <div class="stat-number" id="revTotalBookings">0</div>
             <div class="stat-label" data-i18n="booking.kpi.total">Total Bookings</div>
           </div>
@@ -102,7 +102,7 @@
             <div class="stat-label" data-i18n="booking.kpi.pending">Pending</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">❌</div>
+            <div class="stat-icon"><i data-lucide="x-circle" style="width:28px;height:28px;color:var(--danger)"></i></div>
             <div class="stat-number" id="revCancelled">0</div>
             <div class="stat-label" data-i18n="revenue.kpi.cancelled">Cancelled</div>
           </div>
@@ -112,7 +112,7 @@
             <div class="stat-label" data-i18n="revenue.kpi.totalRevenue">Total Revenue</div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon"><i data-lucide="bar-chart" style="width:28px;height:28px;color:var(--info)"></i></div>
             <div class="stat-number" id="revAvgOrder">₹0</div>
             <div class="stat-label" data-i18n="revenue.kpi.avgOrder">Avg. Order Value</div>
           </div>
@@ -167,7 +167,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
-        <div class="footer-brand">🚘 <span>PRATAP</span> TRAVELS</div>
+        <div class="footer-brand"><i data-lucide="car" style="width:24px;height:24px;color:var(--accent)"></i> <span>PRATAP</span> TRAVELS</div>
         <p>Belabagan, Deoghar | +91 76313 82174 | +91 87978 71251</p>
         <div class="footer-divider"></div>
         <div class="footer-bottom">        <p data-i18n="footer.rights">© 2026 प्रताप ट्रैवल्स। सर्वाधिकार सुरक्षित।</p></div>
@@ -179,5 +179,7 @@
     <script src="js/i18n.js"></script>
     <script>document.addEventListener("DOMContentLoaded", function () { I18N.init(); });</script>
     <script src="js/main.js"></script>
+      <script src="https://unpkg.com/lucide@0.344.0"></script>
+    <script>document.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });</script>
   </body>
 </html>
