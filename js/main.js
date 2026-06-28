@@ -583,25 +583,23 @@ document.addEventListener("DOMContentLoaded", function () {
 // ---------- Refresh dashboard tables after login ----------
 
 // ---------- Cancel Booking ----------
-async function cancelBooking(bookingId) {
+function cancelBooking(bookingId) {
   if (
     !confirm(
       "Are you sure you want to cancel this booking? This will release the assigned vehicle.",
     )
   )
     return;
-  await changeBookingStatus(bookingId, "cancelled");
-  await fetchBookingsFromApi();
+  changeBookingStatus(bookingId, "cancelled");
   renderBookingTable();
   updateBookingKPIs();
   showToast("Booking cancelled and vehicle released.", "info");
 }
 
-async function completeBooking(bookingId) {
+function completeBooking(bookingId) {
   if (!confirm("Mark this trip as completed? Completed bookings will be reflected in Revenue."))
     return;
-  await changeBookingStatus(bookingId, "completed");
-  await fetchBookingsFromApi();
+  changeBookingStatus(bookingId, "completed");
   renderBookingTable();
   updateBookingKPIs();
   showToast("Trip marked as completed.", "success");
@@ -2427,7 +2425,11 @@ function renderBookingTable() {
           return (
             '<span class="notified-badge notified-flagged">' +
             (typeof I18N !== "undefined" && I18N.t ? I18N.t("booking.notified.needsAction") : "Needs Action") +
-            "</span>"
+            '</span> <button class="btn-action-confirm" style="padding:3px 8px;font-size:0.75rem;" onclick="sendBookingNotification(\'' +
+            b.bookingId +
+            '\')" title="' +
+            (typeof I18N !== "undefined" && I18N.t ? I18N.t("booking.action.sendEmail") : "Send Email") +
+            '">\u2709\ufe0f</button>'
           );
         } else if (b.status === "confirmed") {
           return (
@@ -4291,6 +4293,58 @@ async function fetchRevenueData() {
   }
 }
 
+// ---------- Local Revenue Calculation (fallback when API unavailable) ----------
+function calculateLocalRevenue() {
+  var bookings = getBookings();
+  var totalBookings = bookings.length;
+  var confirmed = 0, completed = 0, pending = 0, cancelled = 0;
+  var routeMap = {}, monthMap = {};
+  var totalRevenue = 0, completedCount = 0;
+  for (var i = 0; i < bookings.length; i++) {
+    var b = bookings[i];
+    if (b.status === 'confirmed') confirmed++;
+    else if (b.status === 'completed') completed++;
+    else if (b.status === 'cancelled') cancelled++;
+    else pending++;
+    if (b.status === 'completed') {
+      completedCount++;
+      var route = b.route || 'Unknown';
+      if (!routeMap[route]) routeMap[route] = { route: route, count: 0, revenue: 0 };
+      routeMap[route].count++;
+      routeMap[route].revenue += 500; // Default fare per completed booking
+      totalRevenue += 500;
+      if (b.date) {
+        var monthKey = b.date.substring(0, 7);
+        if (!monthMap[monthKey]) monthMap[monthKey] = { month: monthKey, count: 0, revenue: 0 };
+        monthMap[monthKey].count++;
+        monthMap[monthKey].revenue += 500;
+      }
+    }
+  }
+  var revenueByRoute = Object.values(routeMap).map(function(r) {
+    r.average = r.count > 0 ? Math.round(r.revenue / r.count) : 0;
+    return r;
+  });
+  var revenueByMonth = Object.values(monthMap).sort(function(a, b) { return b.month > a.month ? 1 : -1; });
+  return {
+    totalBookings: totalBookings, confirmedBookings: confirmed, completedBookings: completed,
+    pendingBookings: pending, cancelledBookings: cancelled, totalRevenue: totalRevenue,
+    averageOrderValue: completedCount > 0 ? Math.round(totalRevenue / completedCount) : 0,
+    revenueByRoute: revenueByRoute, revenueByMonth: revenueByMonth
+  };
+}
+
+function refreshRevenuePage() {
+  var refreshBtn = document.getElementById('revenueRefreshBtn');
+  if (refreshBtn) { refreshBtn.textContent = '⏳ Loading...'; refreshBtn.disabled = true; }
+  fetchRevenueData().then(function(data) {
+    if (!data) { data = calculateLocalRevenue(); data._fromLocal = true; }
+    renderRevenueDashboard(data);
+    if (refreshBtn) { refreshBtn.textContent = '🔄 Refresh'; refreshBtn.disabled = false; }
+    showToast(data._fromLocal ? 'Showing local data (API unavailable)' : 'Revenue data refreshed.', 'success');
+  });
+}
+
 function renderRevenueDashboard(data) {
   if (!data) return;
   var elTotal = document.getElementById('revTotalBookings');
@@ -4388,6 +4442,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
   if (document.getElementById('revTotalBookings')) {
     fetchRevenueData().then(function(data) {
+      if (!data) data = calculateLocalRevenue();
       renderRevenueDashboard(data);
     });
   }

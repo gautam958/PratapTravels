@@ -33,7 +33,10 @@
       <div>
         <h1 data-i18n="admin.card.revenue.title">📈 Revenue Dashboard</h1>
         <p data-i18n="admin.card.revenue.desc">Track bookings, revenue, and business performance</p>
-        <a href="admin.html" class="admin-back-link" data-i18n="admin.back">← Admin Dashboard</a>
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <a href="admin.html" class="admin-back-link" data-i18n="admin.back">← Admin Dashboard</a>
+          <button id="revenueRefreshBtn" onclick="refreshRevenuePage()" style="background:#27ae60;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;">🔄 Refresh</button>
+        </div>
         <div class="admin-nav-links" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;justify-content:center;">
           <a href="visitors.html" class="admin-back-link" style="font-size:0.85rem;">📊 Visitors</a>
           <a href="booking.html" class="admin-back-link" style="font-size:0.85rem;">📋 Bookings</a>

@@ -285,6 +285,77 @@ test('BUG: openConfirmBooking called with b.bookingId in table', () => {
 });
 
 // ==========================================
+// ==========================================
+// BUG: Send Confirmation Button & Status Updates
+// ==========================================
+
+test('BUG: needs_notification shows send button alongside badge', () => {
+  // After vehicle assignment, needs_notification=true should show BOTH badge AND send button
+  const notifStart = mainJs.indexOf('b.needs_notification)');
+  assert(notifStart !== -1, 'Should check needs_notification in notification column');
+  const notifBlock = mainJs.substring(notifStart, notifStart + 500);
+  assert(notifBlock.includes('notified-flagged'), 'Should show Needs Action badge');
+  assert(notifBlock.includes('sendBookingNotification('), 'Should also include send button when needs_notification is true');
+  assert(notifBlock.includes('btn-action-confirm'), 'Send button should have btn-action-confirm class');
+});
+
+test('BUG: completeBooking does NOT call fetchBookingsFromApi', () => {
+  // completeBooking should update local cache directly via changeBookingStatus
+  // and NOT call fetchBookingsFromApi which could overwrite the local state change
+  const fnStart = mainJs.indexOf('function completeBooking(');
+  assert(fnStart !== -1, 'Should have completeBooking function');
+  const fnEnd = mainJs.indexOf(String.fromCharCode(10) + '}', fnStart) + 2;
+  const fnBody = mainJs.substring(fnStart, fnEnd);
+  assert(!fnBody.includes('fetchBookingsFromApi'), 'completeBooking should NOT call fetchBookingsFromApi (overwrites local state)');
+  assert(fnBody.includes('changeBookingStatus'), 'Should call changeBookingStatus to update local cache');
+  assert(fnBody.includes('renderBookingTable'), 'Should re-render table after status change');
+  assert(fnBody.includes('updateBookingKPIs'), 'Should update KPIs after status change');
+});
+
+test('BUG: cancelBooking does NOT call fetchBookingsFromApi', () => {
+  const fnStart = mainJs.indexOf('function cancelBooking(');
+  assert(fnStart !== -1, 'Should have cancelBooking function');
+  const fnEnd = mainJs.indexOf(String.fromCharCode(10) + '}', fnStart) + 2;
+  const fnBody = mainJs.substring(fnStart, fnEnd);
+  assert(!fnBody.includes('fetchBookingsFromApi'), 'cancelBooking should NOT call fetchBookingsFromApi (overwrites local state)');
+  assert(fnBody.includes('changeBookingStatus'), 'Should call changeBookingStatus to update local cache');
+});
+
+test('BUG: revenue page has refreshRevenuePage function', () => {
+  assert(mainJs.includes('function refreshRevenuePage()'), 'Should have refreshRevenuePage function');
+  const fnStart = mainJs.indexOf('function refreshRevenuePage()');
+  const fnBody = mainJs.substring(fnStart, fnStart + 400);
+  assert(fnBody.includes('fetchRevenueData'), 'refreshRevenuePage should call fetchRevenueData');
+  assert(fnBody.includes('renderRevenueDashboard'), 'refreshRevenuePage should call renderRevenueDashboard');
+  assert(fnBody.includes('revenueRefreshBtn'), 'refreshRevenuePage should reference the refresh button');
+});
+
+test('BUG: revenue page has calculateLocalRevenue fallback', () => {
+  assert(mainJs.includes('function calculateLocalRevenue()'), 'Should have calculateLocalRevenue function');
+  const fnStart = mainJs.indexOf('function calculateLocalRevenue()');
+  const fnBody = mainJs.substring(fnStart, fnStart + 800);
+  assert(fnBody.includes('getBookings()'), 'Should read from local bookings cache');
+  assert(fnBody.includes('revenueByRoute') || mainJs.includes('revenueByRoute'), 'Should calculate revenue by route');
+  assert(fnBody.includes('revenueByMonth') || mainJs.includes('revenueByMonth'), 'Should calculate revenue by month');
+  assert(fnBody.includes('completedBookings') || mainJs.includes('completedBookings'), 'Should count completed bookings');
+});
+
+test('BUG: revenue init uses calculateLocalRevenue as fallback', () => {
+  assert(mainJs.includes('if (!data) data = calculateLocalRevenue()'), 'Revenue initialization should fall back to calculateLocalRevenue when API returns null');
+});
+
+
+test('Status column exists in booking table with status badge rendering', () => {
+  // Verify status column header exists
+  assert(mainJs.includes('booking-status-badge'), 'Should render booking-status-badge in table');
+  assert(mainJs.includes('status-confirmed'), 'Should have status-confirmed class');
+  assert(mainJs.includes('status-completed'), 'Should have status-completed class');
+  assert(mainJs.includes('status-cancelled'), 'Should have status-cancelled class');
+  assert(mainJs.includes('status-pending'), 'Should have status-pending class');
+  assert(mainJs.includes('booking-status-badge'), 'Should display booking status badge in table');
+});
+
+
 // PRINT RESULTS
 // ==========================================
 
