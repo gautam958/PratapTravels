@@ -496,4 +496,591 @@ var I18N = (function () {
       "revenue.kpi.cancelled": "रद्द",
       "revenue.kpi.totalRevenue": "कुल रेवेन्यू",
       "revenue.kpi.avgOrder": "आनुमाड",
+      // Revenue page — auth
+      "revenue.auth.title": "🔒 एडमिन एक्सेस आवश्यक",
+      "revenue.auth.desc": "रेवेन्यू एनालिटिक्स देखने के लिए अधिकृत Google खाते से साइन इन करें",
+      // Revenue page — panel titles
+      "revenue.route.title": "🗺️ मार्ग अनुसार रेवेन्यू",
+      "revenue.monthly.title": "📅 मासिक रेवेन्यू",
+      // Revenue page — table headers
+      "revenue.table.route": "मार्ग",
+      "revenue.table.bookings": "बुकिंग",
+      "revenue.table.revenue": "रेवेन्यू",
+      "revenue.table.avgValue": "औसत मूल्य",
+      "revenue.table.month": "महीना",
+      // Revenue page — empty states
+      "revenue.noData": "अभी तक कोई रेवेन्यू डेटा उपलब्ध नहीं है।",
+    },
+
+    en: {
+      // Navbar
+      "nav.services": "Services",
+      "nav.routes": "Routes",
+      "nav.offers": "Offers",
+      "nav.rentals": "Rentals",
+      "nav.hire-driver": "Hire Driver",
+      "nav.contact": "Contact",
+      "nav.status": "📋 Booking Status",
+      "nav.visitors": "Visitors",
+      "nav.home": "Home",
+
+      // Hero
+      "hero.badge": "🌟 Trusted for Generations",
+      "hero.title1": "Your Journey,",
+      "hero.title2": "Our Priority",
+      "hero.desc": "Experience the convenience of a private driver with PRATAP TRAVELS. Airport transfers, business trips, or tourism — we deliver safe, reliable, and premium travel every time.",
+      "hero.book-now": "📞 Book Now",
+      "hero.view-packages": "🗺 View Packages",
+
+      // Services
+      "services.title": "Our Services",
+      "services.subtitle": "Travel Made Easy with PRATAP TRAVELS",
+      "services.airport.title": "Airport Transfer",
+      "services.airport.desc": "On-time pickup and hassle-free transfer to any airport. Professional drivers and luxury vehicles.",
+      "services.airport.li1": "On-time pickup guarantee",
+      "services.airport.li2": "Meet & greet service",
+      "services.airport.li3": "Flight tracking included",
+      "services.tourism.title": "Tourism & Pilgrimage",
+      "services.tourism.desc": "From quick deliveries to long scenic drives, we make every trip smooth and enjoyable for families and groups.",
+      "services.tourism.li1": "Baba Dham & Temple Circuit",
+      "services.tourism.li2": "Family-friendly packages",
+      "services.tourism.li3": "Customized itineraries",
+      "services.business.title": "Business Travel",
+      "services.business.desc": "Smart travel solutions for professionals. Seamless travel for business meetings, corporate events, and more.",
+      "services.business.li1": "Reliable executive service",
+      "services.business.li2": "Confidential & professional driver",
+      "services.business.li3": "Customized travel plans",
+
+      // Slider
+      "slider.title": "Explore Our Destinations",
+      "slider.subtitle": "Discover the beauty of every route we offer",
+
+      // Routes
+      "routes.title": "Routes & Pricing",
+      "routes.subtitle": "Affordable private driver services to popular destinations",
+      "routes.filter.all": "All Routes",
+      "routes.filter.pilgrimage": "🛕 Pilgrimage",
+      "routes.filter.city": "🏙️ City",
+      "routes.filter.local": "📍 Local",
+      "routes.th.route": "Route",
+      "routes.th.distance": "Distance",
+      "routes.th.duration": "Duration",
+      "routes.th.price": "Price (Estimated)",
+      "routes.th.highlights": "Highlights",
+      "routes.th.map": "Map",
+      "routes.popular": "Popular",
+
+      // Offers
+      "offers.title": "Special Offers",
+      "offers.subtitle": "Exclusive packages for every type of traveler",
+      "offers.pilgrimage.title": "Pilgrimage Combo",
+      "offers.pilgrimage.desc": "Deoghar → Basukinath + Sultangaj in one day. Special darshan assistance included.",
+      "offers.pilgrimage.price": "Starting ₹3,500",
+      "offers.weekend.title": "Weekend Getaway",
+      "offers.weekend.desc": "Deoghar → Tarapith + Nandan Pahar family package. Perfect for a refreshing weekend.",
+      "offers.weekend.price": "Starting ₹2,800",
+      "offers.business.title": "Business Express",
+      "offers.business.desc": "Deoghar → Ranchi / Kolkata / Patna WiFi-enabled car + complimentary water bottles.",
+      "offers.business.price": "Starting ₹5,000",
+      "offers.family.title": "Family Fun Deal",
+      "offers.family.desc": "Deoghar Waterpark + Tapovan Hills half-day trip. Perfect for kids and parents alike.",
+      "offers.family.price": "Starting ₹1,200",
+      "offers.festival.title": "Festival Special (Shravani Mela)",
+      "offers.festival.desc": "₹500 off on Baba Dham + Basukinath package. Celebrate the festival hassle-free!",
+      "offers.festival.price": "₹500 Off",
+
+      // Rentals
+      "rentals.title": "Vehicle Rental",
+      "rentals.subtitle": "Well-maintained vehicles for short or long trips",
+      "rentals.card1.title": "Professional & Reliable",
+      "rentals.card1.li1": "Well-maintained vehicles",
+      "rentals.card1.li2": "Valid ID proof required (Aadhaar, DL, Passport)",
+      "rentals.card1.li3": "Refundable security deposit",
+      "rentals.card1.li4": "Simple paperwork, quick approval",
+      "rentals.card1.btn": "📞 Call Now",
+      "rentals.card2.title": "Easy Rental in Deoghar",
+      "rentals.card2.li1": "ID proof submission (mandatory)",
+      "rentals.card2.li2": "Security deposit for safety",
+      "rentals.card2.btn": "📞 Book Today",
+      "rentals.card3.title": "Work & Worship",
+      "rentals.card3.li1": "Security deposit (refundable)",
+      "rentals.card3.li2": "Valid ID proof and documents",
+      "rentals.card3.li3": "Transparent pricing, no hidden costs",
+      "rentals.card3.btn": "📞 Reserve Now",
+      "rentals.banner.title": "🎉 Book for 3+ days and get 10% off!",
+      "rentals.banner.desc": "Special discounts on long rentals. Perfect for pilgrimages and business trips.",
+      "rentals.banner.btn": "📞 Grab the Offer",
+
+      // Hire Driver
+      "hire-driver.title": "Driver Hire Service",
+      "hire-driver.subtitle": "Professional and reliable drivers for all your travel needs",
+      "hire-driver.intro": "We provide professional and reliable drivers to meet your travel needs. Whether you need assistance for short trips within the local area or long-distance travel to distant destinations, our drivers ensure safe, timely, and comfortable journeys.",
+      "hire-driver.th.service": "Service Type",
+      "hire-driver.th.details": "Service Details",
+      "hire-driver.th.charge": "Per Day Charge",
+      "hire-driver.th.food": "Food & Stay Allowance",
+      "hire-driver.th.terms": "Additional Charges / Terms",
+      "hire-driver.service1.name": "📍 Local Area Service",
+      "hire-driver.service1.details": "City rides, office runs, and nearby trips within Deoghar district (up to 8-10 hours)",
+      "hire-driver.service1.food": "Included (customer to provide meals or basic ₹150-₹200 daily allowance)",
+      "hire-driver.service1.terms": "Overtime: ₹100 per additional hour beyond standard shift.",
+      "hire-driver.service2.name": "🛣️ Long Distance Service",
+      "hire-driver.service2.details": "Long-distance trips outside Deoghar or multi-day trips (e.g., Ranchi, Patna, or Kolkata)",
+      "hire-driver.service2.food": "Mandatory night stay/meals allowance: Customer provides clean accommodation and meals (or additional ₹300/night allowance).",
+      "hire-driver.service2.terms": "Night driving charge: ₹200 extra for driving between 10:00 PM and 5:00 AM.",
+      "hire-driver.service3.name": "⏱️ Hourly Basis",
+      "hire-driver.service3.details": "Short local drops, emergency runs, or temple visits (Baidyanath Dham)",
+      "hire-driver.service3.food": "Not required for short durations.",
+      "hire-driver.service3.terms": "Return transit cost if dropped far from initial pickup location.",
+      "hire-driver.footer": "Our drivers are courteous, well-trained, and familiar with local and regional routes. They follow safety practices and provide a stress-free travel experience, whether you are booking for a day or multiple days.",
+      "hire-driver.btn": "📞 Hire a Driver",
+
+      // Refer & Win
+      "nav.refer": "Refer",
+      "refer.title": "🎁 Refer & Win!",
+      "refer.subtitle": "Refer friends and both earn ₹50 reward",
+      "refer.step1.title": "Share Your Referral Code",
+      "refer.step1.desc": "Share your unique referral code or link with friends and family",
+      "refer.step2.title": "Friend Books a Trip",
+      "refer.step2.desc": "Your friend uses the referral code on their first booking",
+      "refer.step3.title": "Both Win!",
+      "refer.step3.desc": "You get ₹50 and your friend gets ₹50 off on their first booking",
+      "refer.card.referrer.title": "For You (Referrer)",
+      "refer.card.referrer.desc": "Instant ₹50 reward for every successful referral",
+      "refer.card.referrer.li1": "No limit — share as much as you want",
+      "refer.card.referrer.li2": "Instant reward — after friend's booking",
+      "refer.card.referrer.li3": "Use as discount on your next trip",
+      "refer.card.friend.title": "For Your Friend (New Customer)",
+      "refer.card.friend.desc": "₹50 off on first booking",
+      "refer.card.friend.li1": "Instant discount on first trip",
+      "refer.card.friend.li2": "Just enter the referral code",
+      "refer.card.friend.li3": "No minimum amount required",
+      "refer.generate.title": "Generate Your Referral Code",
+      "refer.generate.desc": "Enter your name below and get your unique referral code",
+      "refer.generate.placeholder": "Enter your name",
+      "refer.generate.btn": "🎁 Generate My Code",
+      "refer.output.yourCode": "Your Unique Referral Code:",
+      "refer.share.whatsapp": "Share on WhatsApp",
+      "refer.share.copy": "Copy Code",
+      "refer.faq.title": "Frequently Asked Questions",
+      "refer.faq.q1": "How does the referral reward work?",
+      "refer.faq.a1": "When your friend uses your referral code to make their first booking and the trip is completed, you receive a ₹50 reward and your friend gets ₹50 off on the booking.",
+      "refer.faq.q2": "Is there a limit on referrals?",
+      "refer.faq.a2": "No! You can refer as many friends as you want. You earn ₹50 for every successful referral.",
+      "refer.faq.q3": "How do I receive the reward?",
+      "refer.faq.a3": "Your reward will be credited to your account which you can use on your next trip.",
+      "modal.referral": "Referral Code",
+      "modal.referral.placeholder": "Enter referral code if you have one",
+
+      // Contact
+      "contact.title": "Contact Us",
+      "contact.subtitle": "We are here to help you plan the perfect trip",
+      "contact.call.title": "Call Us",
+      "contact.visit.title": "Visit Us",
+      "contact.whatsapp.title": "WhatsApp",
+      "contact.whatsapp.desc": "Instant booking via WhatsApp",
+      "contact.whatsapp.btn": "💬 Chat on WhatsApp",
+      "contact.cta": "📞 Book Your Trip Now",
+
+      // Footer
+      "footer.rights": "© 2026 Pratap Travels. All Rights Reserved.",
+
+      // Booking Modal
+      "modal.title": "🚗 Book Your Trip",
+      "modal.subtitle": "Fill the form and we will confirm shortly",
+      "modal.name": "Full Name *",
+      "modal.name.placeholder": "Enter your full name",
+      "modal.phone": "Phone Number *",
+      "modal.phone.placeholder": "e.g. 7991182086",
+      "modal.email": "Email Address",
+      "modal.email.placeholder": "e.g. you@example.com",
+      "modal.route": "Route *",
+      "modal.route.default": "Choose your destination",
+      "modal.date": "Travel Date *",
+      "modal.time": "Preferred Time",
+      "modal.passengers": "Number of Passengers",
+      "modal.type": "Trip Type *",
+      "modal.type.default": "Select trip type",
+      "modal.type.one-way": "One Way",
+      "modal.type.round-trip": "Round Trip",
+      "modal.type.full-day": "Full Day / Multi-Day",
+      "modal.type.rental": "Vehicle Rental",
+      "modal.remarks": "Special Requests / Notes",
+      "modal.remarks.placeholder": "Any special requirements... (airport pickup, multiple stops, etc.)",
+      "modal.submit": "🚗 Submit Booking Request",
+      "modal.note": "We will confirm your booking within 30 minutes via WhatsApp or phone.",
+      "modal.success.title": "Booking Request Sent!",
+      "modal.success.desc": "We have received your booking request. We will contact you shortly for confirmation.",
+      "modal.success.btn": "Book Another Trip",
+
+      // Floating Button
+      "floating.btn": "Book Now",
+
+      // Error messages
+      // Visitors page
+      "visitors.hero.title": "📊 Visitor Analytics",
+      "visitors.hero.desc": "Track who visited your website — location, device, pages, and more",
+      "visitors.auth.title": "🔒 Admin Access Required",
+      "visitors.auth.desc": "Sign in with an authorized Google account to view visitor analytics",
+      "visitors.auth.google": "Sign in with Google",
+      "visitors.auth.or": "or",
+      "visitors.auth.note": "Admin accounts only. Contact the site owner for access.",
+      "visitors.btn.refresh": "Refresh",
+      "visitors.btn.signout": "Sign Out",
+      "visitors.kpi.total": "Total Visitors",
+      "visitors.kpi.newToday": "New Today",
+      "visitors.kpi.returning": "Returning",
+      "visitors.kpi.active": "Active (Last 30 min)",
+      "visitors.kpi.countries": "Countries",
+      "visitors.kpi.pages": "Pages Viewed",
+      "visitors.table.title": "📋 Visitor Records",
+      "visitors.table.search": "🔍 Search by location, device, path...",
+      "visitors.btn.clearLog": "Clear Log",
+      "visitors.empty": "No visitor data yet. Tracking starts automatically when the page is loaded.",
+
+      "error.name": "Please enter your name",
+      "error.phone": "Enter a valid 10-digit phone number",
+      "error.email": "Enter a valid email address",
+      "error.route": "Please select a destination",
+      "error.date": "Please select a travel date",
+      "error.type": "Please select a trip type",
+      "sending": "⏳ Sending...",
+      "submit.booking": "🚗 Submit Booking Request",
+
+      // Admin pages — common
+      "admin.back": "← Admin Dashboard",
+      "admin.refresh": "🔄 Refresh",
+      "admin.export.csv": "📥 Download CSV",
+
+      // Admin dashboard (admin.html)
+      "admin.hero.title": "🔒 Admin Dashboard",
+      "admin.hero.desc": "Manage visitors, referrals, and analytics",
+      "admin.auth.desc": "Sign in with an authorized Google account to view the dashboard",
+      "admin.card.visitors.title": "Visitor Analytics",
+      "admin.card.visitors.desc": "Track website visitors, devices, locations, and page views",
+      "admin.card.visitors.link": "Open Dashboard →",
+      "admin.card.referrals.title": "Referral Dashboard",
+      "admin.card.referrals.desc": "Manage referral codes, redemptions, and reward balances",
+      "admin.card.referrals.link": "Open Dashboard →",
+      "admin.card.bookings.title": "Booking Dashboard",
+      "admin.card.bookings.desc": "View all customer bookings with filters and search",
+      "admin.card.bookings.link": "Open Dashboard →",
+      "admin.card.audit.title": "Audit Trail",
+      "admin.card.audit.desc": "Track all user activities and interactions on the website",
+      "admin.card.audit.link": "Open Dashboard →",
+      "admin.card.revenue.title": "💰 Revenue Dashboard",
+      "admin.card.revenue.desc": "Track bookings, revenue, and business performance analytics",
+      "admin.card.revenue.link": "Open Dashboard →",
+
+      // Booking completed status
+      "booking.filter.completed": "Completed",
+      "booking.action.complete": "Mark Trip Completed",
+
+      // Visitors dashboard (visitors.html) — table headers
+      "visitors.table.th.id": "Visitor ID",
+      "visitors.table.th.ip": "IP",
+      "visitors.table.th.country": "Country",
+      "visitors.table.th.state": "State",
+      "visitors.table.th.city": "City",
+      "visitors.table.th.device": "Device / Browser",
+      "visitors.table.th.pages": "Pages",
+      "visitors.table.th.visits": "Visits",
+      "visitors.table.th.firstSeen": "First Seen",
+      "visitors.table.th.lastSeen": "Last Seen",
+      "visitors.table.th.timestamp": "Timestamp",
+      "visitors.table.th.user": "User",
+
+      // Referral dashboard (referral.html)
+      "referral.hero.title": "🎁 Referral Dashboard",
+      "referral.hero.desc": "Track referral codes, redemptions, and reward balances",
+      "referral.auth.desc": "Sign in with an authorized Google account to view the referral dashboard",
+      "referral.kpi.totalCodes": "Total Codes",
+      "referral.kpi.redemptions": "Redemptions",
+      "referral.kpi.rewardsPaid": "Rewards Paid",
+      "referral.kpi.pending": "Pending Rewards",
+      "referral.table.title": "🎁 Referral Codes",
+      "referral.table.search": "🔍 Search by code or name...",
+      "referral.table.code": "Code",
+      "referral.table.name": "Name",
+      "referral.table.referrals": "Referrals",
+      "referral.table.redemptions": "Redemptions",
+      "referral.table.rewardsEarned": "Rewards Earned",
+      "referral.table.rewardBalance": "Reward Balance",
+      "referral.table.created": "Created",
+      "referral.table.status": "Status",
+      "referral.empty": "No referral codes yet. Codes will appear here as users generate them.",
+      "referral.modal.title": "🎁 Redemption History",
+      "referral.modal.subtitle": "Referral Code Details",
+      "referral.modal.totalRedemptions": "Total Redemptions",
+      "referral.modal.rewardsPaid": "Rewards Paid",
+      "referral.modal.pendingBalance": "Pending Balance",
+      "referral.modal.th.phone": "Customer Phone",
+      "referral.modal.th.bookingId": "Booking ID",
+      "referral.modal.th.amount": "Reward Amount",
+      "referral.modal.th.redeemedOn": "Redeemed On",
+      "referral.modal.th.status": "Status",
+      "referral.modal.empty": "No redemptions yet for this referral code.",
+
+      // Bookings dashboard (booking.html)
+      "booking.hero.title": "📋 Booking Dashboard",
+      "booking.hero.desc": "View and manage all customer bookings",
+      "booking.auth.desc": "Sign in with an authorized Google account to view the booking dashboard",
+      "booking.kpi.total": "Total Bookings",
+      "booking.kpi.confirmed": "Confirmed",
+      "booking.kpi.pending": "Pending",
+      "booking.kpi.referral": "With Referral",
+      "booking.table.title": "📋 All Bookings",
+      "booking.table.search": "🔍 Search by name, phone, route...",
+      "booking.table.id": "Booking ID",
+      "booking.table.name": "Name",
+      "booking.table.phone": "Phone",
+      "booking.table.route": "Route",
+      "booking.table.date": "Date",
+      "booking.table.time": "Time",
+      "booking.table.tripType": "Trip Type",
+      "booking.table.passengers": "Passengers",
+      "booking.table.referral": "Referral",
+      "booking.table.notified": "Notification",
+      "booking.table.status": "Status",
+      "booking.table.created": "Created",
+      "booking.empty": "No bookings yet. Bookings will appear here as users submit them.",
+      "booking.filter.allStatus": "All Status",
+      "booking.filter.confirmed": "Confirmed",
+      "booking.filter.pending": "Pending",
+      "booking.filter.cancelled": "Cancelled",
+      "booking.filter.allTime": "All Time",
+      "booking.filter.today": "Today",
+      "booking.filter.week": "Last 7 Days",
+      "booking.filter.month": "Last 30 Days",
+
+      // Audit trail (audit-trail.html)
+      "audit.hero.title": "📜 Audit Trail",
+      "audit.hero.desc": "Track all user activities and interactions on the website",
+      "audit.auth.desc": "Sign in with an authorized Google account to view the audit trail",
+      "audit.kpi.total": "Total Events",
+      "audit.kpi.bookings": "Bookings",
+      "audit.kpi.referrals": "Referral Events",
+      "audit.kpi.today": "Today's Events",
+      "audit.table.title": "📜 Activity Log",
+      "audit.table.search": "🔍 Search events...",
+      "audit.table.id": "Event ID",
+      "audit.table.type": "Type",
+      "audit.table.details": "Details",
+      "audit.table.page": "Page",
+      "audit.table.timestamp": "Timestamp",
+      "audit.table.visitor": "Visitor",
+      "audit.empty": "No audit events yet. Activities will appear here as users interact with the site.",
+      "audit.filter.allTypes": "All Types",
+      "audit.filter.pageVisit": "Page Visit",
+      "audit.filter.bookings": "Bookings",
+      "audit.filter.referralGen": "Referral Generated",
+      "audit.filter.referralRedeem": "Referral Redeemed",
+      "audit.filter.clicks": "Clicks",
+      "audit.filter.allTime": "All Time",
+      "audit.filter.today": "Today",
+      "audit.filter.week": "Last 7 Days",
+      "audit.filter.month": "Last 30 Days",
+
+      // Vehicle master (vehicle.html)
+      "vehicle.hero.title": "🚗 Vehicle Master",
+      "vehicle.hero.desc": "Manage vehicles, drivers, and availability",
+      "vehicle.auth.desc": "Sign in with an authorized Google account to view the vehicle master",
+      "vehicle.btn.add": "➕ Add Vehicle",
+      "vehicle.kpi.total": "Total Vehicles",
+      "vehicle.kpi.available": "Available",
+      "vehicle.kpi.booked": "Booked",
+      "vehicle.kpi.maintenance": "Maintenance",
+      "vehicle.table.title": "🚗 All Vehicles",
+      "vehicle.table.search": "🔍 Search by number, driver, type...",
+      "vehicle.table.number": "Vehicle Number",
+      "vehicle.table.type": "Type",
+      "vehicle.table.driverName": "Driver Name",
+      "vehicle.table.driverPhone": "Driver Phone",
+      "vehicle.table.seats": "Seats",
+      "vehicle.table.status": "Status",
+      "vehicle.table.created": "Created",
+      "vehicle.table.actions": "Actions",
+      "vehicle.empty": "No vehicles yet. Add vehicles to start assigning them to bookings.",
+      "vehicle.filter.all": "All",
+      "vehicle.filter.available": "Available",
+      "vehicle.filter.booked": "Booked",
+      "vehicle.filter.maintenance": "Maintenance",
+      "vehicle.modal.addTitle": "➕ Add Vehicle",
+      "vehicle.modal.editTitle": "✏️ Edit Vehicle",
+      "vehicle.modal.number": "Vehicle Number",
+      "vehicle.modal.type": "Vehicle Type",
+      "vehicle.modal.seats": "Seats",
+      "vehicle.modal.status": "Status",
+      "vehicle.modal.driverName": "Driver Name",
+      "vehicle.modal.driverPhone": "Driver Phone",
+      "vehicle.modal.notes": "Notes",
+      "vehicle.modal.cancel": "Cancel",
+      "vehicle.modal.save": "💾 Save",
+      "vehicle.quick.title": "➕ Quick Add Vehicle",
+      "vehicle.schedule.title": "📅 Vehicle Schedule",
+      "vehicle.schedule.close": "Close",
+      "vehicle.schedule.empty": "No upcoming bookings for this vehicle.",
+
+      // Booking confirm modal
+      "booking.confirm.title": "✅ Confirm Booking",
+      "booking.confirm.vehicle": "🚗 Select Vehicle",
+      "booking.confirm.pickupDate": "📅 Pickup Date",
+      "booking.confirm.pickupTime": "⏰ Pickup Time",
+      "booking.confirm.pickupAddress": "📍 Pickup Address",
+      "booking.confirm.adminNotes": "📝 Admin Notes",
+      "booking.confirm.cancel": "Cancel",
+      "booking.confirm.submit": "✅ Confirm",
+      "booking.table.vehicle": "Vehicle",
+      "booking.table.driver": "Driver",
+      "booking.table.actions": "Actions",
+
+      // Admin card for vehicles
+      "admin.card.vehicles.title": "Vehicle Master",
+      "admin.card.vehicles.desc": "Manage vehicles, drivers, and availability",
+      "admin.card.vehicles.link": "Open Dashboard →",
+      // Vehicle type options
+      "vehicle.type.sedan": "Sedan",
+      "vehicle.type.suv": "SUV",
+      "vehicle.type.hatchback": "Hatchback",
+      "vehicle.type.innova": "Innova",
+      "vehicle.type.tempo": "Tempo Traveller",
+      "vehicle.type.bus": "Bus",
+      "vehicle.type.other": "Other",
+      "vehicle.seats.4": "4 Seats",
+      "vehicle.seats.5": "5 Seats",
+      "vehicle.seats.6": "6 Seats",
+      "vehicle.seats.7": "7 Seats",
+      "vehicle.seats.9": "9 Seats",
+      "vehicle.seats.12": "12 Seats",
+      "vehicle.seats.17": "17 Seats",
+      "vehicle.seats.20": "20 Seats",
+      // Booking confirm modal placeholders
+      "booking.confirm.selectVehicle": "-- Select Vehicle --",
+      "booking.confirm.pickupAddress.placeholder": "Pickup address (optional)",
+      "booking.confirm.adminNotes.placeholder": "Internal notes (optional)",
+      // Notification labels
+      "booking.notified.emailSent": "Email Sent",
+      "booking.notified.whatsappSent": "WhatsApp Sent",
+      "booking.notified.none": "No notification sent",
+      "booking.action.sendEmail": "Send Email",
+      "booking.action.sendWhatsApp": "Send WhatsApp",
+      "booking.notified.needsAction": "Action Needed",
+      "booking.notified.sent": "Notification Sent",
+
+      // Email confirmation modal
+      "booking.emailModal.title": "✉️ Send Confirmation Email",
+      "booking.emailModal.to": "To (Customer Email) *",
+      "booking.emailModal.cc1": "CC 1",
+      "booking.emailModal.cc1.placeholder": "owner@prataptravels.com",
+      "booking.emailModal.cc2": "CC 2",
+      "booking.emailModal.cc2.placeholder": "admin@prataptravels.com",
+      "booking.emailModal.subject": "Subject",
+      "booking.emailModal.body": "Email Body",
+      "booking.emailModal.send": "Send Confirmation",
+      // Price Calculator
+      "calc.title": "💰 Fare Calculator",
+      "calc.subtitle": "See estimated fare for your trip",
+      "calc.route": "Route",
+      "calc.route.default": "Choose destination",
+      "calc.vehicle": "Vehicle Type",
+      "calc.vehicle.sedan": "Sedan (Swift Dzire)",
+      "calc.vehicle.hatchback": "Hatchback (Celerio)",
+      "calc.vehicle.suv": "SUV (Brezza/XUV)",
+      "calc.vehicle.innova": "Innova / Ertiga",
+      "calc.vehicle.tempo": "Tempo Traveller",
+      "calc.trip": "Trip Type",
+      "calc.trip.oneway": "One Way",
+      "calc.trip.roundtrip": "Round Trip",
+      "calc.trip.fullday": "Full Day / Multi-Day",
+      "calc.trip.rental": "Vehicle Rental",
       // Revenue page
+      "revenue.kpi.totalBookings": "Total Bookings",
+      "revenue.kpi.confirmed": "Confirmed",
+      "revenue.kpi.pending": "Pending",
+      "revenue.kpi.cancelled": "Cancelled",
+      "revenue.kpi.totalRevenue": "Total Revenue",      "revenue.kpi.avgOrder": "Avg. Order",
+      // Revenue page — auth
+      "revenue.auth.title": "🔒 Admin Access Required",
+      "revenue.auth.desc": "Sign in with an authorized Google account to view revenue analytics",
+      // Revenue page — panel titles
+      "revenue.route.title": "🗺️ Revenue by Route",
+      "revenue.monthly.title": "📅 Monthly Revenue",
+      // Revenue page — table headers
+      "revenue.table.route": "Route",
+      "revenue.table.bookings": "Bookings",
+      "revenue.table.revenue": "Revenue",
+      "revenue.table.avgValue": "Avg. Value",
+      "revenue.table.month": "Month",
+      // Revenue page — empty states
+      "revenue.noData": "No revenue data available yet.",
+    },
+
+  };
+
+  function init() {
+    applyTranslations();
+    var langBtnHi = document.getElementById("langBtnHi");
+    var langBtnEn = document.getElementById("langBtnEn");
+    if (langBtnHi) {
+      langBtnHi.addEventListener("click", function () {
+        setLanguage("hi");
+      });
+    }
+    if (langBtnEn) {
+      langBtnEn.addEventListener("click", function () {
+        setLanguage("en");
+      });
+    }
+    updateLangButtons();
+  }
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    localStorage.setItem(STORAGE_KEY, lang);
+    applyTranslations();
+    updateLangButtons();
+  }
+
+  function getLanguage() {
+    return currentLang;
+  }
+
+  function t(key) {
+    var lang = translations[currentLang];
+    if (lang && lang[key]) return lang[key];
+    // Fallback to English
+    if (translations.en && translations.en[key]) return translations.en[key];
+    // Fallback to key itself
+    return key;
+  }
+
+  function applyTranslations() {
+    var elements = document.querySelectorAll("[data-i18n]");
+    elements.forEach(function (el) {
+      var key = el.getAttribute("data-i18n");
+      var translated = t(key);
+      if (translated) el.textContent = translated;
+    });
+    var placeholders = document.querySelectorAll("[data-i18n-placeholder]");
+    placeholders.forEach(function (el) {
+      var key = el.getAttribute("data-i18n-placeholder");
+      var translated = t(key);
+      if (translated) el.placeholder = translated;
+    });
+  }
+
+  function updateLangButtons() {
+    var langBtnHi = document.getElementById("langBtnHi");
+    var langBtnEn = document.getElementById("langBtnEn");
+    if (langBtnHi) langBtnHi.classList.toggle("active", currentLang === "hi");
+    if (langBtnEn) langBtnEn.classList.toggle("active", currentLang === "en");
+  }
+
+  return {
+    init: init,
+    t: t,
+    getLanguage: getLanguage,
+    setLanguage: setLanguage,
+    applyTranslations: applyTranslations,
+  };
+})();
