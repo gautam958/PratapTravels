@@ -619,6 +619,13 @@ function cancelBooking(bookingId) {
   showToast("Booking cancelled and vehicle released.", "info");
 }
 
+function completeBooking(bookingId) {
+  if (!confirm("Mark this trip as completed? Completed bookings will be reflected in Revenue."))
+    return;
+  changeBookingStatus(bookingId, "completed");
+  showToast("Trip marked as completed.", "success");
+}
+
 function _refreshCurrentDashboard() {
   if (document.getElementById("visitorTableBody")) {
     fetchVisitorRecordsFromApi().then(function () {
@@ -2337,9 +2344,11 @@ function renderBookingTable() {
     var statusClass =
       b.status === "confirmed"
         ? "status-confirmed"
-        : b.status === "cancelled"
-          ? "status-cancelled"
-          : "status-pending";
+        : b.status === "completed"
+          ? "status-completed"
+          : b.status === "cancelled"
+            ? "status-cancelled"
+            : "status-pending";
     var vehicleInfo = "-";
     var driverInfo = "-";
     if (b.vehicleId) {
@@ -2461,10 +2470,12 @@ function updateBookingKPIs() {
   var total = bookings.length;
   var confirmed = 0,
     pending = 0,
+    completed = 0,
     withReferral = 0;
   for (var i = 0; i < bookings.length; i++) {
     if (bookings[i].status === "confirmed") confirmed++;
-    else pending++;
+    else if (bookings[i].status === "completed") completed++;
+    else if (bookings[i].status !== "cancelled") pending++;
     if (bookings[i].referral_code) withReferral++;
   }
   var elTotal = document.getElementById("bkKpiTotal");
@@ -3364,7 +3375,7 @@ function changeBookingStatus(bookingId, newStatus) {
     if (bookings[i].bookingId === bookingId) {
       var vehicleId = bookings[i].vehicleId;
       bookings[i].status = newStatus;
-      if (newStatus === "cancelled" && vehicleId) {
+      if ((newStatus === "cancelled" || newStatus === "completed") && vehicleId) {
         bookings[i].vehicleId = null;
         updateVehicle(vehicleId, { status: "available" });
         recordAuditTrail("vehicle_released", {
@@ -3400,12 +3411,16 @@ function getVehicleSchedule(vehicleId) {
   }
   // Sort by date
   schedule.sort(function (a, b) {
-    return new Date(a.date) - new Date(b.date);
+    return new Date(a.date || a.createdAt || 0) - new Date(b.date || b.createdAt || 0);
   });
   return schedule;
 }
 
-function renderVehicleSchedule(vehicleId) {
+async function renderVehicleSchedule(vehicleId) {
+  // Ensure bookings are loaded from API before rendering schedule
+  if (getBookings().length === 0) {
+    await fetchBookingsFromApi();
+  }
   var tbody = document.getElementById("vehicleScheduleBody");
   var emptyState = document.getElementById("emptyScheduleState");
   var panel = document.getElementById("vehicleSchedulePanel");
@@ -3804,6 +3819,13 @@ function sendEmailConfirmation() {
       subject: subject,
       body: body,
       bookingId: bookingId,
+      bookingData: (function() {
+        var bookings = getBookings();
+        for (var i = 0; i < bookings.length; i++) {
+          if (bookings[i].bookingId === bookingId) return bookings[i];
+        }
+        return null;
+      })(),
     }),
   })
     .then(function (resp) {
@@ -4039,6 +4061,8 @@ document.addEventListener("DOMContentLoaded", async function () {
       "referral.html",
       "booking.html",
       "audit-trail.html",
+      "vehicle.html",
+      "revenue.html",
     ];
     if (adminPages.indexOf(currentPage) === -1) {
       trackVisit().catch(function () {

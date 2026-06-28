@@ -2798,6 +2798,25 @@ img {
   box-shadow: 0 2px 8px rgba(243, 156, 18, 0.35);
 }
 
+/* ---------- Admin Nav Links ---------- */
+.admin-nav-links a {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.admin-nav-links a:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 /* ---------- Utility ---------- */
 .hidden {
   display: none !important;
