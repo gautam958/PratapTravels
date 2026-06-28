@@ -234,6 +234,57 @@ test('Notification column renders correctly for all states', () => {
 });
 
 // ==========================================
+// BUG: Blank Booking ID & Confirm Button
+// ==========================================
+
+test('BUG: bookingId is generated BEFORE bookingData definition', () => {
+  const bookingDataStart = mainJs.indexOf('var bookingData = {');
+  assert(bookingDataStart !== -1, 'Should have bookingData definition');
+  // Find the bookingId generation line
+  const bookingIdGen = mainJs.indexOf('var bookingId = "BK" + Date.now()');
+  assert(bookingIdGen !== -1, 'Should have bookingId generation');
+  // bookingId generation must come BEFORE bookingData definition
+  assert(bookingIdGen < bookingDataStart,
+    'bookingId generation (line ~' + bookingIdGen + ') must be BEFORE bookingData definition (line ~' + bookingDataStart + ') to avoid undefined bookingId');
+});
+
+test('BUG: bookingData includes bookingId (not undefined)', () => {
+  const bookingDataStart = mainJs.indexOf('var bookingData = {');
+  const bookingDataEnd = mainJs.indexOf('};', bookingDataStart);
+  const bookingDataSection = mainJs.substring(bookingDataStart, bookingDataEnd);
+  assert(bookingDataSection.includes('bookingId: bookingId'), 'bookingData should include bookingId field');
+  // Verify there's only ONE bookingId generation (no duplicates)
+  const matches = mainJs.match(/var bookingId = "BK" \+ Date\.now\(\)/g);
+  assert(matches && matches.length === 1, 'Should have exactly ONE bookingId generation (found: ' + (matches ? matches.length : 0) + ')');
+});
+
+test('BUG: openConfirmBooking finds booking by bookingId', () => {
+  const fnStart = mainJs.indexOf('function openConfirmBooking(');
+  assert(fnStart !== -1, 'Should have openConfirmBooking function');
+  const fnBodyStart = mainJs.indexOf('{', fnStart);
+  const fnEnd = mainJs.indexOf('function closeConfirmBookingModal', fnStart);
+  const fnBody = mainJs.substring(fnStart, fnEnd);
+  // Should search bookings by bookingId
+  assert(fnBody.includes('bookings[i].bookingId === bookingId'), 'openConfirmBooking should match bookings by bookingId');
+  // Should store found booking in _confirmBookingData
+  assert(fnBody.includes('_confirmBookingData = booking'), 'Should store found booking in _confirmBookingData');
+  // Should return early if not found (prevents confirm button doing nothing)
+  assert(fnBody.includes('if (!booking) return'), 'Should return early if booking not found to prevent silent failure');
+});
+
+test('BUG: openConfirmBooking called with b.bookingId in table', () => {
+  // The confirm button in the table should pass b.bookingId (not a hardcoded or undefined value)
+  // Check that openConfirmBooking is called with b.bookingId in the table (not a hardcoded string)
+  const confirmCallIdx = mainJs.indexOf('openConfirmBooking(');
+  // Find the one inside the table rendering (not the function definition)
+  const tableRenderIdx = mainJs.indexOf('btn-action-confirm');
+  assert(tableRenderIdx !== -1, 'Should have confirm button in table');
+  const nearbyCode = mainJs.substring(tableRenderIdx, tableRenderIdx + 200);
+  assert(nearbyCode.includes('openConfirmBooking('), 'Confirm button should call openConfirmBooking');
+  assert(nearbyCode.includes('b.bookingId'), 'Confirm button should pass b.bookingId (not hardcoded or undefined)');
+});
+
+// ==========================================
 // PRINT RESULTS
 // ==========================================
 

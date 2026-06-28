@@ -293,6 +293,10 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
+      // Generate booking ID before building bookingData
+      var bookingId = "BK" + Date.now() + phoneVal.slice(-4);
+      var dataApiUrl = getDataApiUrl();
+
       // Booking data to save (used for both API and local storage)
       var bookingData = {
         bookingId: bookingId,
@@ -354,9 +358,6 @@ document.addEventListener("DOMContentLoaded", function () {
           updateReferrerStatsOnRedemption(referralVal, phoneVal, bookingId);
         }
       }
-
-      var bookingId = "BK" + Date.now() + phoneVal.slice(-4);
-      var dataApiUrl = getDataApiUrl();
 
       if (dataApiUrl) {
         fetch(dataApiUrl, {
