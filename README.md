@@ -1583,7 +1583,7 @@ Admin-only dashboard at `revenue.html` showing revenue analytics and business in
 ### How It Works
 
 - Fetches booking data from `PratapTravels-Data` Azure Function with `type=revenue`
-- Revenue is calculated from **both confirmed and completed bookings** (completed trips represent actual revenue earned)
+- Revenue is calculated from **completed bookings only** (completed trips represent actual revenue earned; confirmed bookings are not counted until the trip is completed)
 - Displays KPI cards: Total Bookings, Confirmed, Completed, Pending, Cancelled, Total Revenue, Average Order Value
 - Shows **Revenue by Route** table (route, booking count, total revenue)
 - Shows **Revenue by Month** table (month, booking count, total revenue)
@@ -1703,7 +1703,7 @@ Add this handler in the GET section, after the status handler:
 // Keep route prices in sync with ROUTE_PRICES in js/main.js
 if (dataType == "revenue")
 {
-    var revenueBookings = bookingsList.Where(b => b.status?.ToString() == "confirmed" || b.status?.ToString() == "completed").ToList();
+    var revenueBookings = bookingsList.Where(b => b.status?.ToString() == "completed").ToList();
     var confirmedCount = bookingsList.Count(b => b.status?.ToString() == "confirmed");
     var completedCount = bookingsList.Count(b => b.status?.ToString() == "completed");
     var pendingCount = bookingsList.Count(b => b.status?.ToString() == "pending");
@@ -1761,6 +1761,7 @@ if (dataType == "revenue")
     {
         totalBookings = bookingsList.Count,
         totalRevenue = totalRevenue,
+        confirmedBookings = confirmedCount,
         completedBookings = completedCount,
         pendingBookings = pendingCount,
         cancelledBookings = cancelledCount,

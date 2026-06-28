@@ -293,9 +293,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      // Send booking to Azure Function API (same visitors endpoint)
-      var bookingPayload = {
-        type: "booking",
+      // Booking data to save (used for both API and local storage)
+      var bookingData = {
+        bookingId: bookingId,
         name: nameVal,
         phone: phoneVal,
         email: emailVal || "",
@@ -306,6 +306,8 @@ document.addEventListener("DOMContentLoaded", function () {
         trip_type: typeVal,
         remarks: remarksVal || "",
         referral_code: referralVal || "",
+        createdAt: new Date().toISOString(),
+        status: "pending",
       };
 
       // Helper: build WhatsApp fallback message
@@ -356,12 +358,12 @@ document.addEventListener("DOMContentLoaded", function () {
       var bookingId = "BK" + Date.now() + phoneVal.slice(-4);
       var dataApiUrl = getDataApiUrl();
 
-      if (visitorApiUrl) {
-        fetch(visitorApiUrl, {
+      if (dataApiUrl) {
+        fetch(dataApiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           mode: "cors",
-          body: JSON.stringify(bookingPayload),
+          body: JSON.stringify({ type: "booking_data", data: bookingData }),
         })
           .then(function (resp) {
             if (!resp.ok) throw new Error("HTTP " + resp.status);
@@ -370,22 +372,8 @@ document.addEventListener("DOMContentLoaded", function () {
           .then(function () {
             showBookingSuccess(false);
             handleReferralRedemption(bookingId);
-            // Save booking locally and to audit trail
-            saveBookingLocally({
-              bookingId: bookingId,
-              name: nameVal,
-              phone: phoneVal,
-              email: emailVal,
-              route: routeVal,
-              date: dateVal,
-              time: timeVal,
-              passengers: passengersVal,
-              trip_type: typeVal,
-              remarks: remarksVal,
-              referral_code: referralVal,
-              createdAt: new Date().toISOString(),
-              status: "pending",
-            });
+            // Save booking locally (API already saved via booking_data above)
+            _bookingsCache.unshift(bookingData);
             recordAuditTrail("booking_submit", {
               bookingId: bookingId,
               name: nameVal,
@@ -398,22 +386,8 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Booking API failed:", error);
             showBookingSuccess(true);
             handleReferralRedemption(bookingId);
-            // Save booking locally even on API failure
-            saveBookingLocally({
-              bookingId: bookingId,
-              name: nameVal,
-              phone: phoneVal,
-              email: emailVal,
-              route: routeVal,
-              date: dateVal,
-              time: timeVal,
-              passengers: passengersVal,
-              trip_type: typeVal,
-              remarks: remarksVal,
-              referral_code: referralVal,
-              createdAt: new Date().toISOString(),
-              status: "pending",
-            });
+            // Save booking locally even on API failure (fire-and-forget to API)
+            saveBookingLocally(bookingData);
             recordAuditTrail("booking_submit", {
               bookingId: bookingId,
               name: nameVal,
@@ -3338,17 +3312,27 @@ function persistBookingToApi(bookingId, updates) {
 function assignVehicleToBooking(bookingId, vehicleId) {
   if (!bookingId || !vehicleId) return;
   var bookings = getBookings();
+  var needsNotification = false;
   for (var i = 0; i < bookings.length; i++) {
     if (bookings[i].bookingId === bookingId) {
       bookings[i].vehicleId = vehicleId;
       bookings[i].status = "confirmed";
+      // Set needs_notification flag so admin sees "Needs Action" in notification column
+      if (!bookings[i].email_sent && !bookings[i].notification_sent) {
+        bookings[i].needs_notification = true;
+        needsNotification = true;
+      }
       break;
     }
   }
   _bookingsCache = bookings;
 
-  // Persist status change to server
-  persistBookingToApi(bookingId, { status: "confirmed", vehicleId: vehicleId });
+  // Persist status change and notification flag to server
+  persistBookingToApi(bookingId, {
+    status: "confirmed",
+    vehicleId: vehicleId,
+    needs_notification: needsNotification
+  });
 
   // Update vehicle status to booked
   updateVehicle(vehicleId, { status: "booked" });
@@ -3386,8 +3370,19 @@ function changeBookingStatus(bookingId, newStatus) {
     if (bookings[i].bookingId === bookingId) {
       var vehicleId = bookings[i].vehicleId;
       bookings[i].status = newStatus;
+      var apiUpdates = { status: newStatus };
       if ((newStatus === "cancelled" || newStatus === "completed") && vehicleId) {
         bookings[i].vehicleId = null;
+        apiUpdates.vehicleId = null;
+        // Clear driver/vehicle info on the booking record
+        bookings[i].vehicleNumber = '';
+        bookings[i].vehicleType = '';
+        bookings[i].driverName = '';
+        bookings[i].driverPhone = '';
+        apiUpdates.vehicleNumber = '';
+        apiUpdates.vehicleType = '';
+        apiUpdates.driverName = '';
+        apiUpdates.driverPhone = '';
         updateVehicle(vehicleId, { status: "available" });
         recordAuditTrail("vehicle_released", {
           bookingId: bookingId,
@@ -3395,8 +3390,8 @@ function changeBookingStatus(bookingId, newStatus) {
         });
       }
       _bookingsCache = bookings;
-      // Persist status change to server
-      persistBookingToApi(bookingId, { status: newStatus });
+      // Persist all status and vehicle changes to server
+      persistBookingToApi(bookingId, apiUpdates);
       recordAuditTrail("booking_status_change", {
         bookingId: bookingId,
         newStatus: newStatus,
@@ -3851,6 +3846,7 @@ function sendEmailConfirmation() {
             bookings[i].email_sent_cc = [cc1, cc2].filter(function (e) {
               return e !== "";
             });
+            bookings[i].needs_notification = false;
             break;
           }
         }
@@ -3861,6 +3857,7 @@ function sendEmailConfirmation() {
           notification_sent: true,
           notification_type: "email",
           notified_at: new Date().toISOString(),
+          needs_notification: false,
           email_sent_to: to,
           email_sent_cc: [cc1, cc2].filter(function (e) {
             return e !== "";
@@ -3918,7 +3915,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
       }
       var vehicle = getVehicleById(vehicleId);
-      assignVehicleToBooking(bookingId, vehicleId);
+      // Update local booking cache with pickup/vehicle details BEFORE assignVehicleToBooking
+      // (assignVehicleToBooking sets status=confirmed, vehicleId, and persists to API + updates vehicle)
       var bookings = getBookings();
       for (var i = 0; i < bookings.length; i++) {
         if (bookings[i].bookingId === bookingId) {
@@ -3933,8 +3931,20 @@ document.addEventListener("DOMContentLoaded", function () {
           break;
         }
       }
-      persistBookingToApi(bookingId, { status: 'confirmed', vehicleId: vehicleId, pickup_date: pickupDate, pickup_time: pickupTime, pickup_address: pickupAddr, admin_notes: adminNotes });
-      if (vehicle) updateVehicle(vehicleId, { status: 'booked' });
+      _bookingsCache = bookings;
+      // Now assign vehicle (sets status=confirmed, vehicleId, persists to API, updates vehicle status)
+      assignVehicleToBooking(bookingId, vehicleId);
+      // Persist the additional pickup/vehicle details to API (status+vehicleId already persisted by assignVehicleToBooking)
+      persistBookingToApi(bookingId, {
+        pickup_date: pickupDate,
+        pickup_time: pickupTime,
+        pickup_address: pickupAddr,
+        admin_notes: adminNotes,
+        vehicleNumber: vehicle ? vehicle.vehicleNumber : '',
+        vehicleType: vehicle ? vehicle.vehicleType : '',
+        driverName: vehicle ? vehicle.driverName : '',
+        driverPhone: vehicle ? vehicle.driverPhone : ''
+      });
       recordAuditTrail('booking_confirm', { bookingId: bookingId, vehicleId: vehicleId });
       closeConfirmBookingModal();
       renderBookingTable();
@@ -4323,8 +4333,9 @@ function renderRevenueDashboard(data) {
 function shareDriverLocation(bookingId) {
   var bookings = getBookings();
   var booking = null;
+  var bookingIdx = -1;
   for (var i = 0; i < bookings.length; i++) {
-    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; break; }
+    if (bookings[i].bookingId === bookingId) { booking = bookings[i]; bookingIdx = i; break; }
   }
   if (!booking) { showToast('Booking not found', 'error'); return; }
   var msg = '\ud83d\ude98 *PRATAP TRAVELS - Driver Assignment*\n\n';
@@ -4340,6 +4351,21 @@ function shareDriverLocation(bookingId) {
   msg += '\n\ud83d\udcde For queries, call +91 76313 82174';
   var phone = booking.phone ? '91' + booking.phone : '';
   window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+  // Mark notification as sent via WhatsApp
+  if (bookingIdx >= 0) {
+    bookings[bookingIdx].notification_sent = true;
+    bookings[bookingIdx].notification_type = 'whatsapp';
+    bookings[bookingIdx].notified_at = new Date().toISOString();
+    bookings[bookingIdx].needs_notification = false;
+    _bookingsCache = bookings;
+    persistBookingToApi(bookingId, {
+      notification_sent: true,
+      notification_type: 'whatsapp',
+      notified_at: new Date().toISOString(),
+      needs_notification: false
+    });
+    renderBookingTable();
+  }
   showToast('Opening WhatsApp to share driver details...', 'success');
 }
 
