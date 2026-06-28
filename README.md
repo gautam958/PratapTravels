@@ -77,11 +77,12 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 ### 📋 Bookings Dashboard (`booking.html`)
 
 - **Google Sign-In** — Same admin auth as visitors dashboard
-- **KPI Cards** — Total Bookings, Confirmed, Pending, With Referral
+- **KPI Cards** — Total Bookings, Confirmed, Completed, Pending, With Referral
 - **Search** by name, phone, route, referral code
-- **Filters** — Status (All/Confirmed/Pending/Cancelled), Date (All/Today/7 Days/30 Days)
+- **Filters** — Status (All/Confirmed/Pending/Completed/Cancelled), Date (All/Today/7 Days/30 Days)
 - **Table** — Booking ID, Name, Phone, Route, Date, Time, Trip Type, Passengers, Vehicle, Driver, Referral, Status, Notification, Actions
 - **Booking Confirmation** — Assign vehicles, set pickup details, send confirmation emails
+- **Trip Completion** — Mark confirmed trips as completed; vehicle is auto-released and revenue is reflected in the Revenue dashboard
 - **Driver Location Sharing** — Send booking details + driver info to customer via WhatsApp
 - **Email Notifications** — Send confirmation emails (only for confirmed bookings)
 - **Export CSV** — Download all bookings as CSV
@@ -998,9 +999,10 @@ The admin can view all customer bookings in a dedicated dashboard at `booking.ht
 
 ### Admin Dashboard (`booking.html`)
 
-- **KPI Cards:** Total Bookings, Confirmed, Pending, With Referral
+- **KPI Cards:** Total Bookings, Confirmed, Completed, Pending, With Referral
 - **Search** by name, phone, route, referral code
-- **Filters** — Status (All / Confirmed / Pending / Cancelled), Date (All / Today / Last 7 Days / Last 30 Days)
+- **Filters** — Status (All / Confirmed / Pending / Completed / Cancelled), Date (All / Today / Last 7 Days / Last 30 Days)
+- **Actions** — Confirm (✅) for pending, Edit (✏️) + Complete (✅) + Cancel (❌) for confirmed
 - **Export CSV** — Download filtered bookings as CSV
 - Protected by **Google Sign-In**
 
@@ -1099,7 +1101,11 @@ The admin can manage vehicles and drivers in a dedicated dashboard at `vehicle.h
 3. Selects a vehicle from the dropdown (or adds a new one)
 4. Sets pickup date, time, address, and admin notes
 5. On confirm: vehicle status → Booked, booking status → Confirmed
-6. On cancellation: vehicle status → Available (auto-released)
+6. Admin can click the ✅ button on a confirmed booking to mark the trip as **Completed** (terminal status)
+7. On cancellation: vehicle status → Available (auto-released)
+8. On completion: vehicle status → Available (auto-released), revenue is reflected in Revenue dashboard
+
+**Status lifecycle:** `pending` → `confirmed` → `completed` (or `cancelled` at any point)
 
 ### Data Source
 
@@ -1577,7 +1583,8 @@ Admin-only dashboard at `revenue.html` showing revenue analytics and business in
 ### How It Works
 
 - Fetches booking data from `PratapTravels-Data` Azure Function with `type=revenue`
-- Displays KPI cards: Total Bookings, Total Revenue, Confirmed Bookings, Average Booking Value
+- Revenue is calculated from **both confirmed and completed bookings** (completed trips represent actual revenue earned)
+- Displays KPI cards: Total Bookings, Confirmed, Completed, Pending, Cancelled, Total Revenue, Average Order Value
 - Shows **Revenue by Route** table (route, booking count, total revenue)
 - Shows **Revenue by Month** table (month, booking count, total revenue)
 - Auto-fetches on page load if the dashboard section is visible (after Google Sign-In)
@@ -1600,8 +1607,11 @@ GET https://communication-fn.azurewebsites.net/api/PratapTravels-Data?type=reven
 {
   "totalBookings": 42,
   "totalRevenue": 125000,
-  "confirmedBookings": 35,
-  "avgBookingValue": 2976,
+  "confirmedBookings": 20,
+  "completedBookings": 15,
+  "pendingBookings": 5,
+  "cancelledBookings": 2,
+  "averageOrderValue": 3571,
   "revenueByRoute": [
     { "route": "Basukinath", "count": 12, "revenue": 24000 },
     { "route": "Tarapith", "count": 8, "revenue": 16000 }
