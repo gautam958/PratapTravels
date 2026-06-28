@@ -608,21 +608,27 @@ document.addEventListener("DOMContentLoaded", function () {
 // ---------- Refresh dashboard tables after login ----------
 
 // ---------- Cancel Booking ----------
-function cancelBooking(bookingId) {
+async function cancelBooking(bookingId) {
   if (
     !confirm(
       "Are you sure you want to cancel this booking? This will release the assigned vehicle.",
     )
   )
     return;
-  changeBookingStatus(bookingId, "cancelled");
+  await changeBookingStatus(bookingId, "cancelled");
+  await fetchBookingsFromApi();
+  renderBookingTable();
+  updateBookingKPIs();
   showToast("Booking cancelled and vehicle released.", "info");
 }
 
-function completeBooking(bookingId) {
+async function completeBooking(bookingId) {
   if (!confirm("Mark this trip as completed? Completed bookings will be reflected in Revenue."))
     return;
-  changeBookingStatus(bookingId, "completed");
+  await changeBookingStatus(bookingId, "completed");
+  await fetchBookingsFromApi();
+  renderBookingTable();
+  updateBookingKPIs();
   showToast("Trip marked as completed.", "success");
 }
 
@@ -2442,7 +2448,7 @@ function renderBookingTable() {
         } else if (b.needs_notification) {
           return (
             '<span class="notified-badge notified-flagged">' +
-            I18N.t("booking.notified.needsAction") +
+            (typeof I18N !== "undefined" && I18N.t ? I18N.t("booking.notified.needsAction") : "Needs Action") +
             "</span>"
           );
         } else if (b.status === "confirmed") {
@@ -2450,7 +2456,7 @@ function renderBookingTable() {
             '<button class="btn-action-confirm" style="padding:3px 8px;font-size:0.75rem;" onclick="sendBookingNotification(\'' +
             b.bookingId +
             '\')" title="' +
-            I18N.t("booking.action.sendEmail") +
+            (typeof I18N !== "undefined" && I18N.t ? I18N.t("booking.action.sendEmail") : "Send Email") +
             '">\u2709\ufe0f</button>'
           );
         } else {
@@ -3393,8 +3399,6 @@ function changeBookingStatus(bookingId, newStatus) {
       break;
     }
   }
-  renderBookingTable();
-  updateBookingKPIs();
 }
 
 // ---------- Vehicle Schedule View ----------
