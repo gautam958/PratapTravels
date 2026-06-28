@@ -7,6 +7,7 @@ const fs = require('fs');
 
 const mainJs = fs.readFileSync('js/main.js', 'utf8');
 const readme = fs.readFileSync('README.md', 'utf8');
+const revenueFunction = fs.readFileSync('azure-function/PratapTravels-run.csx', 'utf8');
 
 let passCount = 0;
 let failCount = 0;
@@ -119,10 +120,10 @@ test('BUG5+8: changeBookingStatus persists vehicleId:null and clears driver info
 });
 
 test('BUG6: Revenue Azure Function code only counts completed bookings', () => {
-  // Check README for the correct filter
-  const revenueSection = readme.substring(
-    readme.indexOf('if (dataType == "revenue")'),
-    readme.indexOf('if (dataType == "revenue")') + 300
+  // Check the actual Azure Function source file for the correct filter
+  const revenueSection = revenueFunction.substring(
+    revenueFunction.indexOf('if (dataType == "revenue")'),
+    revenueFunction.indexOf('if (dataType == "revenue")') + 300
   );
   assert(revenueSection.includes('.Where(b => b.status?.ToString() == "completed")'), 
     'Revenue should filter by completed only');
@@ -131,7 +132,7 @@ test('BUG6: Revenue Azure Function code only counts completed bookings', () => {
 });
 
 test('BUG6: Revenue API response includes confirmedBookings', () => {
-  assert(readme.includes('confirmedBookings = confirmedCount'), 
+  assert(revenueFunction.includes('confirmedBookings = confirmedCount'), 
     'Revenue API response should include confirmedBookings');
 });
 

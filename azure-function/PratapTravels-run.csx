@@ -124,7 +124,7 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
         // Admin endpoints: require function key
         // ----------------------------------------------------------
         string functionKey = req.Headers["x-functions-key"].FirstOrDefault() ?? req.Query["code"];
-        string expectedKey = Environment.GetEnvironmentVariable("DATA_FUNCTION_KEY") ?? "";
+        string expectedKey = Environment.GetEnvironmentVariable("PRATAP_DATA_FUNCTION_KEY") ?? "";
         if (string.IsNullOrEmpty(expectedKey) || functionKey != expectedKey)
             return new ForbidResult();
 
@@ -148,12 +148,9 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
         // ----------------------------------------------------------
         // CHANGED: type=revenue — Revenue analytics
         // FIX: Revenue calculated from COMPLETED bookings only
-        //      (previously counted confirmed + completed)
-        // FIX: Added confirmedBookings to response
         // ----------------------------------------------------------
         if (dataType == "revenue")
         {
-            // CHANGED: Only completed bookings contribute to revenue
             var revenueBookings = bookingsList.Where(b => b.status?.ToString() == "completed").ToList();
             var confirmedCount = bookingsList.Count(b => b.status?.ToString() == "confirmed");
             var completedCount = bookingsList.Count(b => b.status?.ToString() == "completed");
@@ -212,17 +209,17 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             {
                 totalBookings = bookingsList.Count,
                 totalRevenue = totalRevenue,
-                confirmedBookings = confirmedCount,     // CHANGED: Added to response
+                confirmedBookings = confirmedCount,
                 completedBookings = completedCount,
                 pendingBookings = pendingCount,
                 cancelledBookings = cancelledCount,
                 averageOrderValue = Math.Round(avgBookingValue, 0),
                 revenueByRoute = revenueByRoute.Values.ToList(),
-                revenueByMonth = revenueByMonth.Values.OrderByDescending(m => m["month"]?.ToString()).ToList()
+                // FIXED: Explicitly cast m to dynamic to bypass the object indexing error
+                revenueByMonth = revenueByMonth.Values.OrderByDescending(m => ((dynamic)m).month?.ToString()).ToList()
             });
         }
 
-        // Default: return summary counts
         return new OkObjectResult(new {
             totalBookings = bookingsList.Count,
             totalAuditEvents = auditList.Count,
@@ -239,9 +236,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
         dynamic data = string.IsNullOrWhiteSpace(requestBody) ? null : JsonConvert.DeserializeObject(requestBody);
         string dataType = data?.type?.ToString() ?? "";
 
-        // ----------------------------------------------------------
-        // Handle booking_data (save new booking)
-        // ----------------------------------------------------------
         if (dataType == "booking_data")
         {
             dynamic bookingData = data.data;
@@ -255,9 +249,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Booking data saved" });
         }
 
-        // ----------------------------------------------------------
-        // Handle audit_trail
-        // ----------------------------------------------------------
         if (dataType == "audit_trail")
         {
             dynamic auditRecord = data.data;
@@ -271,9 +262,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Audit event saved" });
         }
 
-        // ----------------------------------------------------------
-        // Handle vehicle_data (add new vehicle)
-        // ----------------------------------------------------------
         if (dataType == "vehicle_data")
         {
             dynamic vehicleData = data.data;
@@ -287,11 +275,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Vehicle saved" });
         }
 
-        // ----------------------------------------------------------
-        // Handle booking_confirmation (send confirmation email via SMTP, with CC support)
-        // CHANGED: Now reads booking details from bookingData when top-level fields are missing
-        //          (frontend sends full booking object in bookingData field)
-        // ----------------------------------------------------------
         if (dataType == "booking_confirmation")
         {
             try
@@ -302,8 +285,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                 if (string.IsNullOrEmpty(recipientAddress))
                     return new BadRequestObjectResult(new { error = "Customer email is required" });
 
-                // CHANGED: Read booking details from bookingData if top-level fields missing
-                // The frontend sendEmailConfirmation() sends the full booking in bookingData
                 dynamic bd = data?.bookingData;
                 string name = data?.name?.ToString() ?? bd?.name?.ToString() ?? "Guest";
                 string route = data?.route?.ToString() ?? bd?.route?.ToString() ?? "-";
@@ -315,7 +296,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                 string pickupAddr = data?.pickup_address?.ToString() ?? bd?.pickup_address?.ToString() ?? "";
                 string bookingIdVal = data?.bookingId?.ToString() ?? bd?.bookingId?.ToString() ?? "-";
 
-                // Include vehicle type in display if available
                 string vehicleDisplay = !string.IsNullOrEmpty(vehicleType) && vehicle != "-"
                     ? vehicle + " (" + vehicleType + ")"
                     : vehicle;
@@ -330,7 +310,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                 message.From = new MailAddress(smtpUser, "Pratap Travels Booking Confirmation");
                 message.To.Add(recipientAddress);
 
-                // Add CC recipients if provided
                 if (data?.cc != null)
                 {
                     try
@@ -359,7 +338,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                 string addrSection = !string.IsNullOrEmpty(pickupAddr)
                     ? $"<p><b>Pickup Address:</b> {pickupAddr}</p>" : "";
 
-                // CHANGED: Use vehicleDisplay (includes vehicle type) and improved formatting
                 message.Body = $@"
                     <h2>🚗 Pratap Travels — Booking Confirmed</h2>
                     <hr/>
@@ -387,11 +365,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             }
         }
 
-        // ----------------------------------------------------------
-        // Handle booking_update (update existing booking fields)
-        // CHANGED: Now handles vehicleId:null, driver info clearing,
-        //          needs_notification flag, and notification status updates
-        // ----------------------------------------------------------
         if (dataType == "booking_update")
         {
             string bookingId = data.id?.ToString();
@@ -415,17 +388,9 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             if (index == -1)
                 return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
 
-            // Merge update fields into existing booking
-            // This handles all updates including:
-            //   - status changes (confirmed, completed, cancelled)
-            //   - vehicleId assignment (vehicleId: "V123") or release (vehicleId: null)
-            //   - driver/vehicle info (vehicleNumber, vehicleType, driverName, driverPhone)
-            //   - pickup details (pickup_date, pickup_time, pickup_address, admin_notes)
-            //   - notification flags (needs_notification, notification_sent, notification_type, notified_at, email_sent, email_sent_to, email_sent_cc)
             var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
             foreach (var prop in updateObj.Properties())
             {
-                // Handle null values (e.g., vehicleId: null when releasing vehicle)
                 if (prop.Value.Type == Newtonsoft.Json.Linq.JTokenType.Null)
                 {
                     bookingsList[index][prop.Name] = null;
@@ -442,9 +407,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Booking updated" });
         }
 
-        // ----------------------------------------------------------
-        // Handle vehicle_update (update existing vehicle)
-        // ----------------------------------------------------------
         if (dataType == "vehicle_update")
         {
             string vehicleId = data.id?.ToString();
@@ -468,7 +430,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             if (index == -1)
                 return new NotFoundObjectResult(new { error = "Vehicle " + vehicleId + " not found" });
 
-            // Merge update fields into existing vehicle
             var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
             foreach (var prop in updateObj.Properties())
             {
@@ -488,9 +449,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Vehicle updated" });
         }
 
-        // ----------------------------------------------------------
-        // Handle vehicle_delete (delete a vehicle)
-        // ----------------------------------------------------------
         if (dataType == "vehicle_delete")
         {
             string vehicleId = data.id?.ToString();
