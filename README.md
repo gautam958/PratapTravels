@@ -18,6 +18,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - [Vehicle Master](#vehicle-master)
 - [Booking Status Tracker](#booking-status-tracker)
 - [Revenue Dashboard](#revenue-dashboard)
+- [Agents Folder](#agents-folder)
 - [PratapTravels-Data Azure Function](#prataptravels-data-azure-function)
 - [Azure Function Changes Required](#azure-function-changes-required)
 - [Tech Stack](#tech-stack)
@@ -623,6 +624,21 @@ Both the `type=status` and `type=revenue` handlers are already included in [`azu
 | `vehicle_delete`       | **POST**    | Delete a vehicle                      | ✅ Already exists  |
 | `booking_update`       | **POST**    | Update a booking                      | ✅ Already exists  |
 | `booking_confirmation` | **POST**    | Send confirmation email               | ✅ Already exists  |
+
+---
+
+## Agents Folder
+
+This repository includes an `agents` folder containing four specialized files:
+
+- **architecture-reviewer.md** – Used for reviewing and validating system architecture.  
+- **code-reviewer.md** – Used for conducting code reviews and ensuring coding standards.  
+- **document-creator.md** – Used for creating and maintaining project documentation.  
+- **test-writer.md** – Used for writing and managing test cases.  
+
+### Usage
+
+Whenever new features are added or existing components are changed in this repository, these four files must be referenced and updated accordingly. They serve as living guidelines to ensure quality, consistency, and maintainability across architecture, code, documentation, and testing.
 
 ---
 
