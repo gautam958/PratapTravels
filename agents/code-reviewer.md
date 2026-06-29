@@ -8,6 +8,8 @@ Standards and procedures for conducting code reviews in the PratapTravels projec
 
 This document defines coding standards, error handling practices, performance optimization tips, and security checks that must be applied during code reviews. It includes examples of good vs. bad practices to ensure consistent code quality.
 
+> **🌐 Bilingual Requirement:** This website supports Hindi and English. Every new feature or code change MUST include both language translations. Reference `agents/i18n-guidelines.md` for implementation details.
+
 ---
 
 ## 1. Coding Style Guidelines
@@ -69,7 +71,71 @@ const renderTable = () => {
 
 ---
 
-## 2. Error Handling Practices
+## 2. i18n / Bilingual Requirements (CRITICAL)
+
+**Every user-facing feature MUST support both Hindi and English.**
+
+### HTML: data-i18n Attributes
+
+```html
+<!-- ✅ Good: Both languages supported via i18n system -->
+<h2 data-i18n="section.title">हमारी सेवाएँ</h2>
+<p data-i18n="section.desc">यात्रा आसान</p>
+<button data-i18n="section.btn">अभी बुक करें</button>
+
+<!-- ❌ Bad: Hardcoded English only -->
+<h2>Our Services</h2>
+<p>Travel made easy</p>
+```
+
+### HTML: Placeholder Translations
+
+```html
+<!-- ✅ Good -->
+<input type="text" placeholder="नाम दर्ज करें" data-i18n-placeholder="form.name.placeholder" />
+
+<!-- ❌ Bad -->
+<input type="text" placeholder="Enter name" />
+```
+
+### JavaScript: Dynamic Text
+
+```javascript
+// ✅ Good: Bilingual toast messages
+var lang = typeof I18N !== 'undefined' ? I18N.getLanguage() : 'hi';
+showToast(
+  lang === 'hi' ? 'बुकिंग सफल!' : 'Booking successful!',
+  'success'
+);
+
+// ✅ Good: Using I18N.t() helper
+showToast(I18N.t('booking.success'), 'success');
+
+// ❌ Bad: Hardcoded English
+showToast("Booking successful!", 'success');
+```
+
+### i18n Translation Keys in `js/i18n.js`
+
+```javascript
+// Hindi section
+"feature.newKey": "नया हिंदी टेक्स्ट"
+
+// English section
+"feature.newKey": "New English text"
+```
+
+### i18n Checklist for Every PR
+
+- [ ] All HTML text has `data-i18n` attributes
+- [ ] All placeholders have `data-i18n-placeholder` attributes
+- [ ] All dynamic JS text uses `I18N.t()` or bilingual conditionals
+- [ ] Translation keys added to both Hindi and English in `js/i18n.js`
+- [ ] No hardcoded user-facing strings without i18n
+
+---
+
+## 3. Error Handling Practices
 
 ### Required Error Handling Patterns
 
@@ -84,7 +150,11 @@ try {
   // process data
 } catch (e) {
   console.warn("API failed:", e.message);
-  showToast("Using cached data (API unavailable).", "info");
+  var lang = typeof I18N !== 'undefined' ? I18N.getLanguage() : 'hi';
+  showToast(
+    lang === 'hi' ? 'कैश्ड डेटा का उपयोग हो रहा है' : 'Using cached data',
+    "info"
+  );
 }
 ```
 
@@ -109,29 +179,17 @@ if (modal) {
 document.getElementById("bookingModal").classList.remove("hidden");
 ```
 
-#### Form Validation
-
-```javascript
-// ✅ Good: Validate with specific error messages
-if (!phoneRegex.test(phone.value.replace(/\s/g, ""))) {
-  document.getElementById("phoneError").textContent =
-    "Enter a valid 10-digit phone number";
-  phone.classList.add("error");
-  valid = false;
-}
-```
-
 ### User Feedback
 
 - Use `showToast(message, type)` for non-blocking notifications
 - Use `showToast(message, "error")` for errors
 - Use `showToast(message, "success")` for confirmations
 - Use `showToast(message, "info")` for informational messages
-- Never leave the user without feedback after an action
+- **Always provide bilingual messages** (Hindi + English)
 
 ---
 
-## 3. Performance Optimization
+## 4. Performance Optimization
 
 ### Required Practices
 
@@ -155,36 +213,6 @@ bookings.forEach(function (b) {
 });
 ```
 
-#### Event Listeners
-
-```javascript
-// ✅ Good: Debounce expensive operations
-var debounceTimer;
-searchInput.addEventListener("input", function () {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(function () {
-    renderBookingTable();
-  }, 300);
-});
-```
-
-#### API Caching
-
-```javascript
-// ✅ Good: Cache API responses in memory
-var _bookingsCache = [];
-
-function getBookings() {
-  return _bookingsCache;
-}
-
-async function fetchBookingsFromApi() {
-  var data = await fetch(apiUrl);
-  _bookingsCache = data;
-  return data;
-}
-```
-
 ### Performance Checklist
 
 - [ ] No repeated `getElementById` calls in loops
@@ -196,7 +224,7 @@ async function fetchBookingsFromApi() {
 
 ---
 
-## 4. Security Checks
+## 5. Security Checks
 
 ### Required Security Practices
 
@@ -240,17 +268,6 @@ function getVisitorApiUrl() {
 var apiUrl = "https://example.com/api?key=abc123secret";
 ```
 
-#### Self-Referral Prevention
-
-```javascript
-// ✅ Good: Validate referral codes server-side
-var refValidationResult = await validateReferralCodeServer(referralVal);
-if (!refValidationResult || !refValidationResult.valid) {
-  showToast("Referral code is invalid.", "error");
-  referralVal = "";
-}
-```
-
 ### Security Checklist
 
 - [ ] All user data rendered with `escapeHtml()`
@@ -263,13 +280,16 @@ if (!refValidationResult || !refValidationResult.valid) {
 
 ---
 
-## 5. Code Review Checklist
+## 6. Code Review Checklist
 
 ### For Every Pull Request
 
 - [ ] **Syntax:** Code passes `node -c` syntax check
 - [ ] **Tests:** All existing tests pass (`node test_flows.js`)
 - [ ] **i18n:** All user-visible text has `data-i18n` attributes
+- [ ] **i18n:** All placeholders have `data-i18n-placeholder` attributes
+- [ ] **i18n:** All dynamic text uses `I18N.t()` or bilingual conditionals
+- [ ] **i18n:** Translation keys added to both Hindi and English in `js/i18n.js`
 - [ ] **Error Handling:** API calls have try-catch blocks
 - [ ] **Null Checks:** DOM access includes null guards
 - [ ] **XSS:** User data is escaped before rendering
@@ -280,12 +300,12 @@ if (!refValidationResult || !refValidationResult.valid) {
 
 ### Common Issues to Flag
 
-1. **Magic numbers** — Extract to named constants
-2. **Duplicate code** — Extract to shared helper functions
-3. **Missing null checks** — Add guards for DOM elements
-4. **Console.log in production** — Use `console.warn` for debugging only
-5. **Unused variables** — Remove dead code
-6. **Hardcoded strings** — Move to i18n or constants
+1. **Missing i18n** — Hardcoded strings without bilingual support
+2. **Magic numbers** — Extract to named constants
+3. **Duplicate code** — Extract to shared helper functions
+4. **Missing null checks** — Add guards for DOM elements
+5. **Console.log in production** — Use `console.warn` for debugging only
+6. **Unused variables** — Remove dead code
 
 ---
 

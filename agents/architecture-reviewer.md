@@ -8,6 +8,8 @@ A comprehensive guide for reviewing and validating system and application archit
 
 This document defines the standards, checklists, and best practices for reviewing architectural decisions in the PratapTravels project. It ensures that all system components are designed for scalability, security, performance, and maintainability.
 
+> **🌐 Bilingual Requirement:** This website supports Hindi and English. Every new feature or architectural decision MUST account for bilingual text support. Reference `agents/i18n-guidelines.md` for implementation details.
+
 ---
 
 ## 1. Scalability Review

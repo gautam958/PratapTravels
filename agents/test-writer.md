@@ -8,6 +8,8 @@ Instructions for writing and maintaining test cases in the PratapTravels project
 
 This document defines the testing strategies, naming conventions, and coverage expectations for the PratapTravels project. It includes sample test structures and best practices for unit, integration, and end-to-end testing.
 
+> **🌐 Bilingual Requirement:** This website supports Hindi and English. Tests MUST verify that i18n translations exist for all user-facing features. Reference `agents/i18n-guidelines.md` for translation patterns.
+
 ---
 
 ## 1. Testing Strategy
@@ -144,12 +146,34 @@ test('Feature: CSS styles exist', () => {
 });
 ```
 
-### i18n Translation Tests
+### i18n Translation Tests (CRITICAL)
+
+**Every new feature MUST have i18n tests.**
 
 ```javascript
-test('Feature: i18n translations exist', () => {
+test('Feature: i18n translations exist in Hindi', () => {
   var i18nJs = require('fs').readFileSync('js/i18n.js', 'utf8');
   assert(i18nJs.includes('feature.key'), 'Should have feature.key i18n key');
+  assert(i18nJs.includes('feature.title'), 'Should have feature.title i18n key');
+});
+
+test('Feature: i18n translations exist in English', () => {
+  var i18nJs = require('fs').readFileSync('js/i18n.js', 'utf8');
+  // English section comes after Hindi section
+  var enSection = i18nJs.substring(i18nJs.indexOf('"en":'));
+  assert(enSection.includes('feature.key'), 'Should have feature.key in English section');
+  assert(enSection.includes('feature.title'), 'Should have feature.title in English section');
+});
+
+test('Feature: HTML has data-i18n attributes', () => {
+  var indexHtml = require('fs').readFileSync('index.html', 'utf8');
+  assert(indexHtml.includes('data-i18n="feature.title"'), 'Should have data-i18n for feature title');
+  assert(indexHtml.includes('data-i18n="feature.desc"'), 'Should have data-i18n for feature description');
+});
+
+test('Feature: JavaScript uses I18N for dynamic text', () => {
+  assert(mainJs.includes('I18N.getLanguage') || mainJs.includes('I18N.t('), 
+    'Should use I18N for bilingual dynamic text');
 });
 ```
 
@@ -203,6 +227,8 @@ Navigate to the local index.html file and verify:
 - [ ] API calls succeed (or fallback works)
 - [ ] Data persists correctly
 - [ ] Mobile layout renders properly
+- [ ] **Language toggle switches between Hindi and English**
+- [ ] **All text elements update when language is switched**
 
 ---
 
@@ -219,6 +245,7 @@ Navigate to the local index.html file and verify:
 | Revenue Dashboard | 80% | ⚠️ Partial |
 | Visitor Tracking | 90% | ✅ Covered |
 | Audit Trail | 90% | ✅ Covered |
+| **i18n Translations** | **100%** | ⚠️ Partial |
 
 ### Test Categories in test_flows.js
 
@@ -228,6 +255,7 @@ Navigate to the local index.html file and verify:
 4. **Chatbot Tests** — Fare calculator, FAQ, clear result, book now
 5. **Vehicle Tests** — Status lifecycle, assignment
 6. **Revenue Tests** — Calculation, API integration
+7. **i18n Tests** — Translation keys, data-i18n attributes, bilingual support
 
 ---
 
@@ -239,8 +267,9 @@ Navigate to the local index.html file and verify:
 2. **Choose the testing pattern** — Static analysis, runtime, or browser
 3. **Write the test name** — Use descriptive, sentence-style names
 4. **Write assertions** — Use `assert()` with clear error messages
-5. **Run the tests** — `node test_flows.js`
-6. **Verify all tests pass** — Fix any failures before committing
+5. **Add i18n tests** — Verify translation keys and data-i18n attributes
+6. **Run the tests** — `node test_flows.js`
+7. **Verify all tests pass** — Fix any failures before committing
 
 ### Adding to test_flows.js
 
@@ -253,6 +282,17 @@ test('New Test: description of what is tested', () => {
   // Or HTML structure test
   var indexHtml = require('fs').readFileSync('index.html', 'utf8');
   assert(indexHtml.includes('element'), 'Should have element in HTML');
+});
+
+// i18n tests for the same feature
+test('New Feature: i18n translations exist', () => {
+  var i18nJs = require('fs').readFileSync('js/i18n.js', 'utf8');
+  assert(i18nJs.includes('feature.key'), 'Should have feature.key i18n key');
+});
+
+test('New Feature: HTML has data-i18n attributes', () => {
+  var indexHtml = require('fs').readFileSync('index.html', 'utf8');
+  assert(indexHtml.includes('data-i18n="feature.key"'), 'Should have data-i18n for feature');
 });
 
 // PRINT RESULTS section comes AFTER all tests
@@ -283,6 +323,10 @@ assert(html.includes('class="element"'), 'Should have element with class');
 // CSS check
 var css = require('fs').readFileSync('css/style.css', 'utf8');
 assert(css.includes('.element-class'), 'Should have CSS for .element-class');
+
+// i18n check
+var i18n = require('fs').readFileSync('js/i18n.js', 'utf8');
+assert(i18n.includes('feature.key'), 'Should have feature.key translation');
 ```
 
 ---
@@ -296,6 +340,8 @@ assert(css.includes('.element-class'), 'Should have CSS for .element-class');
 - [ ] Test is isolated (doesn't affect other tests)
 - [ ] Test passes consistently
 - [ ] No `console.log` in test code (use assertion messages instead)
+- [ ] **i18n tests included for new features** (translation keys, data-i18n attributes)
+- [ ] **Both Hindi and English translations verified**
 
 ---
 

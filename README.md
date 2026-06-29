@@ -631,6 +631,7 @@ Both the `type=status` and `type=revenue` handlers are already included in [`azu
 
 This repository includes an `agents` folder containing four specialized files:
 
+- **i18n-guidelines.md** – Defines bilingual (Hindi/English) translation requirements for all features.  
 - **architecture-reviewer.md** – Used for reviewing and validating system architecture.  
 - **code-reviewer.md** – Used for conducting code reviews and ensuring coding standards.  
 - **document-creator.md** – Used for creating and maintaining project documentation.  

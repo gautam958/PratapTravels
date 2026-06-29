@@ -8,6 +8,8 @@ Rules and templates for creating and maintaining project documentation in the Pr
 
 This document defines the standards for creating clear, consistent, and well-maintained documentation. It includes templates for technical specifications, user guides, and API references, with an emphasis on clarity, consistency, and version control.
 
+> **🌐 Bilingual Requirement:** This website supports Hindi and English. Documentation for new features MUST include i18n implementation details. Reference `agents/i18n-guidelines.md` for translation patterns.
+
 ---
 
 ## 1. Documentation Standards
@@ -18,6 +20,7 @@ This document defines the standards for creating clear, consistent, and well-mai
 - **Consistency** — Use the same formatting, terminology, and structure across all docs.
 - **Living Documents** — Documentation must be updated whenever code changes.
 - **Version Control** — All documentation changes are committed alongside code changes.
+- **Bilingual** — Document the Hindi and English translations for all user-facing features.
 
 ### Formatting Rules
 
@@ -169,6 +172,21 @@ For documenting new features:
 1. Step-by-step explanation
 2. ...
 
+### i18n / Bilingual Support
+
+**Hindi:**
+- `data-i18n="feature.title"` → "हिंदी टेक्स्ट"
+- `data-i18n="feature.desc"` → "हिंदी विवरण"
+
+**English:**
+- `data-i18n="feature.title"` → "English Text"
+- `data-i18n="feature.desc"` → "English Description"
+
+**Translation keys added to `js/i18n.js`:**
+- `feature.title`
+- `feature.desc`
+- `feature.btn`
+
 ### Data Structure
 
 ```json
@@ -199,7 +217,7 @@ When documenting changes, use this format:
 ## [Date] - Version X.Y.Z
 
 ### Added
-- New feature description
+- New feature description (with i18n: Hindi + English translations)
 
 ### Changed
 - Modification description
@@ -221,6 +239,7 @@ When documenting changes, use this format:
 - [ ] API endpoints documented (if applicable)
 - [ ] Data structures documented with JSON examples
 - [ ] Configuration options documented
+- [ ] **i18n section** added with Hindi and English translation keys
 - [ ] Project structure updated (if new files added)
 - [ ] Environment variables documented
 
@@ -252,6 +271,7 @@ When documenting changes, use this format:
 - Are all API endpoints documented?
 - Are configuration options documented?
 - Is the project structure accurate?
+- **Does the documentation include i18n/bilingual details for user-facing features?**
 
 ---
 
