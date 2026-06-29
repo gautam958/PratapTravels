@@ -716,7 +716,13 @@
                 <option value="Madhupur">Deoghar → Madhupur</option>
                 <option value="Jamtara">Deoghar → Jamtara</option>
                 <option value="Budhai">Deoghar → Budhai</option>
+                <option value="other">Other (custom route)</option>
               </select>
+              <div id="calcCustomRoute" class="calc-custom-route hidden">
+                <input type="text" id="calcCustomFrom" placeholder="From (e.g. Deoghar)" data-i18n-placeholder="calc.custom.from" class="calc-custom-input" />
+                <input type="text" id="calcCustomTo" placeholder="To (e.g. City Name)" data-i18n-placeholder="calc.custom.to" class="calc-custom-input" />
+                <input type="number" id="calcCustomDistance" placeholder="Distance (km)" data-i18n-placeholder="calc.custom.distance" class="calc-custom-input" min="1" max="2000" />
+              </div>
             </div>
             <div class="calc-field">
               <label data-i18n="calc.vehicle"><i data-lucide="car" style="width:16px;height:16px"></i> Vehicle Type</label>

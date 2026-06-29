@@ -615,6 +615,36 @@ function completeBooking(bookingId) {
   showToast("Trip marked as completed.", "success");
 }
 
+function deleteBooking(bookingId) {
+  if (!confirm("Are you sure you want to permanently delete this booking? This cannot be undone."))
+    return;
+  var bookings = getBookings();
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) {
+      var vehicleId = bookings[i].vehicleId;
+      if (vehicleId) {
+        updateVehicle(vehicleId, { status: "available" });
+        recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
+      }
+      bookings.splice(i, 1);
+      var apiUrl = getDataApiUrl();
+      if (apiUrl) {
+        fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          mode: "cors",
+          body: JSON.stringify({ type: "booking_delete", data: { bookingId: bookingId } }),
+        }).catch(function() {});
+      }
+      recordAuditTrail("booking_delete", { bookingId: bookingId });
+      break;
+    }
+  }
+  renderBookingTable();
+  updateBookingKPIs();
+  showToast("Booking deleted permanently.", "info");
+}
+
 function _refreshCurrentDashboard() {
   if (document.getElementById("visitorTableBody")) {
     fetchVisitorRecordsFromApi().then(function () {
@@ -2369,7 +2399,10 @@ function renderBookingTable() {
         '\')" title="Confirm & Assign Vehicle"><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
         '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
         b.bookingId +
-        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button>';
+        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+        '<button class="btn-action-delete" onclick="deleteBooking(\'' +
+        b.bookingId +
+        '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button>';
     } else if (b.status === "confirmed") {
       actionBtn =
         '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' +
@@ -2380,7 +2413,10 @@ function renderBookingTable() {
         '\')" title="Mark Trip Completed"><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
         '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
         b.bookingId +
-        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button>';
+        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+        '<button class="btn-action-delete" onclick="deleteBooking(\'' +
+        b.bookingId +
+        '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button>';
     }
     tr.innerHTML =
       '<td><code class="vid-code">' +
@@ -4227,11 +4263,27 @@ function calculateEstimatedPrice() {
   var route = routeSelect.value;
   var vehicle = vehicleSelect.value;
   var trip = tripSelect.value;
+  var customDiv = document.getElementById('calcCustomRoute');
+  if (customDiv) {
+    customDiv.classList.toggle('hidden', route !== 'other');
+  }
   if (!route) {
     resultDiv.innerHTML = '<p class="calc-placeholder">\ud83d\udccd Select a route to see estimated fare</p>';
     return;
   }
-  var routeData = ROUTE_PRICES[route];
+  var routeData, distance;
+  if (route === 'other') {
+    var cd = parseFloat((document.getElementById('calcCustomDistance') || {}).value) || 0;
+    if (!cd || cd < 1) {
+      resultDiv.innerHTML = '<p class="calc-placeholder">Please enter distance in km</p>';
+      return;
+    }
+    distance = cd;
+    routeData = { base: Math.round(cd * 12), max: Math.round(cd * 14.4), distance: cd };
+  } else {
+    routeData = ROUTE_PRICES[route];
+    distance = routeData.distance;
+  }
   var vehicleMult = VEHICLE_MULTIPLIERS[vehicle] || 1.0;
   var tripMult = TRIP_MULTIPLIERS[trip] || 1.0;
   var minPrice = Math.round(routeData.base * vehicleMult * tripMult);
@@ -4240,7 +4292,7 @@ function calculateEstimatedPrice() {
     '<div class="calc-result-content">' +
     '<div class="calc-price-range">\u20b9' + minPrice.toLocaleString() + ' \u2013 \u20b9' + maxPrice.toLocaleString() + '</div>' +
     '<div class="calc-details">' +
-    '<span>\ud83d\udccd ' + routeData.distance + ' km</span>' +
+    '<span>\ud83d\udccd ' + distance + ' km</span>' +
     '<span>\ud83d\ude97 ' + vehicleSelect.options[vehicleSelect.selectedIndex].text + '</span>' +
     '<span>\ud83d\udd04 ' + tripSelect.options[tripSelect.selectedIndex].text + '</span>' +
     '</div>' +
@@ -4474,6 +4526,12 @@ document.addEventListener('DOMContentLoaded', function () {
     if (calcRoute) calcRoute.addEventListener('change', calculateEstimatedPrice);
     if (calcVehicle) calcVehicle.addEventListener('change', calculateEstimatedPrice);
     if (calcTrip) calcTrip.addEventListener('change', calculateEstimatedPrice);
+    var calcCustomDist = document.getElementById('calcCustomDistance');
+    var calcCustomFromEl = document.getElementById('calcCustomFrom');
+    var calcCustomToEl = document.getElementById('calcCustomTo');
+    if (calcCustomDist) calcCustomDist.addEventListener('input', calculateEstimatedPrice);
+    if (calcCustomFromEl) calcCustomFromEl.addEventListener('input', calculateEstimatedPrice);
+    if (calcCustomToEl) calcCustomToEl.addEventListener('input', calculateEstimatedPrice);
   }
   if (document.getElementById('revTotalBookings')) {
     fetchRevenueData().then(function(data) {

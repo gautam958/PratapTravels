@@ -864,6 +864,36 @@ img { max-width: 100%; display: block; }
 }
 .calc-note { font-size: 0.78rem; color: var(--text-muted); margin-top: 8px; }
 
+/* Custom route input for calculator */
+.calc-custom-route {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  background: var(--surface);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+.calc-custom-route.hidden { display: none; }
+.calc-custom-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-xs);
+  font-size: 0.88rem;
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg-white);
+  transition: var(--transition);
+  outline: none;
+  box-sizing: border-box;
+}
+.calc-custom-input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(41,128,185,0.1);
+}
+
 /* ---------- Route Map Link ---------- */
 .route-map-link { display: inline-block; font-size: 1.1rem; margin-right: 6px; text-decoration: none; transition: transform 0.2s ease; cursor: pointer; }
 .route-map-link:hover { transform: scale(1.3); }
