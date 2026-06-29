@@ -5167,7 +5167,7 @@ function displayChatFare(distanceKm, distanceText, duration, vehicleType, tripTy
     '<div class="chat-fare-detail"><span>' + (lang === 'hi' ? '🔄 ट्रिप' : '🔄 Trip') + '</span><span>' + escapeHtml(tripLabels[tripType] || tripType) + '</span></div>' +
     '<hr class="chat-fare-divider">' +
     '<div class="chat-fare-note">*' + (lang === 'hi' ? 'अनुमानित किराया। वास्तविक कीमत टोल, पार्किंग और माँग के अनुसार बदल सकती है।' : 'Estimated fare. Actual price may vary based on tolls, parking, and demand.') + '</div>' +
-    '<button class="chat-fare-book-btn" onclick="toggleChatbot(); setTimeout(function(){ openBookingModal(); }, 300);">' + (lang === 'hi' ? '📞 अभी बुक करें' : '📞 Book Now') + '</button>';
+    '<button class="chat-fare-book-btn" onclick="openBookingFromChatbot();">' + (lang === 'hi' ? '📞 अभी बुक करें' : '📞 Book Now') + '</button>';
   resultDiv.classList.remove('hidden');
   refreshLucideIcons();
 }
@@ -5178,4 +5178,117 @@ function displayChatFareFallback(vehicleType, tripType) {
   if (!fareResult) return;
   var lang = typeof I18N !== 'undefined' ? I18N.getLanguage() : 'hi';
   fareResult.innerHTML = '<div style="padding:8px 0;font-size:0.88rem;">' + (lang === 'hi' ? '⚠️ दूरी की गणना नहीं हो सकी। कृपया स्थान का नाम स्पष्ट रूप से दर्ज करें (जैसे: Deoghar, Ranchi, Patna)।<br><br>या आप <a href="#calculator" onclick="toggleChatbot();" style="color:var(--accent);font-weight:600;">मूल कैलकुलेटर</a> का उपयोग कर सकते हैं।' : '⚠️ Could not calculate distance. Please enter a clear location name (e.g., Deoghar, Ranchi, Patna).<br><br>Or you can use the <a href="#calculator" onclick="toggleChatbot();" style="color:var(--accent);font-weight:600;">basic calculator</a>.') + '</div>';
+}
+
+/* ============================================
+   CHATBOT: Clear Result, FAQ, and Book Now Data Copy
+   ============================================ */
+
+// ---------- Clear Chat Result ----------
+function clearChatResult() {
+  var resultDiv = document.getElementById('chatResult');
+  var fareResult = document.getElementById('chatFareResult');
+  if (resultDiv) resultDiv.classList.add('hidden');
+  if (fareResult) fareResult.innerHTML = '';
+  // Reset input fields
+  var fromInput = document.getElementById('chatFrom');
+  var toInput = document.getElementById('chatTo');
+  if (fromInput) fromInput.value = '';
+  if (toInput) toInput.value = '';
+  _chatFromCoords = null;
+  _chatToCoords = null;
+}
+
+// ---------- Book Now with Data Copy ----------
+function openBookingFromChatbot() {
+  var fromInput = document.getElementById('chatFrom');
+  var toInput = document.getElementById('chatTo');
+  var vehicleSelect = document.getElementById('chatVehicle');
+  var tripSelect = document.getElementById('chatTrip');
+
+  var fromText = fromInput ? fromInput.value.trim() : '';
+  var toText = toInput ? toInput.value.trim() : '';
+  var vehicleType = vehicleSelect ? vehicleSelect.value : '';
+  var tripType = tripSelect ? tripSelect.value : '';
+
+  // Close chatbot and open booking modal
+  toggleChatbot();
+  setTimeout(function() {
+    openBookingModal();
+    // Pre-fill the booking route dropdown if a match exists
+    var routeSelect = document.getElementById('bookRoute');
+    if (routeSelect && fromText && toText) {
+      var routeText = fromText + ' to ' + toText;
+      // Try to find matching route option
+      for (var i = 0; i < routeSelect.options.length; i++) {
+        var opt = routeSelect.options[i];
+        if (opt.value && routeText.toLowerCase().indexOf(opt.value.toLowerCase()) !== -1) {
+          routeSelect.value = opt.value;
+          break;
+        }
+      }
+      // If no match, set to 'Other'
+      var matched = false;
+      for (var i = 0; i < routeSelect.options.length; i++) {
+        if (routeSelect.options[i].value === routeSelect.value) { matched = true; break; }
+      }
+      if (!matched) routeSelect.value = 'Other';
+    }
+    // Pre-fill trip type
+    var typeSelect = document.getElementById('bookType');
+    if (typeSelect && tripType) {
+      for (var i = 0; i < typeSelect.options.length; i++) {
+        if (typeSelect.options[i].value === tripType) {
+          typeSelect.value = tripType;
+          break;
+        }
+      }
+    }
+    // Add route details to remarks
+    var remarksField = document.getElementById('bookRemarks');
+    if (remarksField && (fromText || toText)) {
+      var existing = remarksField.value.trim();
+      var routeInfo = 'Pickup: ' + (fromText || 'N/A') + ' | Drop: ' + (toText || 'N/A');
+      if (vehicleType) routeInfo += ' | Vehicle: ' + vehicleType;
+      remarksField.value = existing ? existing + '\n' + routeInfo : routeInfo;
+    }
+  }, 300);
+}
+
+// ---------- FAQ Handler ----------
+function handleChatFaq(topic) {
+  var resultDiv = document.getElementById('chatResult');
+  var fareResult = document.getElementById('chatFareResult');
+  if (!resultDiv || !fareResult) return;
+
+  var lang = typeof I18N !== 'undefined' ? I18N.getLanguage() : 'hi';
+  var responses = {
+    vehicles: {
+      hi: '<strong>हमारे उपलब्ध वाहन:</strong><br>🚗 <strong>Sedan</strong> - Swift Dzire (4 सीटर)<br>🚗 <strong>Hatchback</strong> - Celerio (4 सीटर)<br>🚙 <strong>SUV</strong> - Brezza/XUV (6 सीटर)<br>🚐 <strong>Innova/Ertiga</strong> (7 सीटर)<br>🚌 <strong>Tempo Traveller</strong> (12-20 सीटर)<br><br>ऊपर कैलकुलेटर में वाहन चुनकर किराया देखें! 💰',
+      en: '<strong>Our Available Vehicles:</strong><br>🚗 <strong>Sedan</strong> - Swift Dzire (4 seater)<br>🚗 <strong>Hatchback</strong> - Celerio (4 seater)<br>🚙 <strong>SUV</strong> - Brezza/XUV (6 seater)<br>🚐 <strong>Innova/Ertiga</strong> (7 seater)<br>🚌 <strong>Tempo Traveller</strong> (12-20 seater)<br><br>Use the calculator above to check fares! 💰'
+    },
+    booking: {
+      hi: '<strong>बुकिंग कैसे करें:</strong><br>1️⃣ ऊपर <strong>From/To</strong> लोकेशन भरें<br>2️⃣ वाहन और ट्रिप टाइप चुनें<br>3️⃣ <strong>"किराया जानें"</strong> बटन दबाएँ<br>4️⃣ <strong>"अभी बुक करें"</strong> पर क्लिक करें<br>5️⃣ फ़ॉर्म भरकर सबमिट करें<br><br>📞 या सीधे कॉल करें: <strong>+91 79911 82086</strong>',
+      en: '<strong>How to Book:</strong><br>1️⃣ Enter <strong>From/To</strong> locations above<br>2️⃣ Select vehicle and trip type<br>3️⃣ Click <strong>"Get Fare"</strong> button<br>4️⃣ Click <strong>"Book Now"</strong><br>5️⃣ Fill the form and submit<br><br>📞 Or call directly: <strong>+91 79911 82086</strong>'
+    },
+    payment: {
+      hi: '<strong>भुगतान के तरीके:</strong><br>💵 <strong>Cash</strong> - यात्रा के अंत में<br>📱 <strong>UPI</strong> - Google Pay / PhonePe / Paytm<br>💳 <strong>Online Transfer</strong> - बैंक ट्रांसफर<br><br>⚠️ एडवांस भुगतान आवश्यक नहीं है। यात्रा पूरी होने के बाद भुगतान करें।',
+      en: '<strong>Payment Methods:</strong><br>💵 <strong>Cash</strong> - Pay at end of trip<br>📱 <strong>UPI</strong> - Google Pay / PhonePe / Paytm<br>💳 <strong>Online Transfer</strong> - Bank transfer<br><br>⚠️ No advance payment required. Pay after trip completion.'
+    },
+    cancellation: {
+      hi: '<strong>कैंसलेशन पॉलिसी:</strong><br>✅ <strong>24 घंटे पहले:</strong> मुफ़्त कैंसलेशन<br>⚠️ <strong>12-24 घंटे पहले:</strong> 25% शुल्क<br>❌ <strong>12 घंटे के अंदर:</strong> 50% शुल्क<br><br>📞 कैंसल करने के लिए कॉल करें: <strong>+91 79911 82086</strong>',
+      en: '<strong>Cancellation Policy:</strong><br>✅ <strong>24+ hours before:</strong> Free cancellation<br>⚠️ <strong>12-24 hours before:</strong> 25% charge<br>❌ <strong>Within 12 hours:</strong> 50% charge<br><br>📞 To cancel, call: <strong>+91 79911 82086</strong>'
+    },
+    contact: {
+      hi: '<strong>संपर्क करें:</strong><br>📞 <strong>Phone:</strong> +91 79911 82086 / +91 87978 71251<br>💬 <strong>WhatsApp:</strong> +91 79911 82086<br>📍 <strong>Address:</strong> Belabagan, Deoghar, Jharkhand<br>🕐 <strong>समय:</strong> सुबह 6:00 - रात 10:00<br><br>🌐 <strong>Website:</strong> ' + window.location.origin,
+      en: '<strong>Contact Us:</strong><br>📞 <strong>Phone:</strong> +91 79911 82086 / +91 87978 71251<br>💬 <strong>WhatsApp:</strong> +91 79911 82086<br>📍 <strong>Address:</strong> Belabagan, Deoghar, Jharkhand<br>🕐 <strong>Hours:</strong> 6:00 AM - 10:00 PM<br><br>🌐 <strong>Website:</strong> ' + window.location.origin
+    }
+  };
+
+  var response = responses[topic];
+  if (!response) return;
+  var text = response[lang] || response.hi;
+
+  fareResult.innerHTML = '<div style="font-size:0.88rem;line-height:1.6;">' + text + '</div>';
+  resultDiv.classList.remove('hidden');
 }

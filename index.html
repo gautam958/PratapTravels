@@ -1412,6 +1412,24 @@
               <div class="chat-fare-result" id="chatFareResult"></div>
             </div>
           </div>
+          <button class="chatbot-clear-btn" id="chatClearBtn" onclick="clearChatResult()">✕ <span data-i18n="chatbot.clear">रिज़ल्ट साफ़ करें</span></button>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="chatbot-faq" id="chatFaq">
+          <div class="chat-msg bot">
+            <div class="chat-msg-avatar">💡</div>
+            <div class="chat-msg-bubble">
+              <div class="chatbot-faq-title" data-i18n="chatbot.faq.title">अक्सर पूछे जाने वाले सवाल:</div>
+              <div class="chatbot-faq-list">
+                <button class="chatbot-faq-btn" onclick="handleChatFaq('vehicles')" data-i18n="chatbot.faq.q1">🚗 कौन से वाहन उपलब्ध हैं?</button>
+                <button class="chatbot-faq-btn" onclick="handleChatFaq('booking')" data-i18n="chatbot.faq.q2">📞 बुकिंग कैसे करें?</button>
+                <button class="chatbot-faq-btn" onclick="handleChatFaq('payment')" data-i18n="chatbot.faq.q3">💳 भुगतान के तरीके?</button>
+                <button class="chatbot-faq-btn" onclick="handleChatFaq('cancellation')" data-i18n="chatbot.faq.q4">❌ कैंसलेशन पॉलिसी?</button>
+                <button class="chatbot-faq-btn" onclick="handleChatFaq('contact')" data-i18n="chatbot.faq.q5">📱 संपर्क कैसे करें?</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

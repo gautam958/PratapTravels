@@ -651,7 +651,14 @@ var I18N = (function () {
       "chatbot.calc": "💰 किराया जानें",
       "chatbot.calculating": "दूरी की गणना हो रही है...",
       "chatbot.error.fillBoth": "कृपया दोनों स्थान दर्ज करें",
-      "chatbot.book": "📞 अभी बुक करें"
+      "chatbot.book": "📞 अभी बुक करें",
+      "chatbot.clear": "रिज़ल्ट साफ़ करें",
+      "chatbot.faq.title": "अक्सर पूछे जाने वाले सवाल:",
+      "chatbot.faq.q1": "🚗 कौन से वाहन उपलब्ध हैं?",
+      "chatbot.faq.q2": "📞 बुकिंग कैसे करें?",
+      "chatbot.faq.q3": "💳 भुगतान के तरीके?",
+      "chatbot.faq.q4": "❌ कैंसलेशन पॉलिसी?",
+      "chatbot.faq.q5": "📱 संपर्क कैसे करें?"
     },
 
     en: {
@@ -1297,7 +1304,14 @@ var I18N = (function () {
       "chatbot.calc": "💰 Get Fare",
       "chatbot.calculating": "Calculating distance & fare...",
       "chatbot.error.fillBoth": "Please enter both locations",
-      "chatbot.book": "📞 Book Now"
+      "chatbot.book": "📞 Book Now",
+      "chatbot.clear": "Clear result",
+      "chatbot.faq.title": "Frequently asked questions:",
+      "chatbot.faq.q1": "🚗 What vehicles are available?",
+      "chatbot.faq.q2": "📞 How to book?",
+      "chatbot.faq.q3": "💳 Payment methods?",
+      "chatbot.faq.q4": "❌ Cancellation policy?",
+      "chatbot.faq.q5": "📱 How to contact?"
     },
   };
 
