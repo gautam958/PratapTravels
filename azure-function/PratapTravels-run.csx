@@ -26,6 +26,7 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
         "https://localhost:8000",
         "https://localhost:8001",
         "https://localhost:8080",
+        "https://portal.azure.com",
         "https://agreeable-meadow-041d69800.7.azurestaticapps.net"
     };
 
@@ -43,14 +44,17 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
     string bookingsFilePath = Path.Combine(dataDir, "bookings.json");
     string auditFilePath = Path.Combine(dataDir, "audit_trail.json");
     string vehiclesFilePath = Path.Combine(dataDir, "vehicles.json");
+    string driverDiaryFilePath = Path.Combine(dataDir, "driver-diary.json");
 
     if (!File.Exists(bookingsFilePath)) File.WriteAllText(bookingsFilePath, "[]");
     if (!File.Exists(auditFilePath)) File.WriteAllText(auditFilePath, "[]");
     if (!File.Exists(vehiclesFilePath)) File.WriteAllText(vehiclesFilePath, "[]");
+    if (!File.Exists(driverDiaryFilePath)) File.WriteAllText(driverDiaryFilePath, "[]");
 
     var bookingsList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(bookingsFilePath));
     var auditList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(auditFilePath));
     var vehiclesList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(vehiclesFilePath));
+    var driverDiaryList = JsonConvert.DeserializeObject<List<dynamic>>(File.ReadAllText(driverDiaryFilePath));
 
     // ================================================================
     // --- GET: Fetch records ---
@@ -145,6 +149,12 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { total = vehiclesList.Count, vehicles = vehiclesList });
         }
 
+        if (dataType == "driver_diary")
+        {
+            var sortedDiary = driverDiaryList.OrderByDescending(d => d.date).ToList();
+            return new OkObjectResult(new { total = sortedDiary.Count, entries = sortedDiary });
+        }
+
         // ----------------------------------------------------------
         // CHANGED: type=revenue — Revenue analytics
         // FIX: Revenue calculated from COMPLETED bookings only
@@ -185,7 +195,7 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                 totalRevenue += bookingRevenue;
 
                 if (!revenueByRoute.ContainsKey(route))
-                    revenueByRoute[route] = new { route = route, count = 0, revenue = 0 };
+                    revenueByRoute[route] = Newtonsoft.Json.Linq.JObject.FromObject(new { route = route, count = 0, revenue = 0 });
                 var routeData = (Newtonsoft.Json.Linq.JObject)revenueByRoute[route];
                 routeData["count"] = (int)routeData["count"] + 1;
                 routeData["revenue"] = (decimal)routeData["revenue"] + bookingRevenue;
@@ -197,7 +207,7 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
                     month = parsedDate.ToString("yyyy-MM");
 
                 if (!revenueByMonth.ContainsKey(month))
-                    revenueByMonth[month] = new { month = month, count = 0, revenue = 0 };
+                    revenueByMonth[month] = Newtonsoft.Json.Linq.JObject.FromObject(new { month = month, count = 0, revenue = 0 });
                 var monthData = (Newtonsoft.Json.Linq.JObject)revenueByMonth[month];
                 monthData["count"] = (int)monthData["count"] + 1;
                 monthData["revenue"] = (decimal)monthData["revenue"] + bookingRevenue;
@@ -466,7 +476,80 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Vehicle deleted" });
         }
 
-        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data', 'booking_update', 'booking_confirmation', 'audit_trail', 'vehicle_data', 'vehicle_update', or 'vehicle_delete'." });
+        if (dataType == "driver_diary_data")
+        {
+            dynamic diaryData = data.data;
+            diaryData.id = "DD" + DateTime.UtcNow.Ticks + "_" + Guid.NewGuid().ToString("N").Substring(0, 6);
+            diaryData.savedAt = DateTime.UtcNow.ToString("o");
+            driverDiaryList.Add(diaryData);
+            File.WriteAllText(driverDiaryFilePath, JsonConvert.SerializeObject(driverDiaryList, Formatting.Indented));
+
+            string logVehicleId = diaryData.vehicleId?.ToString() ?? "Unknown";
+            log.LogInformation("Driver diary entry saved: " + logVehicleId);
+
+            return new OkObjectResult(new { success = true, message = "Driver diary entry saved", id = diaryData.id.ToString() });
+        }
+
+        if (dataType == "driver_diary_update")
+        {
+            string entryId = data.id?.ToString();
+            dynamic updateData = data.data;
+            if (updateData == null)
+                return new BadRequestObjectResult(new { error = "Driver diary update data is required" });
+
+            if (string.IsNullOrEmpty(entryId))
+                return new BadRequestObjectResult(new { error = "Entry id is required for update" });
+
+            int index = -1;
+            for (int i = 0; i < driverDiaryList.Count; i++)
+            {
+                if (driverDiaryList[i].id?.ToString() == entryId)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index == -1)
+                return new NotFoundObjectResult(new { error = "Driver diary entry " + entryId + " not found" });
+
+            var updateObj = (Newtonsoft.Json.Linq.JObject)updateData;
+            foreach (var prop in updateObj.Properties())
+            {
+                if (prop.Value.Type == Newtonsoft.Json.Linq.JTokenType.Null)
+                {
+                    driverDiaryList[index][prop.Name] = null;
+                }
+                else
+                {
+                    driverDiaryList[index][prop.Name] = prop.Value;
+                }
+            }
+            driverDiaryList[index].updatedAt = DateTime.UtcNow.ToString("o");
+
+            File.WriteAllText(driverDiaryFilePath, JsonConvert.SerializeObject(driverDiaryList, Formatting.Indented));
+            log.LogInformation("Driver diary entry updated: " + entryId);
+            return new OkObjectResult(new { success = true, message = "Driver diary entry updated" });
+        }
+
+        if (dataType == "driver_diary_delete")
+        {
+            string entryId = data.id?.ToString();
+
+            if (string.IsNullOrEmpty(entryId))
+                return new BadRequestObjectResult(new { error = "Entry id is required for delete" });
+
+            int removedCount = driverDiaryList.RemoveAll(d => d.id?.ToString() == entryId);
+
+            if (removedCount == 0)
+                return new NotFoundObjectResult(new { error = "Driver diary entry " + entryId + " not found" });
+
+            File.WriteAllText(driverDiaryFilePath, JsonConvert.SerializeObject(driverDiaryList, Formatting.Indented));
+            log.LogInformation("Driver diary entry deleted: " + entryId);
+            return new OkObjectResult(new { success = true, message = "Driver diary entry deleted" });
+        }
+
+        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data', 'booking_update', 'booking_confirmation', 'audit_trail', 'vehicle_data', 'vehicle_update', 'vehicle_delete', 'driver_diary_data', 'driver_diary_update', or 'driver_diary_delete'." });
     }
 
     // ================================================================
