@@ -22,7 +22,7 @@
           return;
         }
         var script = document.createElement('script');
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&callback=__initChatbotPlaces';
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&loading=async&callback=__initChatbotPlaces';
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);
