@@ -4944,3 +4944,238 @@ function exportDriverDiaryCSV() {
   downloadFile(csv, "pratap-travels-driver-diary.csv", "text/csv");
   showToast("CSV exported.", "success");
 }
+
+/* ============================================
+   FLOATING CHATBOT - FARE ESTIMATOR
+   Uses Google Maps Distance Matrix for accurate
+   distance-based fare calculation
+   ============================================ */
+
+var _chatFromAutocomplete = null;
+var _chatToAutocomplete = null;
+var _chatFromCoords = null;
+var _chatToCoords = null;
+
+// ---------- Toggle Chatbot Panel ----------
+function toggleChatbot() {
+  var panel = document.getElementById('chatbotPanel');
+  var fab = document.getElementById('chatbotFab');
+  if (!panel) return;
+  var isOpen = !panel.classList.contains('hidden');
+  if (isOpen) {
+    panel.classList.add('hidden');
+    if (fab) fab.style.display = '';
+  } else {
+    panel.classList.remove('hidden');
+    if (fab) fab.style.display = 'none';
+    // Lazy load Google Maps API on first open
+    if (typeof loadGoogleMapsApi === 'function') loadGoogleMapsApi();
+  }
+}
+
+// ---------- Initialize Places Autocomplete ----------
+function __initChatbotPlaces() {
+  if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+    console.warn('[Chatbot] Google Maps Places API not available');
+    return;
+  }
+  var fromInput = document.getElementById('chatFrom');
+  var toInput = document.getElementById('chatTo');
+  var indiaBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(6.5, 68.0),   // SW corner of India
+    new google.maps.LatLng(35.5, 97.5)   // NE corner of India
+  );
+  var options = {
+    componentRestrictions: { country: 'in' },
+    bounds: indiaBounds,
+    fields: ['formatted_address', 'geometry', 'name']
+  };
+  if (fromInput) {
+    _chatFromAutocomplete = new google.maps.places.Autocomplete(fromInput, options);
+    _chatFromAutocomplete.addListener('place_changed', function() {
+      var place = _chatFromAutocomplete.getPlace();
+      if (place && place.geometry && place.geometry.location) {
+        _chatFromCoords = place.geometry.location;
+      }
+    });
+  }
+  if (toInput) {
+    _chatToAutocomplete = new google.maps.places.Autocomplete(toInput, options);
+    _chatToAutocomplete.addListener('place_changed', function() {
+      var place = _chatToAutocomplete.getPlace();
+      if (place && place.geometry && place.geometry.location) {
+        _chatToCoords = place.geometry.location;
+      }
+    });
+  }
+}
+
+// ---------- Calculate Fare via Distance Matrix ----------
+function calculateChatFare() {
+  var fromInput = document.getElementById('chatFrom');
+  var toInput = document.getElementById('chatTo');
+  var vehicleSelect = document.getElementById('chatVehicle');
+  var tripSelect = document.getElementById('chatTrip');
+  var resultDiv = document.getElementById('chatResult');
+  var fareResult = document.getElementById('chatFareResult');
+  var calcBtn = document.getElementById('chatCalcBtn');
+
+  if (!fromInput || !toInput || !resultDiv || !fareResult) return;
+
+  var fromText = fromInput.value.trim();
+  var toText = toInput.value.trim();
+
+  if (!fromText || !toText) {
+    showToast(typeof I18N !== 'undefined' ? I18N.t('chatbot.error.fillBoth') : 'Please enter both locations', 'error');
+    return;
+  }
+
+  var vehicleType = vehicleSelect ? vehicleSelect.value : 'sedan';
+  var tripType = tripSelect ? tripSelect.value : 'one-way';
+
+  // Show loading
+  resultDiv.classList.remove('hidden');
+  fareResult.innerHTML = '<div class="chatbot-loading">⏳ <span>' + (typeof I18N !== 'undefined' ? I18N.t('chatbot.calculating') : 'Calculating distance & fare...') + '</span></div>';
+  if (calcBtn) { calcBtn.disabled = true; }
+
+  // Try Google Maps Distance Matrix
+  if (typeof google !== 'undefined' && google.maps && google.maps.DistanceMatrixService) {
+    var service = new google.maps.DistanceMatrixService();
+    var origins = _chatFromCoords ? [_chatFromCoords] : [fromText];
+    var destinations = _chatToCoords ? [_chatToCoords] : [toText];
+
+    service.getDistanceMatrix(
+      {
+        origins: origins,
+        destinations: destinations,
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
+      },
+      function(response, status) {
+        if (calcBtn) { calcBtn.disabled = false; }
+        if (status === 'OK' && response.rows[0] && response.rows[0].elements[0]) {
+          var element = response.rows[0].elements[0];
+          if (element.status === 'OK') {
+            var distanceMeters = element.distance.value;
+            var distanceKm = distanceMeters / 1000;
+            var duration = element.duration.text;
+            var distanceText = element.distance.text;
+            displayChatFare(distanceKm, distanceText, duration, vehicleType, tripType);
+            return;
+          }
+        }
+        // Fallback: geocode-based estimate
+        calculateChatFareFallback(fromText, toText, vehicleType, tripType, calcBtn);
+      }
+    );
+  } else {
+    // Google Maps not loaded - use fallback
+    calculateChatFareFallback(fromText, toText, vehicleType, tripType, calcBtn);
+  }
+}
+
+// ---------- Fallback: Haversine distance estimation ----------
+function calculateChatFareFallback(fromText, toText, vehicleType, tripType, calcBtn) {
+  // Try geocoding both locations
+  if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+    var geocoder = new google.maps.Geocoder();
+    var fromCoords = null;
+    var toCoords = null;
+    var done = 0;
+
+    function checkDone() {
+      done++;
+      if (done < 2) return;
+      if (fromCoords && toCoords) {
+        var dist = haversineDistance(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng);
+        displayChatFare(dist, dist.toFixed(0) + ' km (est.)', '~' + Math.round(dist / 40 * 60) + ' mins (est.)', vehicleType, tripType);
+      } else {
+        displayChatFareFallback(vehicleType, tripType);
+      }
+      if (calcBtn) calcBtn.disabled = false;
+    }
+
+    geocoder.geocode({ address: fromText + ', India' }, function(results, status) {
+      if (status === 'OK' && results[0]) fromCoords = results[0].geometry.location.toJSON();
+      checkDone();
+    });
+    geocoder.geocode({ address: toText + ', India' }, function(results, status) {
+      if (status === 'OK' && results[0]) toCoords = results[0].geometry.location.toJSON();
+      checkDone();
+    });
+  } else {
+    displayChatFareFallback(vehicleType, tripType);
+    if (calcBtn) calcBtn.disabled = false;
+  }
+}
+
+// ---------- Haversine formula ----------
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  var R = 6371;
+  var dLat = (lat2 - lat1) * Math.PI / 180;
+  var dLon = (lon2 - lon1) * Math.PI / 180;
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+          Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+          Math.sin(dLon/2) * Math.sin(dLon/2);
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// ---------- Display fare result ----------
+function displayChatFare(distanceKm, distanceText, duration, vehicleType, tripType) {
+  var fareResult = document.getElementById('chatFareResult');
+  if (!fareResult) return;
+
+  // Get fare config
+  var cfg = (typeof PT_CONFIG !== 'undefined' && PT_CONFIG.FARE_CONFIG) ? PT_CONFIG.FARE_CONFIG : {};
+  var baseFare = cfg.baseFare || 150;
+  var perKm = cfg.perKmRate || 12;
+  var minFare = cfg.minimumFare || 300;
+  var vehicleMults = cfg.vehicleMultipliers || { sedan: 1.0, hatchback: 0.85, suv: 1.3, innova: 1.5, tempo: 2.0 };
+  var tripMults = cfg.tripMultipliers || { 'one-way': 1.0, 'round-trip': 1.8, 'full-day': 2.2, 'rental': 2.5 };
+
+  var vMult = vehicleMults[vehicleType] || 1.0;
+  var tMult = tripMults[tripType] || 1.0;
+  var rawFare = (baseFare + (distanceKm * perKm)) * vMult * tMult;
+  var minTripFare = minFare * vMult * tMult;
+  var fare = Math.max(rawFare, minTripFare);
+  var lowFare = Math.round(fare * 0.85 / 10) * 10;
+  var highFare = Math.round(fare * 1.15 / 10) * 10;
+
+  var lang = typeof I18N !== 'undefined' ? I18N.getLanguage() : 'hi';
+  var vehicleLabels = {
+    sedan: lang === 'hi' ? 'सेडान (Swift Dzire)' : 'Sedan (Swift Dzire)',
+    hatchback: lang === 'hi' ? 'हैचबैक (Celerio)' : 'Hatchback (Celerio)',
+    suv: lang === 'hi' ? 'SUV (Brezza/XUV)' : 'SUV (Brezza/XUV)',
+    innova: lang === 'hi' ? 'इनोवा / अर्टिगा' : 'Innova / Ertiga',
+    tempo: lang === 'hi' ? 'टेम्पो ट्रैवलर' : 'Tempo Traveller'
+  };
+  var tripLabels = {
+    'one-way': lang === 'hi' ? 'एक तरफ़ा' : 'One Way',
+    'round-trip': lang === 'hi' ? 'राउंड ट्रिप' : 'Round Trip',
+    'full-day': lang === 'hi' ? 'पूरा दिन' : 'Full Day',
+    'rental': lang === 'hi' ? 'किराया' : 'Rental'
+  };
+
+  fareResult.innerHTML = '<div class="chat-fare-price">₹' + lowFare.toLocaleString('en-IN') + ' – ₹' + highFare.toLocaleString('en-IN') + '</div>' +
+    '<hr class="chat-fare-divider">' +
+    '<div class="chat-fare-detail"><span>' + (lang === 'hi' ? '📏 दूरी' : '📏 Distance') + '</span><span>' + escapeHtml(distanceText) + '</span></div>' +
+    '<div class="chat-fare-detail"><span>' + (lang === 'hi' ? '⏱️ समय' : '⏱️ Duration') + '</span><span>' + escapeHtml(duration) + '</span></div>' +
+    '<div class="chat-fare-detail"><span>' + (lang === 'hi' ? '🚗 वाहन' : '🚗 Vehicle') + '</span><span>' + escapeHtml(vehicleLabels[vehicleType] || vehicleType) + '</span></div>' +
+    '<div class="chat-fare-detail"><span>' + (lang === 'hi' ? '🔄 ट्रिप' : '🔄 Trip') + '</span><span>' + escapeHtml(tripLabels[tripType] || tripType) + '</span></div>' +
+    '<hr class="chat-fare-divider">' +
+    '<div class="chat-fare-note">*' + (lang === 'hi' ? 'अनुमानित किराया। वास्तविक कीमत टोल, पार्किंग और माँग के अनुसार बदल सकती है।' : 'Estimated fare. Actual price may vary based on tolls, parking, and demand.') + '</div>' +
+    '<button class="chat-fare-book-btn" onclick="toggleChatbot(); setTimeout(function(){ openBookingModal(); }, 300);">' + (lang === 'hi' ? '📞 अभी बुक करें' : '📞 Book Now') + '</button>';
+  resultDiv.classList.remove('hidden');
+  refreshLucideIcons();
+}
+
+// ---------- Fallback when geocoding fails ----------
+function displayChatFareFallback(vehicleType, tripType) {
+  var fareResult = document.getElementById('chatFareResult');
+  if (!fareResult) return;
+  var lang = typeof I18N !== 'undefined' ? I18N.getLanguage() : 'hi';
+  fareResult.innerHTML = '<div style="padding:8px 0;font-size:0.88rem;">' + (lang === 'hi' ? '⚠️ दूरी की गणना नहीं हो सकी। कृपया स्थान का नाम स्पष्ट रूप से दर्ज करें (जैसे: Deoghar, Ranchi, Patna)।<br><br>या आप <a href="#calculator" onclick="toggleChatbot();" style="color:var(--accent);font-weight:600;">मूल कैलकुलेटर</a> का उपयोग कर सकते हैं।' : '⚠️ Could not calculate distance. Please enter a clear location name (e.g., Deoghar, Ranchi, Patna).<br><br>Or you can use the <a href="#calculator" onclick="toggleChatbot();" style="color:var(--accent);font-weight:600;">basic calculator</a>.') + '</div>';
+}

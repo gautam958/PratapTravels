@@ -10,6 +10,25 @@
     />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="icon" type="image/jpeg" href="images/hero/prataplog.jpeg" />
+    <!-- Google Maps API for Fare Calculator Chatbot -->
+    <script>
+      // Lazy-load Google Maps API when chatbot opens
+      var _googleMapsLoaded = false;
+      function loadGoogleMapsApi() {
+        if (_googleMapsLoaded) return;
+        var key = (typeof PT_CONFIG !== 'undefined' && PT_CONFIG.GOOGLE_MAPS_API_KEY) || '';
+        if (!key || key === 'YOUR_GOOGLE_MAPS_API_KEY_HERE') {
+          console.warn('[Chatbot] No GOOGLE_MAPS_API_KEY configured in config.js');
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&libraries=places&callback=__initChatbotPlaces';
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        _googleMapsLoaded = true;
+      }
+    </script>
   </head>
   <body>
     <!-- ===== Navbar ===== -->
@@ -1324,6 +1343,84 @@
     >
       🚗 <span data-i18n="floating.btn">बुक करें</span>
     </button>
+
+    <!-- Floating Chatbot - Fare Estimator -->
+    <div class="chatbot-fab" id="chatbotFab" onclick="toggleChatbot()" title="Fare Calculator">
+      <span class="chatbot-fab-icon">💬</span>
+    </div>
+
+    <div class="chatbot-panel hidden" id="chatbotPanel">
+      <div class="chatbot-header">
+        <div class="chatbot-header-info">
+          <span class="chatbot-header-avatar">🚗</span>
+          <div>
+            <div class="chatbot-header-title" data-i18n="chatbot.title">फ़ेयर कैलकुलेटर</div>
+            <div class="chatbot-header-sub" data-i18n="chatbot.subtitle">अनुमानित किराया जानें</div>
+          </div>
+        </div>
+        <button class="chatbot-close" onclick="toggleChatbot()" aria-label="Close">✕</button>
+      </div>
+
+      <div class="chatbot-body" id="chatbotBody">
+        <!-- Welcome message -->
+        <div class="chat-msg bot">
+          <div class="chat-msg-avatar">🤖</div>
+          <div class="chat-msg-bubble" data-i18n="chatbot.welcome">नमस्ते! अपनी यात्रा का अनुमानित किराया जानने के लिए नीचे विवरण भरें। 🚗</div>
+        </div>
+
+        <!-- Fare Form -->
+        <div class="chatbot-form">
+          <div class="chatbot-field">
+            <label data-i18n="chatbot.from">📍 कहाँ से</label>
+            <input type="text" id="chatFrom" placeholder="पिकअप लोकेशन टाइप करें..." data-i18n-placeholder="chatbot.from.placeholder" autocomplete="off" />
+          </div>
+          <div class="chatbot-field">
+            <label data-i18n="chatbot.to">🏁 कहाँ तक</label>
+            <input type="text" id="chatTo" placeholder="गंतव्य टाइप करें..." data-i18n-placeholder="chatbot.to.placeholder" autocomplete="off" />
+          </div>
+          <div class="chatbot-field-row">
+            <div class="chatbot-field half">
+              <label data-i18n="chatbot.vehicle">🚗 वाहन</label>
+              <select id="chatVehicle">
+                <option value="sedan" data-i18n="chatbot.vehicle.sedan">Sedan</option>
+                <option value="hatchback" data-i18n="chatbot.vehicle.hatchback">Hatchback</option>
+                <option value="suv" data-i18n="chatbot.vehicle.suv">SUV</option>
+                <option value="innova" data-i18n="chatbot.vehicle.innova">Innova/Ertiga</option>
+                <option value="tempo" data-i18n="chatbot.vehicle.tempo">Tempo</option>
+              </select>
+            </div>
+            <div class="chatbot-field half">
+              <label data-i18n="chatbot.trip">🔄 ट्रिप</label>
+              <select id="chatTrip">
+                <option value="one-way" data-i18n="chatbot.trip.oneway">एक तरफ़ा</option>
+                <option value="round-trip" data-i18n="chatbot.trip.roundtrip">राउंड ट्रिप</option>
+                <option value="full-day" data-i18n="chatbot.trip.fullday">पूरा दिन</option>
+                <option value="rental" data-i18n="chatbot.trip.rental">किराया</option>
+              </select>
+            </div>
+          </div>
+          <button class="chatbot-calc-btn" id="chatCalcBtn" onclick="calculateChatFare()">
+            <span data-i18n="chatbot.calc">💰 किराया जानें</span>
+          </button>
+        </div>
+
+        <!-- Fare Result -->
+        <div class="chatbot-result hidden" id="chatResult">
+          <div class="chat-msg bot">
+            <div class="chat-msg-avatar">🤖</div>
+            <div class="chat-msg-bubble">
+              <div class="chat-fare-result" id="chatFareResult"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="chatbot-footer">
+        <button class="chatbot-book-btn" onclick="toggleChatbot(); setTimeout(function(){ openBookingModal(); }, 300);">
+          <span data-i18n="chatbot.book">📞 अभी बुक करें</span>
+        </button>
+      </div>
+    </div>
 
     <!-- Booking Modal -->
     <div class="booking-modal-overlay hidden" id="bookingModal">
