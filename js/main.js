@@ -652,6 +652,7 @@ function _refreshCurrentDashboard() {
     }).then(function () {
       renderDriverDiaryTable();
       updateDriverDiaryKPIs();
+      renderDriverDiarySummary();
     });
   }
 }
@@ -2562,7 +2563,7 @@ function exportBookingsCSV() {
       })
       .join("\n");
   downloadFile(csv, "pratap-travels-bookings.csv", "text/csv");
-  showToast("CSV exported.", "success");
+  showToast(I18N.t("dd.toast.csvExported"), "success");
 }
 
 /* ============================================
@@ -4696,14 +4697,14 @@ async function saveDriverDiaryEntry(e) {
   if (editId) {
     var result = await updateDriverDiaryOnApi(editId, entry);
     if (result) {
-      showToast("एंट्री अपडेट हो गई।", "success");
+      showToast(I18N.t("dd.toast.updated"), "success");
     } else {
       showToast("अपडेट विफल (API offline)।", "info");
     }
   } else {
     var result = await saveDriverDiaryToApi(entry);
     if (result) {
-      showToast("एंट्री सेव हो गई।", "success");
+      showToast(I18N.t("dd.toast.saved"), "success");
     } else {
       showToast("सेव विफल (API offline)।", "info");
     }
@@ -4714,10 +4715,10 @@ async function saveDriverDiaryEntry(e) {
 
 // ---------- Delete Driver Diary Entry ----------
 async function deleteDriverDiaryEntry(id) {
-  if (!confirm("क्या आप इस एंट्री को हटाना चाहते हैं?")) return;
+  if (!confirm(I18N.t("dd.toast.confirmDelete"))) return;
   var result = await deleteDriverDiaryFromApi(id);
   if (result) {
-    showToast("एंट्री हटा दी गई।", "success");
+    showToast(I18N.t("dd.toast.deleted"), "success");
   } else {
     showToast("हटाना विफल (API offline)।", "info");
   }
@@ -4728,12 +4729,13 @@ async function deleteDriverDiaryEntry(id) {
 async function refreshDriverDiary() {
   var apiEntries = await fetchDriverDiaryFromApi();
   if (apiEntries) {
-    showToast("डायरी रिफ़्रेश हो गई।", "success");
+    showToast(I18N.t("dd.toast.refreshed"), "success");
   } else {
     showToast("API उपलब्ध नहीं है।", "info");
   }
   renderDriverDiaryTable();
   updateDriverDiaryKPIs();
+  renderDriverDiarySummary();
 }
 
 // ---------- Update Driver Diary KPIs ----------
@@ -4760,6 +4762,55 @@ function updateDriverDiaryKPIs() {
   if (elVehicles) elVehicles.textContent = Object.keys(vehicles).length;
   if (elTotalKM) elTotalKM.textContent = Math.round(totalKM);
   if (elToday) elToday.textContent = todayCount;
+}
+
+// ---------- Render KM Summary (grouped by vehicle + driver) ----------
+function renderDriverDiarySummary() {
+  var tbody = document.getElementById("driverDiarySummaryBody");
+  var emptyState = document.getElementById("emptyDriverDiarySummary");
+  if (!tbody) return;
+
+  var entries = getDriverDiaryEntries();
+  tbody.innerHTML = "";
+
+  if (entries.length === 0) {
+    if (emptyState) emptyState.classList.remove("hidden");
+    return;
+  }
+  if (emptyState) emptyState.classList.add("hidden");
+
+  // Group by vehicleId + driverName
+  var summary = {};
+  for (var i = 0; i < entries.length; i++) {
+    var e = entries[i];
+    var key = (e.vehicleId || "unknown") + "|" + (e.driverName || "unknown");
+    if (!summary[key]) {
+      summary[key] = {
+        vehicleNumber: e.vehicleNumber || "-",
+        driverName: e.driverName || "-",
+        trips: 0,
+        totalKM: 0,
+      };
+    }
+    summary[key].trips++;
+    summary[key].totalKM += parseFloat(e.totalKM) || 0;
+  }
+
+  var rows = Object.values(summary).sort(function (a, b) {
+    return b.totalKM - a.totalKM;
+  });
+
+  rows.forEach(function (row) {
+    var tr = document.createElement("tr");
+    var avgKM = row.trips > 0 ? Math.round(row.totalKM / row.trips) : 0;
+    tr.innerHTML =
+      '<td><code class="vid-code">' + escapeHtml(row.vehicleNumber) + "</code></td>" +
+      "<td>" + escapeHtml(row.driverName) + "</td>" +
+      "<td><b>" + row.trips + "</b></td>" +
+      "<td><b>" + Math.round(row.totalKM) + " km</b></td>" +
+      "<td>" + avgKM + " km</td>";
+    tbody.appendChild(tr);
+  });
 }
 
 // ---------- Render Driver Diary Table ----------
@@ -4837,7 +4888,7 @@ function editDriverDiaryEntry(id) {
       return;
     }
   }
-  showToast("एंट्री नहीं मिली।", "error");
+  showToast(I18N.t("dd.toast.notFound"), "error");
 }
 
 // ---------- Populate Vehicle Filter Dropdown ----------
@@ -4878,7 +4929,7 @@ function populateDriverDiaryDriverFilter() {
 function exportDriverDiaryCSV() {
   var entries = getDriverDiaryEntries();
   if (entries.length === 0) {
-    showToast("No data to export.", "error");
+    showToast(I18N.t("dd.toast.noData"), "error");
     return;
   }
   var headers = ["Date", "Vehicle Number", "Start Point", "End Point", "Total KM", "Driver Name", "Driver Phone", "Notes", "Created"];
