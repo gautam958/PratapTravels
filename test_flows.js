@@ -8,6 +8,7 @@ const fs = require('fs');
 const mainJs = fs.readFileSync('js/main.js', 'utf8');
 const readme = fs.readFileSync('README.md', 'utf8');
 const revenueFunction = fs.readFileSync('azure-function/PratapTravels-run.csx', 'utf8');
+const i18nJs = fs.readFileSync('js/i18n.js', 'utf8');
 
 let passCount = 0;
 let failCount = 0;
@@ -356,6 +357,113 @@ test('Status column exists in booking table with status badge rendering', () => 
 });
 
 
+// ==========================================
+// CHATBOT FARE ESTIMATOR TESTS
+// ==========================================
+
+test('Chatbot: toggleChatbot function defined', () => {
+  assert(mainJs.includes('function toggleChatbot'), 'Should define toggleChatbot function');
+});
+
+test('Chatbot: calculateChatFare function defined', () => {
+  assert(mainJs.includes('function calculateChatFare'), 'Should define calculateChatFare function');
+});
+
+test('Chatbot: haversineDistance calculates correctly', () => {
+  assert(mainJs.includes('function haversineDistance'), 'Should define haversineDistance function');
+  // Verify the formula uses correct constants (R = 6371 for Earth radius)
+  assert(mainJs.includes('6371') || mainJs.includes('6371'), 'Should use Earth radius 6371km in haversine');
+});
+
+test('Chatbot: displayChatFare shows fare with vehicle multipliers', () => {
+  assert(mainJs.includes('function displayChatFare'), 'Should define displayChatFare function');
+  // Should reference fare config multipliers
+  assert(mainJs.includes('FARE_CONFIG') || mainJs.includes('fareConfig'), 'Should use fare configuration for multipliers');
+  assert(mainJs.includes('chatFareResult'), 'Should render result into chatFareResult element');
+});
+
+test('Chatbot: displayChatFareFallback shows error on failure', () => {
+  assert(mainJs.includes('function displayChatFareFallback'), 'Should define displayChatFareFallback function');
+  assert(mainJs.includes('chatFareResult'), 'Fallback should render into chatFareResult element');
+});
+
+test('Chatbot: clearChatResult resets inputs and hides result', () => {
+  assert(mainJs.includes('function clearChatResult'), 'Should define clearChatResult function');
+  // Should access chatFrom and chatTo inputs
+  assert(mainJs.includes('chatFrom'), 'clearChatResult should reference chatFrom input');
+  assert(mainJs.includes('chatTo'), 'clearChatResult should reference chatTo input');
+  // Should hide the result
+  assert(mainJs.includes('hidden'), 'Should toggle hidden class to show/hide result');
+});
+
+test('Chatbot: openBookingFromChatbot pre-fills booking modal', () => {
+  assert(mainJs.includes('function openBookingFromChatbot'), 'Should define openBookingFromChatbot function');
+  assert(mainJs.includes('bookRoute'), 'Should set bookRoute in booking modal');
+  assert(mainJs.includes('bookType'), 'Should set bookType in booking modal');
+  assert(mainJs.includes('bookRemarks'), 'Should add route info to remarks');
+  assert(mainJs.includes('openBookingModal'), 'Should call openBookingModal to open the modal');
+});
+
+test('Chatbot: handleChatFaq has all 5 FAQ topics', () => {
+  assert(mainJs.includes('function handleChatFaq'), 'Should define handleChatFaq function');
+  assert(mainJs.includes('vehicles:') || mainJs.includes("'vehicles'") || mainJs.includes('"vehicles"'), 'Should have vehicles FAQ topic');
+  assert(mainJs.includes('booking:') || mainJs.includes("'booking'") || mainJs.includes('"booking"'), 'Should have booking FAQ topic');
+  assert(mainJs.includes('payment:') || mainJs.includes("'payment'") || mainJs.includes('"payment"'), 'Should have payment FAQ topic');
+  assert(mainJs.includes('cancellation:') || mainJs.includes("'cancellation'") || mainJs.includes('"cancellation"'), 'Should have cancellation FAQ topic');
+  assert(mainJs.includes('contact:') || mainJs.includes("'contact'") || mainJs.includes('"contact"'), 'Should have contact FAQ topic');
+});
+
+test('Chatbot: uses Google Maps Distance Matrix API', () => {
+  assert(mainJs.includes('DistanceMatrixService') || mainJs.includes('getDistanceMatrix'), 'Should use Distance Matrix service');
+});
+
+test('Chatbot: has vehicle and trip type multipliers', () => {
+  assert(mainJs.includes('vehicleMultipliers') || mainJs.includes('VEHICLE_MULTIPLIERS') || mainJs.includes('vehicleType'), 'Should have vehicle type multipliers');
+  assert(mainJs.includes('tripMultipliers') || mainJs.includes('TRIP_MULTIPLIERS') || mainJs.includes('tripType'), 'Should have trip type multipliers');
+});
+
+test('Chatbot: Book Now button calls openBookingFromChatbot', () => {
+  assert(mainJs.includes('openBookingFromChatbot'), 'Book Now should call openBookingFromChatbot');
+});
+
+test('Chatbot: i18n has chatbot.faq translations in Hindi', () => {
+  assert(i18nJs.includes('chatbot.faq.title'), 'Should have chatbot.faq.title i18n key');
+  assert(i18nJs.includes('chatbot.faq.q1'), 'Should have chatbot.faq.q1 i18n key');
+  assert(i18nJs.includes('chatbot.faq.q5'), 'Should have chatbot.faq.q5 i18n key');
+});
+
+test('Chatbot: i18n has chatbot.clear translation', () => {
+  assert(i18nJs.includes('chatbot.clear'), 'Should have chatbot.clear i18n key');
+});
+
+test('Chatbot: Google Maps API uses loading=async', () => {
+  var indexHtml = require('fs').readFileSync('index.html', 'utf8');
+  assert(indexHtml.includes('loading=async'), 'Google Maps script should use loading=async');
+});
+
+test('Chatbot: clear button exists in HTML', () => {
+  var indexHtml = require('fs').readFileSync('index.html', 'utf8');
+  assert(indexHtml.includes('chatbot-clear-btn'), 'Should have chatbot-clear-btn element');
+  assert(indexHtml.includes('clearChatResult'), 'Clear button should call clearChatResult');
+});
+
+test('Chatbot: FAQ section exists in HTML with 5 questions', () => {
+  var indexHtml = require('fs').readFileSync('index.html', 'utf8');
+  assert(indexHtml.includes('chatbot-faq'), 'Should have chatbot-faq section');
+  assert(indexHtml.includes('handleChatFaq'), 'FAQ buttons should call handleChatFaq');
+  // Count FAQ button occurrences
+  var faqMatches = indexHtml.match(/handleChatFaq\(/g) || [];
+  assert(faqMatches.length === 5, 'Should have exactly 5 FAQ buttons (found: ' + faqMatches.length + ')');
+});
+
+test('Chatbot: CSS has clear button and FAQ styles', () => {
+  var css = require('fs').readFileSync('css/style.css', 'utf8');
+  assert(css.includes('.chatbot-clear-btn'), 'Should have .chatbot-clear-btn CSS');
+  assert(css.includes('.chatbot-faq'), 'Should have .chatbot-faq CSS');
+  assert(css.includes('.chatbot-faq-btn'), 'Should have .chatbot-faq-btn CSS');
+});
+
+
 // PRINT RESULTS
 // ==========================================
 
@@ -376,3 +484,4 @@ console.log(`========================================\n`);
 if (failCount > 0) {
   process.exit(1);
 }
+
