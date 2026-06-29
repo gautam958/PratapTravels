@@ -1252,28 +1252,6 @@ img { max-width: 100%; display: block; }
 .chat-fare-book-btn:hover {
   transform: translateY(-1px);
 }
-
-.chatbot-footer {
-  padding: 12px 16px;
-  border-top: 1px solid #eee;
-  flex-shrink: 0;
-}
-.chatbot-book-btn {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--primary, #1a5276), #0e2f44);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.chatbot-book-btn:hover {
-  transform: translateY(-1px);
-}
-
 .chatbot-loading {
   display: flex;
   align-items: center;
