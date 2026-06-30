@@ -356,6 +356,28 @@ test('Status column exists in booking table with status badge rendering', () => 
   assert(mainJs.includes('booking-status-badge'), 'Should display booking status badge in table');
 });
 
+test('Action buttons always show Confirm, Update, Complete, Cancel, Delete with disabled states', () => {
+  // All 4 action buttons must always be rendered in the table
+  assert(mainJs.includes('openConfirmBooking'), 'Should have Confirm button calling openConfirmBooking');
+  assert(mainJs.includes('completeBooking'), 'Should have Complete button calling completeBooking');
+  assert(mainJs.includes('cancelBooking'), 'Should have Cancel button calling cancelBooking');
+  assert(mainJs.includes('deleteBooking'), 'Should have Delete button calling deleteBooking');
+
+  // Buttons should use disabled attribute based on status
+  assert(mainJs.includes("b.status !== 'pending' ? ' disabled' : ''"), 'Confirm button disabled when not pending');
+  assert(mainJs.includes("b.status !== 'confirmed' ? ' disabled' : ''"), 'Complete button disabled when not confirmed');
+  assert(mainJs.includes("b.status !== 'pending' && b.status !== 'confirmed' ? ' disabled' : ''"), 'Cancel button disabled when not pending/confirmed');
+
+  // Delete button should never be disabled (always available)
+  assert(mainJs.includes('deleteBooking('), 'Delete button should exist with deleteBooking handler');
+
+  // CSS should style disabled action buttons
+  var css = require('fs').readFileSync('css/style.css', 'utf8');
+  assert(css.includes('.btn-action-confirm[disabled]'), 'CSS should style .btn-action-confirm[disabled]');
+  assert(css.includes('.btn-action-cancel[disabled]'), 'CSS should style .btn-action-cancel[disabled]');
+  assert(css.includes('.btn-action-delete[disabled]'), 'CSS should style .btn-action-delete[disabled]');
+});
+
 
 // ==========================================
 // CHATBOT FARE ESTIMATOR TESTS

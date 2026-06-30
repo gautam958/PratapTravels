@@ -2391,33 +2391,12 @@ function renderBookingTable() {
         driverInfo = escapeHtml(v.driverName);
       }
     }
-    var actionBtn = "";
-    if (b.status !== "confirmed" && b.status !== "cancelled") {
-      actionBtn =
-        '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' +
-        b.bookingId +
-        '\')" title="Confirm & Assign Vehicle"><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
-        '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
-        b.bookingId +
-        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
-        '<button class="btn-action-delete" onclick="deleteBooking(\'' +
-        b.bookingId +
-        '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button>';
-    } else if (b.status === "confirmed") {
-      actionBtn =
-        '<button class="btn-refresh" style="padding:4px 10px;font-size:0.75rem;" onclick="openConfirmBooking(\'' +
-        b.bookingId +
-        '\')" title="Update"><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
-        '<button class="btn-action-confirm" onclick="completeBooking(\'' +
-        b.bookingId +
-        '\')" title="Mark Trip Completed"><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
-        '<button class="btn-action-cancel" onclick="cancelBooking(\'' +
-        b.bookingId +
-        '\')" title="Cancel Booking"><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
-        '<button class="btn-action-delete" onclick="deleteBooking(\'' +
-        b.bookingId +
-        '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button>';
-    }
+    var actionBtn =
+      '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle"' + (b.status !== 'pending' ? ' disabled' : '') + '><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+      '<button class="btn-action-edit" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Update Booking"' + (b.status !== 'confirmed' ? ' disabled' : '') + '><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+      '<button class="btn-action-confirm" onclick="completeBooking(\'' + b.bookingId + '\')" title="Mark Trip Completed"' + (b.status !== 'confirmed' ? ' disabled' : '') + '><i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+      '<button class="btn-action-cancel" onclick="cancelBooking(\'' + b.bookingId + '\')" title="Cancel Booking"' + (b.status !== 'pending' && b.status !== 'confirmed' ? ' disabled' : '') + '><i data-lucide="circle-x" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+      '<button class="btn-action-delete" onclick="deleteBooking(\'' + b.bookingId + '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button>';
     tr.innerHTML =
       '<td><code class="vid-code">' +
       escapeHtml(b.bookingId || "-") +
