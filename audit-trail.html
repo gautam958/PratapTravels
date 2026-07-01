@@ -51,11 +51,6 @@
       <div class="auth-card">
         <h2 data-i18n="visitors.auth.title">🔒 एडमिन एक्सेस आवश्यक</h2>
         <p data-i18n="audit.auth.desc">ऑडिट ट्रेल देखने के लिए अधिकृत Google खाते से साइन इन करें</p>
-        <div id="g_id_onload"
-          data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com"
-          data-callback="handleGoogleCredentialResponse"
-          data-use_fedcm_for_prompt="false"
-          data-auto_prompt="false"></div>
         <button class="google-btn" id="googleSignIn" onclick="handleGoogleSignIn()">
           <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -65,6 +60,7 @@
           </svg>
           <span data-i18n="visitors.auth.google">Google से साइन इन करें</span>
         </button>
+        <div id="gsiFallbackButton" class="hidden" style="margin-top:12px;text-align:center;"></div>
 
         <p style="font-size: 0.85rem; color: #999" data-i18n="visitors.auth.note">केवल एडमिन खाते। एक्सेस के लिए साइट मालिक से संपर्क करें।</p>
       </div>

@@ -62,13 +62,6 @@
         <p data-i18n="visitors.auth.desc">
           आगंतुक विश्लेषण देखने के लिए अधिकृत Google खाते से साइन इन करें
         </p>
-        <div
-          id="g_id_onload"
-          data-client_id="529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com"
-          data-callback="handleGoogleCredentialResponse"
-          data-use_fedcm_for_prompt="false"
-          data-auto_prompt="false"
-        ></div>
         <button
           class="google-btn"
           id="googleSignIn"
@@ -93,6 +86,7 @@
             />
           </svg          ><span data-i18n="visitors.auth.google">Google से साइन इन करें</span>
         </button>
+        <div id="gsiFallbackButton" class="hidden" style="margin-top:12px;text-align:center;"></div>
 
         <p style="font-size: 0.85rem; color: #999" data-i18n="visitors.auth.note">
           केवल एडमिन खाते। एक्सेस के लिए साइट मालिक से संपर्क करें।

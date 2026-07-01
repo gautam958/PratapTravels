@@ -473,25 +473,90 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // ---------- Google Sign-In ----------
+var _gsiInitialized = false;
+
+// Show loading spinner on the Google sign-in button while GIS script loads
+// Runs immediately (not in DOMContentLoaded) so the spinner is visible during
+// the GIS defer-script network download.
+(function _initGsiLoadingState() {
+  var btn = document.getElementById("googleSignIn");
+  if (!btn) return;
+  // If GIS already loaded, nothing to do
+  if (typeof google !== "undefined" && google.accounts && google.accounts.id) return;
+
+  // Save original button content
+  btn.setAttribute("data-original-html", btn.innerHTML);
+  btn.disabled = true;
+  btn.innerHTML =
+    '<span class="google-btn-loading-spinner"></span>' +
+    '<span style="color:var(--text-secondary);font-size:0.9rem;">Loading Google Sign-In…</span>';
+  btn.style.pointerEvents = "none";
+
+  // Poll for GIS readiness, then restore the button
+  var attempts = 0;
+  var check = setInterval(function () {
+    attempts++;
+    if (
+      typeof google !== "undefined" &&
+      google.accounts &&
+      google.accounts.id
+    ) {
+      clearInterval(check);
+      _restoreGsiButton(btn);
+    } else if (attempts > 100) {
+      // 10 seconds max (100 × 100ms)
+      clearInterval(check);
+      _restoreGsiButton(btn, true);
+    }
+  }, 100);
+})();
+
+function _restoreGsiButton(btn, timedOut) {
+  if (!btn) return;
+  var orig = btn.getAttribute("data-original-html");
+  if (orig) btn.innerHTML = orig;
+  btn.disabled = false;
+  btn.style.pointerEvents = "";
+  if (timedOut) {
+    console.warn(
+      "Google Identity Services script did not load in time. Sign-in may not work.",
+    );
+  }
+}
+
 function handleGoogleSignIn() {
   if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
-    // Initialize Google ID configuration if it wasn't automatically initialized
-    google.accounts.id.initialize({
-      client_id:
-        "529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com",
-      callback: handleGoogleCredentialResponse,
-      use_fedcm_for_prompt: false, // Continues to disable FedCM inside Incognito
-    });
+    // Only initialize once to avoid "called multiple times" warning
+    if (!_gsiInitialized) {
+      google.accounts.id.initialize({
+        client_id:
+          "529204997074-5upkbf81uq05ueef0ai1ik606vpmeg6p.apps.googleusercontent.com",
+        callback: handleGoogleCredentialResponse,
+        use_fedcm_for_prompt: false,
+      });
+      _gsiInitialized = true;
+    }
 
-    // 1. Try to display the overlay prompt
+    // 1. Try to display the One Tap overlay prompt
     google.accounts.id.prompt((notification) => {
       if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
         console.warn(
-          "One-tap prompt skipped or blocked in Incognito. Triggering pop-up selector directly.",
+          "One-tap prompt skipped or blocked. Rendering sign-in button as fallback.",
         );
 
-        // 2. Fallback: If the overlay prompt is blocked by the browser, force the standard Google Pop-up window
-        google.accounts.id.login();
+        // 2. Fallback: render the official Google Sign-In button so user can click it
+        var fallbackContainer = document.getElementById("gsiFallbackButton");
+        if (fallbackContainer) {
+          fallbackContainer.innerHTML = "";
+          fallbackContainer.classList.remove("hidden");
+          google.accounts.id.renderButton(fallbackContainer, {
+            theme: "outline",
+            size: "large",
+            text: "signin_with",
+            shape: "rectangular",
+            width: 300,
+          });
+        }
       }
     });
   } else {
