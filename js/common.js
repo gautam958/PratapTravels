@@ -1919,6 +1919,9 @@ function openConfirmBooking(bookingId) {
     "<div><strong>Current Vehicle:</strong> " +
     vName +
     "</div>" +
+    (booking.fare ? "<div><strong>Fare:</strong> ₹" + escapeHtml(String(booking.fare)) + "</div>" : "") +
+    (booking.from_location ? "<div><strong>From:</strong> " + escapeHtml(booking.from_location) + "</div>" : "") +
+    (booking.to_location ? "<div><strong>To:</strong> " + escapeHtml(booking.to_location) + "</div>" : "") +
     "</div>";
 
   // Pre-fill pickup date/time from booking
@@ -1929,6 +1932,16 @@ function openConfirmBooking(bookingId) {
     booking.pickup_address || "";
   document.getElementById("confirmAdminNotes").value =
     booking.admin_notes || "";
+
+  // Pre-fill fare amount
+  var fareEl = document.getElementById("confirmFare");
+  if (fareEl) fareEl.value = booking.fare || booking.amount || "";
+
+  // Pre-fill from/to locations
+  var fromEl = document.getElementById("confirmFromLocation");
+  var toEl = document.getElementById("confirmToLocation");
+  if (fromEl) fromEl.value = booking.from_location || "";
+  if (toEl) toEl.value = booking.to_location || "";
 
   // Populate vehicle dropdown with date/time filtering
   var selPickupDate = document.getElementById("confirmPickupDate");
@@ -1977,10 +1990,52 @@ function openConfirmBooking(bookingId) {
     pickupTimeEl.removeEventListener("change", refreshVehicleList);
   if (pickupTimeEl) pickupTimeEl.addEventListener("change", refreshVehicleList);
 
+  // Initialize Google Places autocomplete on from/to fields
+  _initConfirmBookingPlaces();
+
   refreshLucideIcons();
 }
 
 
+
+var _confirmFromAutocomplete = null;
+var _confirmToAutocomplete = null;
+
+function _initConfirmBookingPlaces() {
+  var fromEl = document.getElementById("confirmFromLocation");
+  var toEl = document.getElementById("confirmToLocation");
+  if (!fromEl || !toEl) return;
+  // Skip if Google Maps API not loaded yet
+  if (typeof google === 'undefined' || !google.maps || !google.maps.places) {
+    // Lazy-load Google Maps for confirm booking modal
+    if (typeof google === 'undefined' && !document.getElementById('google-maps-script-confirm') && !document.querySelector('script[src*="maps.googleapis.com"]')) {
+      var cbName = '_confirmPlacesCallback';
+      window[cbName] = function() { _initConfirmBookingPlaces(); };
+      var s = document.createElement('script');
+      s.id = 'google-maps-script-confirm';
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + (typeof PT_CONFIG !== 'undefined' && PT_CONFIG.GOOGLE_MAPS_API_KEY ? PT_CONFIG.GOOGLE_MAPS_API_KEY : '') + '&libraries=places&callback=' + cbName;
+      s.async = true; s.defer = true;
+      document.head.appendChild(s);
+    }
+    return;
+  }
+  var indiaBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(6.5, 68.0),
+    new google.maps.LatLng(35.5, 97.5)
+  );
+  var options = {
+    componentRestrictions: { country: 'in' },
+    bounds: indiaBounds,
+    fields: ['formatted_address', 'geometry', 'name']
+  };
+  // Only create if not already attached
+  if (fromEl && !_confirmFromAutocomplete) {
+    _confirmFromAutocomplete = new google.maps.places.Autocomplete(fromEl, options);
+  }
+  if (toEl && !_confirmToAutocomplete) {
+    _confirmToAutocomplete = new google.maps.places.Autocomplete(toEl, options);
+  }
+}
 
 function closeConfirmBookingModal() {
   var modal = document.getElementById("confirmBookingModal");
@@ -2294,6 +2349,9 @@ document.addEventListener("DOMContentLoaded", function () {
       var pickupTime = document.getElementById('confirmPickupTime').value;
       var pickupAddr = document.getElementById('confirmPickupAddress').value;
       var adminNotes = document.getElementById('confirmAdminNotes').value;
+      var fareVal = document.getElementById('confirmFare') ? document.getElementById('confirmFare').value : '';
+      var fromLocVal = document.getElementById('confirmFromLocation') ? document.getElementById('confirmFromLocation').value : '';
+      var toLocVal = document.getElementById('confirmToLocation') ? document.getElementById('confirmToLocation').value : '';
       if (!vehicleId || vehicleId === '__new__') {
         showToast('Please select a vehicle', 'error');
         return;
@@ -2312,6 +2370,9 @@ document.addEventListener("DOMContentLoaded", function () {
           bookings[i].pickup_time = pickupTime;
           bookings[i].pickup_address = pickupAddr;
           bookings[i].admin_notes = adminNotes;
+          bookings[i].fare = fareVal ? Number(fareVal) : '';
+          bookings[i].from_location = fromLocVal;
+          bookings[i].to_location = toLocVal;
           bookings[i].vehicleNumber = vehicle ? vehicle.vehicleNumber : '';
           bookings[i].vehicleType = vehicle ? vehicle.vehicleType : '';
           bookings[i].driverName = vehicle ? vehicle.driverName : '';
@@ -2331,7 +2392,10 @@ document.addEventListener("DOMContentLoaded", function () {
         vehicleNumber: vehicle ? vehicle.vehicleNumber : '',
         vehicleType: vehicle ? vehicle.vehicleType : '',
         driverName: vehicle ? vehicle.driverName : '',
-        driverPhone: vehicle ? vehicle.driverPhone : ''
+        driverPhone: vehicle ? vehicle.driverPhone : '',
+        fare: fareVal ? Number(fareVal) : '',
+        from_location: fromLocVal,
+        to_location: toLocVal
       });
       recordAuditTrail('booking_confirm', { bookingId: bookingId, vehicleId: vehicleId });
       closeConfirmBookingModal();

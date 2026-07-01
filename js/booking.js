@@ -8,37 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("bookingTableBody")) {
     fetchBookingsFromApi().then(function () { renderBookingTable(); updateBookingKPIs(); });
   }
-  var confirmBookingForm = document.getElementById("confirmBookingForm");
-  if (confirmBookingForm) {
-    confirmBookingForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-      var bookingId = document.getElementById("confirmBookingId").value;
-      var vehicleId = document.getElementById("vehicleSelect").value;
-      if (!vehicleId) { showToast("Please select a vehicle.", "error"); return; }
-      if (vehicleId === "__new__") { showToast("Please add a new vehicle first.", "error"); return; }
-      var pickupDate = document.getElementById("confirmPickupDate").value;
-      var pickupTime = document.getElementById("confirmPickupTime").value;
-      var pickupAddress = document.getElementById("confirmPickupAddress").value;
-      var adminNotes = document.getElementById("confirmAdminNotes").value;
-      assignVehicleToBooking(bookingId, vehicleId);
-      var bookings = getBookings();
-      for (var i = 0; i < bookings.length; i++) {
-        if (bookings[i].bookingId === bookingId) {
-          if (pickupDate) bookings[i].pickup_date = pickupDate;
-          if (pickupTime) bookings[i].pickup_time = pickupTime;
-          if (pickupAddress) bookings[i].pickup_address = pickupAddress;
-          if (adminNotes) bookings[i].admin_notes = adminNotes;
-          persistBookingToApi(bookingId, { pickup_date: pickupDate, pickup_time: pickupTime, pickup_address: pickupAddress, admin_notes: adminNotes });
-          break;
-        }
-      }
-      _bookingsCache = bookings;
-      closeConfirmBookingModal();
-      renderBookingTable();
-      updateBookingKPIs();
-      showToast("Vehicle assigned and booking confirmed!", "success");
-    });
-  }
+  // Note: confirmBookingForm submit handler is in common.js to avoid duplicate listeners on booking.html
   var confirmModalClose = document.getElementById("confirmBookingModalClose");
   if (confirmModalClose) confirmModalClose.addEventListener("click", closeConfirmBookingModal);
   var emailModalClose = document.getElementById("emailConfirmModalClose");
