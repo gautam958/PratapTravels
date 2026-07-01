@@ -2453,3 +2453,58 @@ function updateReferrerStatsOnRedemption(
    Save all bookings via API / cache for
    admin dashboard viewing
    ============================================ */
+
+// ---------- Booking Status Tracker ----------
+async function lookupBookingStatus() {
+  var input = document.getElementById('statusInput');
+  var resultDiv = document.getElementById('statusResult');
+  if (!input || !resultDiv) return;
+  var query = input.value.trim();
+  if (!query) {
+    showToast('Please enter a Booking ID or Phone Number', 'error');
+    return;
+  }
+  resultDiv.innerHTML = '<div class="status-loading"><i data-lucide="loader" style="width:24px;height:24px;vertical-align:middle"></i> Looking up your booking...</div>';
+  // Use existing PratapTravels-Data Azure Function with type=status
+  var dataApiUrl = getDataApiUrl();
+  if (!dataApiUrl) {
+    resultDiv.innerHTML = '<div class="status-error">Service temporarily unavailable. Please try again later.</div>';
+    return;
+  }
+  try {
+    var separator = dataApiUrl.indexOf('?') !== -1 ? '&' : '?';
+    var fetchUrl = dataApiUrl + separator + 'type=status&query=' + encodeURIComponent(query);
+    var resp = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    var data = await resp.json();
+    if (!data || !data.bookingId) {
+      resultDiv.innerHTML = '<div class="status-not-found"><i data-lucide="search-x" style="width:20px;height:20px;vertical-align:middle"></i> No booking found for \"' + escapeHtml(query) + '\". Please check your Booking ID or Phone Number and try again.</div>';
+      return;
+    }
+    var statusClass = data.status === 'confirmed' ? 'status-confirmed' : data.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
+    var statusIcon = lucideIcon(data.status === "confirmed" ? "circle-check" : data.status === "cancelled" ? "circle-x" : "clock", 32);
+    var vehicleInfo = data.vehicleNumber ? '<p><strong><i data-lucide="car" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.vehicleNumber) + ' (' + escapeHtml(data.vehicleType || '') + ')</p>' : '';
+    var driverInfo = data.driverName ? '<p><strong><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.driverName) + (data.driverPhone ? ' (' + escapeHtml(data.driverPhone) + ')' : '') + '</p>' : '';
+    var pickupInfo = data.pickup_address ? '<p><strong>\ud83d\udccd Pickup:</strong> ' + escapeHtml(data.pickup_address) + '</p>' : '';
+    resultDiv.innerHTML =
+      '<div class="status-card">' +
+      '<div class="status-header">' +
+      '<span class="status-icon">' + statusIcon + '</span>' +
+      '<span class="booking-status-badge ' + statusClass + '">' + data.status + '</span>' +
+      '</div>' +
+      '<div class="status-details">' +
+      '<p><strong><i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.bookingId) + '</p>' +
+      '<p><strong><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.name || '-') + '</p>' +
+      '<p><strong><i data-lucide="map" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.route || '-') + '</p>' +
+      '<p><strong><i data-lucide="calendar" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.date || '-') + '</p>' +
+      '<p><strong><i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.time || '-') + '</p>' +
+      '<p><strong><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.passengers || '-') + '</p>' +
+      '<p><strong><i data-lucide="repeat" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.trip_type || '-') + '</p>' +
+      vehicleInfo + driverInfo + pickupInfo +
+      '</div>' +
+      '</div>';
+  } catch (e) {
+    console.error('Status lookup failed:', e);
+    resultDiv.innerHTML = '<div class="status-error"><i data-lucide="alert-triangle" style="width:20px;height:20px;vertical-align:middle"></i> Unable to look up booking status. Please try again later or contact us at +91 76313 82174.</div>';
+  }
+}

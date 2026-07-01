@@ -2,7 +2,6 @@
    PRATAP TRAVELS - Index Page JavaScript
    ============================================ */
 
-
 // ---------- Generate a unique referral code from name + phone ----------
 async function generateReferralCode() {
   var nameInput = document.getElementById("referNameInput");
@@ -95,7 +94,6 @@ async function generateReferralCode() {
 
 // ---------- Copy referral code to clipboard ----------
 
-
 // ---------- Copy referral code to clipboard ----------
 function copyReferralCode() {
   var codeDisplay = document.getElementById("referCodeDisplay");
@@ -127,7 +125,6 @@ function copyReferralCode() {
 }
 
 // ---------- Share referral on WhatsApp ----------
-
 
 // ---------- Share referral on WhatsApp ----------
 function shareReferralWhatsApp() {
@@ -186,13 +183,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 // ---------- Update referral stats display ----------
 
-
 function getGoogleMapsUrl(destination) {
   var dest = ROUTE_MAP_DATA[destination] || destination;
   return 'https://www.google.com/maps/dir/Deoghar,+Jharkhand+India/' + encodeURIComponent(dest);
 }
-
-
 
 function initGoogleMapsLinks() {
   var routeRows = document.querySelectorAll('#routesBody tr');
@@ -255,8 +249,6 @@ var TRIP_MULTIPLIERS = {
   'rental': 2.5
 };
 
-
-
 function calculateEstimatedPrice() {
   var routeSelect = document.getElementById('calcRoute');
   var vehicleSelect = document.getElementById('calcVehicle');
@@ -308,8 +300,6 @@ function calculateEstimatedPrice() {
    FEATURE: Booking Status Tracker
    ============================================ */
 
-
-
 // ---------- Toggle Chatbot Panel ----------
 function toggleChatbot() {
   var panel = document.getElementById('chatbotPanel');
@@ -328,7 +318,6 @@ function toggleChatbot() {
 }
 
 // ---------- Initialize Places Autocomplete ----------
-
 
 // ---------- Initialize Places Autocomplete ----------
 function __initChatbotPlaces() {
@@ -368,7 +357,6 @@ function __initChatbotPlaces() {
 }
 
 // ---------- Calculate Fare via Distance Matrix ----------
-
 
 // ---------- Calculate Fare via Distance Matrix ----------
 function calculateChatFare() {
@@ -438,7 +426,6 @@ function calculateChatFare() {
 
 // ---------- Fallback: Haversine distance estimation ----------
 
-
 // ---------- Fallback: Haversine distance estimation ----------
 function calculateChatFareFallback(fromText, toText, vehicleType, tripType, calcBtn) {
   // Try geocoding both locations
@@ -476,7 +463,6 @@ function calculateChatFareFallback(fromText, toText, vehicleType, tripType, calc
 
 // ---------- Haversine formula ----------
 
-
 // ---------- Haversine formula ----------
 function haversineDistance(lat1, lon1, lat2, lon2) {
   var R = 6371;
@@ -490,7 +476,6 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
 }
 
 // ---------- Display fare result ----------
-
 
 // ---------- Display fare result ----------
 function displayChatFare(distanceKm, distanceText, duration, vehicleType, tripType) {
@@ -543,7 +528,6 @@ function displayChatFare(distanceKm, distanceText, duration, vehicleType, tripTy
 
 // ---------- Fallback when geocoding fails ----------
 
-
 // ---------- Fallback when geocoding fails ----------
 function displayChatFareFallback(vehicleType, tripType) {
   var fareResult = document.getElementById('chatFareResult');
@@ -557,7 +541,6 @@ function displayChatFareFallback(vehicleType, tripType) {
    ============================================ */
 
 // ---------- Clear Chat Result ----------
-
 
 // ---------- Clear Chat Result ----------
 function clearChatResult() {
@@ -575,7 +558,6 @@ function clearChatResult() {
 }
 
 // ---------- Book Now with Data Copy ----------
-
 
 // ---------- Book Now with Data Copy ----------
 function openBookingFromChatbot() {
@@ -635,7 +617,6 @@ function openBookingFromChatbot() {
 
 // ---------- FAQ Handler ----------
 
-
 // ---------- FAQ Handler ----------
 function handleChatFaq(topic) {
   var resultDiv = document.getElementById('chatResult');
@@ -674,67 +655,9 @@ function handleChatFaq(topic) {
   resultDiv.classList.remove('hidden');
 }
 
-
-
-async function lookupBookingStatus() {
-  var input = document.getElementById('statusInput');
-  var resultDiv = document.getElementById('statusResult');
-  if (!input || !resultDiv) return;
-  var query = input.value.trim();
-  if (!query) {
-    showToast('Please enter a Booking ID or Phone Number', 'error');
-    return;
-  }
-  resultDiv.innerHTML = '<div class="status-loading"><i data-lucide="loader" style="width:24px;height:24px;vertical-align:middle"></i> Looking up your booking...</div>';
-  // Use existing PratapTravels-Data Azure Function with type=status
-  var dataApiUrl = getDataApiUrl();
-  if (!dataApiUrl) {
-    resultDiv.innerHTML = '<div class="status-error">Service temporarily unavailable. Please try again later.</div>';
-    return;
-  }
-  try {
-    var separator = dataApiUrl.indexOf('?') !== -1 ? '&' : '?';
-    var fetchUrl = dataApiUrl + separator + 'type=status&query=' + encodeURIComponent(query);
-    var resp = await fetch(fetchUrl, { method: 'GET', mode: 'cors' });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    var data = await resp.json();
-    if (!data || !data.bookingId) {
-      resultDiv.innerHTML = '<div class="status-not-found"><i data-lucide="search-x" style="width:20px;height:20px;vertical-align:middle"></i> No booking found for \"' + escapeHtml(query) + '\". Please check your Booking ID or Phone Number and try again.</div>';
-      return;
-    }
-    var statusClass = data.status === 'confirmed' ? 'status-confirmed' : data.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
-    var statusIcon = lucideIcon(data.status === "confirmed" ? "circle-check" : data.status === "cancelled" ? "circle-x" : "clock", 32);
-    var vehicleInfo = data.vehicleNumber ? '<p><strong><i data-lucide="car" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.vehicleNumber) + ' (' + escapeHtml(data.vehicleType || '') + ')</p>' : '';
-    var driverInfo = data.driverName ? '<p><strong><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.driverName) + (data.driverPhone ? ' (' + escapeHtml(data.driverPhone) + ')' : '') + '</p>' : '';
-    var pickupInfo = data.pickup_address ? '<p><strong>\ud83d\udccd Pickup:</strong> ' + escapeHtml(data.pickup_address) + '</p>' : '';
-    resultDiv.innerHTML =
-      '<div class="status-card">' +
-      '<div class="status-header">' +
-      '<span class="status-icon">' + statusIcon + '</span>' +
-      '<span class="booking-status-badge ' + statusClass + '">' + data.status + '</span>' +
-      '</div>' +
-      '<div class="status-details">' +
-      '<p><strong><i data-lucide="clipboard-list" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.bookingId) + '</p>' +
-      '<p><strong><i data-lucide="user" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.name || '-') + '</p>' +
-      '<p><strong><i data-lucide="map" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.route || '-') + '</p>' +
-      '<p><strong><i data-lucide="calendar" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.date || '-') + '</p>' +
-      '<p><strong><i data-lucide="clock" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.time || '-') + '</p>' +
-      '<p><strong><i data-lucide="users" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.passengers || '-') + '</p>' +
-      '<p><strong><i data-lucide="repeat" style="width:16px;height:16px;vertical-align:middle"></i></strong> ' + escapeHtml(data.trip_type || '-') + '</p>' +
-      vehicleInfo + driverInfo + pickupInfo +
-      '</div>' +
-      '</div>';
-  } catch (e) {
-    console.error('Status lookup failed:', e);
-    resultDiv.innerHTML = '<div class="status-error"><i data-lucide="alert-triangle" style="width:20px;height:20px;vertical-align:middle"></i> Unable to look up booking status. Please try again later or contact us at +91 76313 82174.</div>';
-  }
-}
-
 /* ============================================
    FEATURE: Revenue Dashboard
    ============================================ */
-
-
 
 // ---------- Open Booking Modal (called from onclick handlers) ----------
 function openBookingModal() {
@@ -775,7 +698,6 @@ var _localRedemptionsCache = [];
 
 // ---------- Get Referral API URL ----------
 
-
 // ---------- File Upload ----------
 function handleFileUpload(event) {
   var files = event.target.files;
@@ -783,8 +705,6 @@ function handleFileUpload(event) {
     displayUploadedFiles(files);
   }
 }
-
-
 
 function displayUploadedFiles(files) {
   var container = document.getElementById("uploadedFiles");
@@ -802,8 +722,6 @@ function displayUploadedFiles(files) {
     container.appendChild(div);
   }
 }
-
-
 
 // ---------- Reset Booking Form ----------
 function resetBookingForm() {
