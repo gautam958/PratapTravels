@@ -257,6 +257,8 @@ document.addEventListener("DOMContentLoaded", function () {
       var passengersVal = document.getElementById("bookPassengers").value;
       var typeVal = type.value;
       var remarksVal = document.getElementById("bookRemarks").value.trim();
+      var fromLocationVal = document.getElementById("bookFromLocation") ? document.getElementById("bookFromLocation").value.trim() : "";
+      var toLocationVal = document.getElementById("bookToLocation") ? document.getElementById("bookToLocation").value.trim() : "";
 
       // Show loading state
       var submitBtn = document.getElementById("submitBtn");
@@ -318,6 +320,8 @@ document.addEventListener("DOMContentLoaded", function () {
         phone: phoneVal,
         email: emailVal || "",
         route: routeVal,
+        from_location: fromLocationVal,
+        to_location: toLocationVal,
         date: dateVal,
         time: timeVal,
         passengers: passengersVal,
@@ -1931,7 +1935,7 @@ function openConfirmBooking(bookingId) {
   var selPickupTime = document.getElementById("confirmPickupTime");
   var filterDate = selPickupDate ? selPickupDate.value : booking.date;
   var filterTime = selPickupTime ? selPickupTime.value : booking.time;
-  updateVehicleDropdowns(filterDate, filterTime);
+  if (typeof updateVehicleDropdowns === 'function') updateVehicleDropdowns(filterDate, filterTime);
   if (booking.vehicleId) {
     var sel = document.getElementById("vehicleSelect");
     if (sel) sel.value = booking.vehicleId;
@@ -1949,7 +1953,7 @@ function openConfirmBooking(bookingId) {
     var curBookingId = document.getElementById("confirmBookingId")
       ? document.getElementById("confirmBookingId").value
       : null;
-    updateVehicleDropdowns(d, t);
+    if (typeof updateVehicleDropdowns === 'function') updateVehicleDropdowns(d, t);
     // Re-select current vehicle if still available
     var currentVehicleId = null;
     if (curBookingId) {

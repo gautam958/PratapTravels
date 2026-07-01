@@ -354,6 +354,69 @@ function __initChatbotPlaces() {
       }
     });
   }
+  // Also initialize booking form location autocomplete
+  _initBookingFormAutocomplete(options);
+}
+
+// ---------- Booking Form Location Autocomplete ----------
+var _bookFromAutocomplete = null;
+var _bookToAutocomplete = null;
+
+function _initBookingFormAutocomplete(options) {
+  var fromInput = document.getElementById('bookFromLocation');
+  var toInput = document.getElementById('bookToLocation');
+  var indiaBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(6.5, 68.0),
+    new google.maps.LatLng(35.5, 97.5)
+  );
+  var opts = options || {
+    componentRestrictions: { country: 'in' },
+    bounds: indiaBounds,
+    fields: ['formatted_address', 'geometry', 'name']
+  };
+  if (fromInput && !_bookFromAutocomplete) {
+    _bookFromAutocomplete = new google.maps.places.Autocomplete(fromInput, opts);
+  }
+  if (toInput && !_bookToAutocomplete) {
+    _bookToAutocomplete = new google.maps.places.Autocomplete(toInput, opts);
+  }
+  // Auto-populate from/to when route dropdown changes
+  var routeSelect = document.getElementById('bookRoute');
+  if (routeSelect && !routeSelect._autoFromToInit) {
+    routeSelect._autoFromToInit = true;
+    routeSelect.addEventListener('change', function() {
+      var val = routeSelect.value;
+      if (!val || val === 'Other') return;
+      // Default: from = Deoghar, to = selected destination
+      var fi = document.getElementById('bookFromLocation');
+      var ti = document.getElementById('bookToLocation');
+      if (fi && !fi.value) fi.value = 'Deoghar, Jharkhand, India';
+      if (ti && !ti.value) ti.value = val + ', India';
+    });
+  }
+}
+
+// Lazy-load Google Maps if not yet loaded, then init booking autocomplete
+function _ensureGoogleMapsForBooking() {
+  if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+    _initBookingFormAutocomplete();
+    return;
+  }
+  if (typeof loadGoogleMapsApi === 'function' && !_googleMapsLoaded) {
+    loadGoogleMapsApi();
+  }
+  // Poll until loaded
+  var attempts = 0;
+  var check = setInterval(function() {
+    attempts++;
+    if (typeof google !== 'undefined' && google.maps && google.maps.places) {
+      clearInterval(check);
+      _initBookingFormAutocomplete();
+    } else if (attempts > 50) {
+      clearInterval(check);
+      console.warn('[Booking] Google Maps Places API did not load for booking form autocomplete');
+    }
+  }, 200);
 }
 
 // ---------- Calculate Fare via Distance Matrix ----------
@@ -594,6 +657,11 @@ function openBookingFromChatbot() {
       }
       if (!matched) routeSelect.value = 'Other';
     }
+    // Pre-fill from/to location fields
+    var fromLocInput = document.getElementById('bookFromLocation');
+    var toLocInput = document.getElementById('bookToLocation');
+    if (fromLocInput && fromText) fromLocInput.value = fromText;
+    if (toLocInput && toText) toLocInput.value = toText;
     // Pre-fill trip type
     var typeSelect = document.getElementById('bookType');
     if (typeSelect && tripType) {
@@ -672,6 +740,8 @@ function openBookingModal() {
       var refInput = document.getElementById("bookReferral");
       if (refInput) refInput.value = refCode;
     }
+    // Initialize Google Places autocomplete for booking form fields
+    _ensureGoogleMapsForBooking();
   }
 }
 
@@ -731,6 +801,11 @@ function resetBookingForm() {
     form.reset();
     form.classList.remove("hidden");
     success.classList.add("hidden");
+    // Clear from/to location autocomplete fields
+    var fi = document.getElementById('bookFromLocation');
+    var ti = document.getElementById('bookToLocation');
+    if (fi) fi.value = '';
+    if (ti) ti.value = '';
     var errors = form.querySelectorAll(".form-error");
     errors.forEach(function (el) {
       el.textContent = "";
