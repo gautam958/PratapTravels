@@ -669,7 +669,10 @@ document.addEventListener("DOMContentLoaded", function () {
       document.getElementById("userAvatar").textContent = user.initial;
 
       // Re-render dashboards after auth so tables show fresh data
-      _refreshCurrentDashboard();
+      // (function defined in admin.js — only available on admin pages)
+      if (typeof _refreshCurrentDashboard === "function") {
+        _refreshCurrentDashboard();
+      }
     }
   }
 });
