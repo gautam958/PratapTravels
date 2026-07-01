@@ -648,7 +648,7 @@ Whenever new features are added or existing components are changed in this repos
 | Category            | Technology                                                                                      |
 | ------------------- | ----------------------------------------------------------------------------------------------- |
 | **Frontend**        | HTML5, CSS3, JavaScript (ES5+/ES6+)                                                             |
-| **JS Files**        | `main.js` (all logic + dashboards), `crypto.js` (AES-GCM encryption), `i18n.js` (Hindi/English) |
+| **JS Files**        | `common.js` (shared), `index.js`, `admin.js`, `visitors.js`, `vehicle.js`, `audit-trail.js`, `revenue.js`, `driver-diary.js`, `booking.js`, `referral.js`, `crypto.js`, `i18n.js` |
 | **Styling**         | CSS Custom Properties, Flexbox, CSS Grid                                                        |
 | **Fonts**           | System (`Segoe UI`)                                                                             |
 | **Icons**           | Emoji + Inline SVGs                                                                             |
@@ -681,7 +681,16 @@ PratapTravels/
 ├── css/
 │   └── style.css                      # All styles (responsive, animations, components)
 ├── js/
-│   ├── main.js                        # All JS: referral, booking, audit, dashboards, tracking
+│   ├── common.js                      # Shared: auth, API helpers, caches, utils, visitor tracking
+│   ├── index.js                       # index.html: booking form, slider, price calc, chatbot
+│   ├── admin.js                       # admin.html: login state, dashboard refresh
+│   ├── visitors.js                    # visitors.html: KPIs, table, CSV/JSON export
+│   ├── vehicle.js                     # vehicle.html: CRUD, schedule, modals, dropdowns
+│   ├── audit-trail.js                 # audit-trail.html: table, KPIs, CSV export
+│   ├── revenue.js                     # revenue.html: revenue dashboard, driver location
+│   ├── driver-diary.js               # driver-diary.html: entries CRUD, summary, KPIs
+│   ├── booking.js                     # booking.html: table, confirm, email notifications
+│   ├── referral.js                    # referral.html: referral table, redemptions modal
 │   ├── crypto.js                      # AES-GCM encryption module (Web Crypto API)
 │   └── i18n.js                        # Hindi/English language support
 ├── azure-function/
