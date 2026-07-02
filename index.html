@@ -1458,60 +1458,49 @@
                   aria-live="polite"
                 ></span>
               </div>
-              <div class="form-group">
-                <label for="bookRoute" data-i18n="modal.route">मार्ग *</label>
-                <select id="bookRoute" name="route" required>
-                  <option
-                    value=""
-                    disabled
-                    selected
-                    data-i18n="modal.route.default"
-                  >
-                    अपना गंतव्य चुनें
-                  </option>
-                  <option value="Basukinath">Deoghar → Basukinath</option>
-                  <option value="Tarapith">Deoghar → Tarapith</option>
-                  <option value="Sultanganj">Deoghar → Sultanganj</option>
-                  <option value="Ranchi">Deoghar → Ranchi</option>
-                  <option value="Patna">Deoghar → Patna</option>
-                  <option value="Kolkata">Deoghar → Kolkata</option>
-                  <option value="Dumka">Deoghar → Dumka</option>
-                  <option value="Dhanbad">Deoghar → Dhanbad</option>
-                  <option value="Munger">Deoghar → Munger</option>
-                  <option value="Muzaffarpur">Deoghar → Muzaffarpur</option>
-                  <option value="AIIMS Deoghar">Deoghar → AIIMS</option>
-                  <option value="Waterpark">Deoghar Waterpark</option>
-                  <option value="Other">Other (mention in remarks)</option>
-                </select>
-                <span
-                  class="form-error"
-                  id="routeError"
-                  role="alert"
-                  aria-live="polite"
-                ></span>
-              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
-                <label for="bookFromLocation">📍 From Location</label>
+                <label for="bookFromLocation">📍 From Location *</label>
                 <input
                   type="text"
                   id="bookFromLocation"
                   name="fromLocation"
                   placeholder="Starting point (e.g. Deoghar)"
                   autocomplete="off"
+                  required
                 />
               </div>
               <div class="form-group">
-                <label for="bookToLocation">🏁 To Location</label>
+                <label for="bookToLocation">🏁 To Location *</label>
                 <input
                   type="text"
                   id="bookToLocation"
                   name="toLocation"
                   placeholder="Destination (e.g. Ranchi)"
                   autocomplete="off"
+                  required
                 />
               </div>
+            </div>
+            <div class="booking-fare-summary hidden" id="bookingFareSummary">
+              <div class="fare-summary-inner">
+                <div class="fare-summary-item">
+                  <span class="fare-summary-label">📏 Total KM</span>
+                  <span class="fare-summary-value" id="bookingTotalKM">—</span>
+                </div>
+                <div class="fare-summary-divider"></div>
+                <div class="fare-summary-item">
+                  <span class="fare-summary-label">⏱️ Duration</span>
+                  <span class="fare-summary-value" id="bookingDuration">—</span>
+                </div>
+                <div class="fare-summary-divider"></div>
+                <div class="fare-summary-item fare-summary-price">
+                  <span class="fare-summary-label">💰 Estimated Price</span>
+                  <span class="fare-summary-value" id="bookingEstPrice">—</span>
+                </div>
+              </div>
+              <p class="fare-summary-note">*Auto-calculated based on distance. Actual fare may vary.</p>
             </div>
             <div class="form-row">
               <div class="form-group">

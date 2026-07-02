@@ -288,12 +288,15 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
 
-      // Validate route
-      var route = document.getElementById("bookRoute");
-      if (!route.value) {
-        document.getElementById("routeError").textContent =
-          "Please select a destination";
-        route.classList.add("error");
+      // Validate from/to locations (required)
+      var fromLoc = document.getElementById("bookFromLocation");
+      var toLoc = document.getElementById("bookToLocation");
+      if (fromLoc && !fromLoc.value.trim()) {
+        fromLoc.classList.add("error");
+        valid = false;
+      }
+      if (toLoc && !toLoc.value.trim()) {
+        toLoc.classList.add("error");
         valid = false;
       }
 
@@ -321,15 +324,15 @@ document.addEventListener("DOMContentLoaded", function () {
       var nameVal = name.value.trim();
       var phoneVal = phone.value.trim();
       var emailVal = email.value.trim();
-      var routeVal = route.value;
+      var fromLocationVal = fromLoc ? fromLoc.value.trim() : "";
+      var toLocationVal = toLoc ? toLoc.value.trim() : "";
+      var routeVal = fromLocationVal + ' → ' + toLocationVal; // auto-generate route from from/to
       var dateVal = date.value;
       var timeVal =
         document.getElementById("bookTime").value || "Not specified";
       var passengersVal = document.getElementById("bookPassengers").value;
       var typeVal = type.value;
       var remarksVal = document.getElementById("bookRemarks").value.trim();
-      var fromLocationVal = document.getElementById("bookFromLocation") ? document.getElementById("bookFromLocation").value.trim() : "";
-      var toLocationVal = document.getElementById("bookToLocation") ? document.getElementById("bookToLocation").value.trim() : "";
 
       // Show loading state
       var submitBtn = document.getElementById("submitBtn");
@@ -385,6 +388,9 @@ document.addEventListener("DOMContentLoaded", function () {
       var dataApiUrl = getDataApiUrl();
 
       // Booking data to save (used for both API and local storage)
+      // Use auto-calculated fare if available
+      var autoFare = (typeof _bookingFareData !== 'undefined' && _bookingFareData && _bookingFareData.fare) ? _bookingFareData.fare : '';
+
       var bookingData = {
         bookingId: bookingId,
         name: nameVal,
@@ -393,6 +399,7 @@ document.addEventListener("DOMContentLoaded", function () {
         route: routeVal,
         from_location: fromLocationVal,
         to_location: toLocationVal,
+        fare: autoFare,
         date: dateVal,
         time: timeVal,
         passengers: passengersVal,

@@ -306,22 +306,31 @@ function _initBookingFormAutocomplete(options) {
   };
   if (fromInput && !_bookFromAutocomplete) {
     _bookFromAutocomplete = new google.maps.places.Autocomplete(fromInput, opts);
+    _bookFromAutocomplete.addListener('place_changed', function() {
+      _autoCalcBookingFare();
+    });
   }
   if (toInput && !_bookToAutocomplete) {
     _bookToAutocomplete = new google.maps.places.Autocomplete(toInput, opts);
+    _bookToAutocomplete.addListener('place_changed', function() {
+      _autoCalcBookingFare();
+    });
   }
-  // Auto-populate from/to when route dropdown changes
-  var routeSelect = document.getElementById('bookRoute');
-  if (routeSelect && !routeSelect._autoFromToInit) {
-    routeSelect._autoFromToInit = true;
-    routeSelect.addEventListener('change', function() {
-      var val = routeSelect.value;
-      if (!val || val === 'Other') return;
-      // Default: from = Deoghar, to = selected destination
-      var fi = document.getElementById('bookFromLocation');
-      var ti = document.getElementById('bookToLocation');
-      if (fi && !fi.value) fi.value = 'Deoghar, Jharkhand, India';
-      if (ti && !ti.value) ti.value = val + ', India';
+  // Also trigger on manual input changes (debounced)
+  if (fromInput && !fromInput._inputListenerAdded) {
+    fromInput._inputListenerAdded = true;
+    var debounceTimer = null;
+    fromInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function() { _autoCalcBookingFare(); }, 1500);
+    });
+  }
+  if (toInput && !toInput._inputListenerAdded) {
+    toInput._inputListenerAdded = true;
+    var debounceTimer2 = null;
+    toInput.addEventListener('input', function() {
+      clearTimeout(debounceTimer2);
+      debounceTimer2 = setTimeout(function() { _autoCalcBookingFare(); }, 1500);
     });
   }
 }
@@ -347,10 +356,122 @@ function _ensureGoogleMapsForBooking() {
       console.warn('[Booking] Google Maps Places API did not load for booking form autocomplete');
     }
   }, 200);
+}// ---------- Auto-Calculate Fare in Booking Modal ----------
+var _bookingFareData = null; // { distanceKm, distanceText, duration, fare, lowFare, highFare }
+
+function _autoCalcBookingFare() {
+  var fromInput = document.getElementById('bookFromLocation');
+  var toInput = document.getElementById('bookToLocation');
+  var summaryDiv = document.getElementById('bookingFareSummary');
+  if (!fromInput || !toInput || !summaryDiv) return;
+
+  var fromText = fromInput.value.trim();
+  var toText = toInput.value.trim();
+
+  // Need at least some text in both fields
+  if (!fromText || !toText) {
+    summaryDiv.classList.add('hidden');
+    _bookingFareData = null;
+    return;
+  }
+
+  // Show loading state
+  summaryDiv.classList.remove('hidden');
+  document.getElementById('bookingTotalKM').textContent = '⏳';
+  document.getElementById('bookingDuration').textContent = '⏳';
+  document.getElementById('bookingEstPrice').textContent = '⏳';
+
+  // Use Distance Matrix if available
+  if (typeof google !== 'undefined' && google.maps && google.maps.DistanceMatrixService) {
+    var service = new google.maps.DistanceMatrixService();
+    service.getDistanceMatrix(
+      {
+        origins: [fromText],
+        destinations: [toText],
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+        avoidHighways: false,
+        avoidTolls: false
+      },
+      function(response, status) {
+        if (status === 'OK' && response.rows[0] && response.rows[0].elements[0]) {
+          var element = response.rows[0].elements[0];
+          if (element.status === 'OK') {
+            var distanceKm = element.distance.value / 1000;
+            _computeAndDisplayBookingFare(distanceKm, element.distance.text, element.duration.text);
+            return;
+          }
+        }
+        _autoCalcBookingFareFallback(fromText, toText);
+      }
+    );
+  } else {
+    _autoCalcBookingFareFallback(fromText, toText);
+  }
+}
+
+function _autoCalcBookingFareFallback(fromText, toText) {
+  if (typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+    var geocoder = new google.maps.Geocoder();
+    var fromCoords = null;
+    var toCoords = null;
+    var done = 0;
+    function checkDone() {
+      done++;
+      if (done < 2) return;
+      if (fromCoords && toCoords) {
+        var dist = haversineDistance(fromCoords.lat, fromCoords.lng, toCoords.lat, toCoords.lng);
+        _computeAndDisplayBookingFare(dist, dist.toFixed(0) + ' km', '~' + Math.round(dist / 40 * 60) + ' mins');
+      } else {
+        document.getElementById('bookingFareSummary').classList.add('hidden');
+        _bookingFareData = null;
+      }
+    }
+    geocoder.geocode({ address: fromText + ', India' }, function(results, status) {
+      if (status === 'OK' && results[0]) fromCoords = results[0].geometry.location.toJSON();
+      checkDone();
+    });
+    geocoder.geocode({ address: toText + ', India' }, function(results, status) {
+      if (status === 'OK' && results[0]) toCoords = results[0].geometry.location.toJSON();
+      checkDone();
+    });
+  }
+}
+
+function _computeAndDisplayBookingFare(distanceKm, distanceText, duration) {
+  var cfg = (typeof PT_CONFIG !== 'undefined' && PT_CONFIG.FARE_CONFIG) ? PT_CONFIG.FARE_CONFIG : {};
+  var baseFare = cfg.baseFare || 150;
+  var perKm = cfg.perKmRate || 12;
+  var minFare = cfg.minimumFare || 300;
+  var vehicleMults = cfg.vehicleMultipliers || { sedan: 1.0, hatchback: 0.85, suv: 1.3, innova: 1.5, tempo: 2.0 };
+  var tripMults = cfg.tripMultipliers || { 'one-way': 1.0, 'round-trip': 1.8, 'full-day': 2.2, 'rental': 2.5 };
+
+  // Default: sedan, one-way
+  var vMult = vehicleMults.sedan || 1.0;
+  var tMult = tripMults['one-way'] || 1.0;
+  var rawFare = (baseFare + (distanceKm * perKm)) * vMult * tMult;
+  var minTripFare = minFare * vMult * tMult;
+  var fare = Math.max(rawFare, minTripFare);
+  var lowFare = Math.round(fare * 0.85 / 10) * 10;
+  var highFare = Math.round(fare * 1.15 / 10) * 10;
+
+  _bookingFareData = {
+    distanceKm: distanceKm,
+    distanceText: distanceText,
+    duration: duration,
+    fare: Math.round(fare),
+    lowFare: lowFare,
+    highFare: highFare
+  };
+
+  var summaryDiv = document.getElementById('bookingFareSummary');
+  if (summaryDiv) summaryDiv.classList.remove('hidden');
+  document.getElementById('bookingTotalKM').textContent = distanceText;
+  document.getElementById('bookingDuration').textContent = duration;
+  document.getElementById('bookingEstPrice').textContent = '₹' + lowFare.toLocaleString('en-IN') + ' – ₹' + highFare.toLocaleString('en-IN');
 }
 
 // ---------- Calculate Fare via Distance Matrix ----------
-
 // ---------- Calculate Fare via Distance Matrix ----------
 /* ============================================
    CALCULATOR SECTION: Distance Matrix Fare
@@ -666,6 +787,10 @@ function resetBookingForm() {
     var ti = document.getElementById('bookToLocation');
     if (fi) fi.value = '';
     if (ti) ti.value = '';
+    // Clear fare summary
+    var summaryDiv = document.getElementById('bookingFareSummary');
+    if (summaryDiv) summaryDiv.classList.add('hidden');
+    _bookingFareData = null;
     var errors = form.querySelectorAll(".form-error");
     errors.forEach(function (el) {
       el.textContent = "";
