@@ -209,6 +209,7 @@ function renderReferralTable() {
 // ---------- Refresh Referral Data ----------
 async function refreshReferralData() {
   var result = await fetchAllReferrals();
+  if (result && result.data) _allReferralsCache = result.data;
   if (result.fromServer) {
     showToast("Referral data refreshed from server.", "success");
   } else {
@@ -217,6 +218,18 @@ async function refreshReferralData() {
   renderReferralTable();
   updateReferralKPIs();
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+  if (document.getElementById("referralDashboardPanel")) {
+    withAdminPageLoader(function () {
+      return fetchAllReferrals().then(function (result) {
+        if (result && result.data) _allReferralsCache = result.data;
+        renderReferralTable();
+        updateReferralKPIs();
+      });
+    });
+  }
+});
 
 /* ============================================
    REDEMPTION HISTORY
@@ -438,6 +451,5 @@ document.addEventListener("DOMContentLoaded", function () {
    When someone uses a referral code, update
    the code owner's stats in cache
    ============================================ */
-
 
 

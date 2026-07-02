@@ -5,7 +5,12 @@
 // ---------- Audit Trail Init ----------
 document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("auditTableBody")) {
-    fetchAuditFromApi().then(function () { renderAuditTable(); updateAuditKPIs(); });
+    withAdminPageLoader(function () {
+      return fetchAuditFromApi().then(function () {
+        renderAuditTable();
+        updateAuditKPIs();
+      });
+    });
   }
 });
 

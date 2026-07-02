@@ -160,20 +160,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     updateAuditKPIs();
   }
 
-  // Auto-track this page visit (fires on every page that loads main.js)
-  // Skip tracking on admin-only pages (admin.html, visitors.html, referral.html)
+  // Auto-track only the public homepage. Admin pages must not create visitor records.
   if (typeof trackVisit === "function") {
     var currentPage = window.location.pathname.split("/").pop() || "index.html";
-    var adminPages = [
-      "admin.html",
-      "visitors.html",
-      "referral.html",
-      "booking.html",
-      "audit-trail.html",
-      "vehicle.html",
-      "revenue.html",
-    ];
-    if (adminPages.indexOf(currentPage) === -1) {
+    if (currentPage === "index.html" && !_indexVisitTracked) {
+      _indexVisitTracked = true;
       trackVisit().catch(function () {
         /* fire-and-forget tracking */
       });

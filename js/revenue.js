@@ -183,9 +183,11 @@ document.addEventListener('DOMContentLoaded', function () {
     if (calcCustomToEl) calcCustomToEl.addEventListener('input', calculateEstimatedPrice);
   }
   if (document.getElementById('revTotalBookings')) {
-    fetchRevenueData().then(function(data) {
-      if (!data) data = calculateLocalRevenue();
-      renderRevenueDashboard(data);
+    withAdminPageLoader(function () {
+      return fetchRevenueData().then(function(data) {
+        if (!data) data = calculateLocalRevenue();
+        renderRevenueDashboard(data);
+      });
     });
   }
   // Driver Diary Form

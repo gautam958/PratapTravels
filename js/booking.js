@@ -6,10 +6,12 @@
 // ---------- Booking Dashboard Init ----------
 document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("bookingTableBody")) {
-    Promise.all([fetchBookingsFromApi(), fetchVehiclesFromApi()]).then(function () {
-      renderBookingTable();
-      updateBookingKPIs();
-      if (typeof updateVehicleDropdowns === "function") updateVehicleDropdowns();
+    withAdminPageLoader(function () {
+      return Promise.all([fetchBookingsFromApi(), fetchVehiclesFromApi()]).then(function () {
+        renderBookingTable();
+        updateBookingKPIs();
+        if (typeof updateVehicleDropdowns === "function") updateVehicleDropdowns();
+      });
     });
   }
   // Note: confirmBookingForm submit handler is in common.js to avoid duplicate listeners on booking.html

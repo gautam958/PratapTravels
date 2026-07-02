@@ -4,7 +4,12 @@
 
 document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("visitorTableBody")) {
-    fetchVisitorRecordsFromApi().then(function () { renderVisitorTable(); updateKPIs(); });
+    withAdminPageLoader(function () {
+      return fetchVisitorRecordsFromApi().then(function () {
+        renderVisitorTable();
+        updateKPIs();
+      });
+    });
   }
 });
 

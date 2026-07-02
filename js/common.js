@@ -16,6 +16,77 @@ function refreshLucideIcons() {
   if (typeof lucide !== 'undefined' && lucide.createIcons) lucide.createIcons();
 }
 
+// ---------- Admin Page Loading Indicator ----------
+var _adminPageLoaderCount = 0;
+var _indexVisitTracked = false;
+
+function isAdminPage() {
+  return !!(
+    document.getElementById("authSection") &&
+    document.getElementById("dashboardSection")
+  );
+}
+
+function ensureAdminPageLoader() {
+  if (!isAdminPage()) return null;
+  var loader = document.getElementById("adminPageLoader");
+  if (!loader) {
+    loader = document.createElement("div");
+    loader.id = "adminPageLoader";
+    loader.className = "admin-page-loader";
+    loader.setAttribute("role", "status");
+    loader.setAttribute("aria-label", "Loading admin data");
+    loader.innerHTML = '<div class="admin-page-loader-spinner"></div>';
+    document.body.appendChild(loader);
+  }
+  return loader;
+}
+
+function showAdminPageLoader() {
+  var loader = ensureAdminPageLoader();
+  if (!loader) return;
+  _adminPageLoaderCount++;
+  loader.classList.add("visible");
+}
+
+function hideAdminPageLoader() {
+  var loader = document.getElementById("adminPageLoader");
+  if (!loader) return;
+  _adminPageLoaderCount = Math.max(0, _adminPageLoaderCount - 1);
+  if (_adminPageLoaderCount === 0) loader.classList.remove("visible");
+}
+
+function withAdminPageLoader(task) {
+  showAdminPageLoader();
+  return Promise.resolve()
+    .then(task)
+    .finally(function () {
+      hideAdminPageLoader();
+    });
+}
+
+(function initAdminPageLoader() {
+  if (!isAdminPage()) return;
+  showAdminPageLoader();
+  window.addEventListener("load", function () {
+    setTimeout(hideAdminPageLoader, 150);
+  });
+})();
+
+function trackIndexPageVisitOnce() {
+  var currentPage = window.location.pathname.split("/").pop() || "index.html";
+  if (currentPage !== "index.html" || _indexVisitTracked) return;
+  _indexVisitTracked = true;
+  if (typeof trackVisit === "function") {
+    trackVisit().catch(function () {
+      /* fire-and-forget tracking */
+    });
+    recordAuditTrail("page_visit", { page: currentPage });
+  }
+}
+
+document.addEventListener("DOMContentLoaded", trackIndexPageVisitOnce);
+
 // ---------- Navbar Toggle ----------
 document.addEventListener("DOMContentLoaded", function () {
   const navToggle = document.getElementById("navToggle");
@@ -743,6 +814,10 @@ var _referralDataCache = null;
 var _allReferralsCache = [];
 var _redemptionsCache = {};
 var _localRedemptionsCache = [];
+
+var PT_VISITOR_ID_KEY = "pt_vid";
+var VISITOR_RECORDS_KEY = "pt_visitor_records";
+var MAX_VISITOR_RECORDS = 5000;
 
 
 // ---------- Format Date ----------

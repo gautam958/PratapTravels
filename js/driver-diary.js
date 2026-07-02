@@ -11,8 +11,12 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.key === "Escape") closeDriverDiaryModal();
   });
   if (document.getElementById("driverDiaryTableBody")) {
-    fetchDriverDiaryFromApi().then(function () {
-      renderDriverDiaryTable(); updateDriverDiaryKPIs(); renderDriverDiarySummary();
+    withAdminPageLoader(function () {
+      return Promise.all([fetchVehiclesFromApi(), fetchDriverDiaryFromApi()]).then(function () {
+        renderDriverDiaryTable();
+        updateDriverDiaryKPIs();
+        renderDriverDiarySummary();
+      });
     });
   }
 });
