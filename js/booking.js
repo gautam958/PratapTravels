@@ -256,6 +256,48 @@ function updateBookingKPIs() {
 }
 
 
+function completeBooking(bookingId) {
+  if (!confirm("Mark this trip as completed? Completed bookings will be reflected in Revenue."))
+    return;
+  changeBookingStatus(bookingId, "completed");
+  renderBookingTable();
+  updateBookingKPIs();
+  showToast("Trip marked as completed.", "success");
+}
+
+
+
+function deleteBooking(bookingId) {
+  if (!confirm("Are you sure you want to permanently delete this booking? This cannot be undone."))
+    return;
+  var bookings = getBookings();
+  for (var i = 0; i < bookings.length; i++) {
+    if (bookings[i].bookingId === bookingId) {
+      var vehicleId = bookings[i].vehicleId;
+      if (vehicleId) {
+        updateVehicle(vehicleId, { status: "available" });
+        recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
+      }
+      bookings.splice(i, 1);
+      var apiUrl = getDataApiUrl();
+      if (apiUrl) {
+        fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          mode: "cors",
+          body: JSON.stringify({ type: "booking_delete", data: { bookingId: bookingId } }),
+        }).catch(function() {});
+      }
+      recordAuditTrail("booking_delete", { bookingId: bookingId });
+      break;
+    }
+  }
+  renderBookingTable();
+  updateBookingKPIs();
+  showToast("Booking deleted permanently.", "info");
+}
+
+
 
 function exportBookingsCSV() {
   var bookings = getBookings();
