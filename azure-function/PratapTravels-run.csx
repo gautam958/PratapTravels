@@ -261,15 +261,25 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
 
         if (dataType == "audit_trail")
         {
-            dynamic auditRecord = data.data;
-            auditRecord.serverTimestamp = DateTime.UtcNow.ToString("o");
-            auditList.Add(auditRecord);
-            File.WriteAllText(auditFilePath, JsonConvert.SerializeObject(auditList, Formatting.Indented));
+            try
+            {
+                dynamic auditRecord = data.data;
+                if (auditRecord == null)
+                    return new BadRequestObjectResult(new { error = "Audit record data is required" });
+                auditRecord.serverTimestamp = DateTime.UtcNow.ToString("o");
+                auditList.Add(auditRecord);
+                File.WriteAllText(auditFilePath, JsonConvert.SerializeObject(auditList, Formatting.Indented));
 
-            string logAuditType = auditRecord.type?.ToString() ?? "Unknown";
-            log.LogInformation("Audit event saved: " + logAuditType);
+                string logAuditType = auditRecord.type?.ToString() ?? "Unknown";
+                log.LogInformation("Audit event saved: " + logAuditType);
 
-            return new OkObjectResult(new { success = true, message = "Audit event saved" });
+                return new OkObjectResult(new { success = true, message = "Audit event saved" });
+            }
+            catch (Exception ex)
+            {
+                log.LogError("Failed to save audit trail: " + ex.Message);
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
         }
 
         if (dataType == "vehicle_data")

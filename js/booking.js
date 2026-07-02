@@ -125,13 +125,13 @@ function renderBookingTable() {
     // Action buttons: enable/disable based on booking status
     // Pending:   Edit ✅ Delete ✅ Confirm ✅ Complete ❌
     // Confirmed: Edit ✅ Delete ✅ Confirm ❌ Complete ✅
-    // Completed/Cancelled: all disabled
+    // Completed/Cancelled: Edit ❌ Delete ✅ Confirm ❌ Complete ❌
     var isPending = b.status === 'pending';
     var isConfirmed = b.status === 'confirmed';
     var isTerminal = b.status === 'completed' || b.status === 'cancelled';
     var actionBtn =
       '<button class="btn-action-edit" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Edit Booking"' + (isTerminal ? ' disabled' : '') + '><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
-      '<button class="btn-action-delete" onclick="deleteBooking(\'' + b.bookingId + '\')" title="Delete Booking"' + (isTerminal ? ' disabled' : '') + '><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+      '<button class="btn-action-delete" onclick="deleteBooking(\'' + b.bookingId + '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle"' + (!isPending ? ' disabled' : '') + '><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-confirm" onclick="completeBooking(\'' + b.bookingId + '\')" title="Mark Trip Completed"' + (!isConfirmed ? ' disabled' : '') + '><i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle"></i></button>';
     tr.innerHTML =
@@ -283,6 +283,9 @@ async function deleteBooking(bookingId) {
     return;
   }
 
+  // Capture vehicle info before deletion for audit trail
+  var vehicleId = deletedBooking.vehicleId;
+
   var apiUrl = getDataApiUrl();
   if (apiUrl) {
     try {
@@ -306,26 +309,24 @@ async function deleteBooking(bookingId) {
     }
   }
 
+  // Release vehicle if one was assigned (updates local cache + API)
+  if (vehicleId) {
+    updateVehicle(vehicleId, { status: "available" });
+  }
+
+  // Remove from local cache
   for (var j = 0; j < bookings.length; j++) {
     if (bookings[j].bookingId === bookingId) {
-      var vehicleId = bookings[j].vehicleId;
-      if (vehicleId) {
-        var vehicles = getVehicles();
-        for (var v = 0; v < vehicles.length; v++) {
-          if (vehicles[v].id === vehicleId) {
-            vehicles[v].status = "available";
-            vehicles[v].updatedAt = new Date().toISOString();
-            saveVehicles(vehicles);
-            break;
-          }
-        }
-        recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
-      }
       bookings.splice(j, 1);
-      recordAuditTrail("booking_delete", { bookingId: bookingId });
       break;
     }
   }
+  _bookingsCache = bookings;
+
+  // Record audit trail (fire-and-forget)
+  // Note: vehicle_released audit is already recorded by updateVehicle() above
+  recordAuditTrail("booking_delete", { bookingId: bookingId });
+
   renderBookingTable();
   updateBookingKPIs();
   showToast("Booking deleted permanently.", "info");
