@@ -167,16 +167,6 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             var pendingCount = bookingsList.Count(b => b.status?.ToString() == "pending");
             var cancelledCount = bookingsList.Count(b => b.status?.ToString() == "cancelled");
 
-            var routePrices = new Dictionary<string, decimal>
-            {
-                { "Basukinath", 1750 }, { "Tarapith", 2200 }, { "Sultanganj", 3200 },
-                { "Ranchi", 3500 }, { "Patna", 3800 }, { "Kolkata", 4500 },
-                { "Dumka", 1500 }, { "Dhanbad", 3200 }, { "Munger", 2800 },
-                { "Muzaffarpur", 4000 }, { "AIIMS Deoghar", 800 }, { "Waterpark", 600 },
-                { "Sarath", 1800 }, { "Madhupur", 1200 }, { "Jamtara", 1400 },
-                { "Budhai", 500 }
-            };
-
             decimal totalRevenue = 0;
             var revenueByRoute = new Dictionary<string, object>();
             var revenueByMonth = new Dictionary<string, object>();
@@ -184,14 +174,18 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             foreach (var b in revenueBookings)
             {
                 string route = b.route?.ToString() ?? "";
-                decimal basePrice = routePrices.ContainsKey(route) ? routePrices[route] : 1500;
 
-                string tripType = b.trip_type?.ToString() ?? "";
-                decimal multiplier = 1.0m;
-                if (tripType.Contains("Round")) multiplier = 1.8m;
-                else if (tripType.Contains("Full Day")) multiplier = 2.5m;
+                // Use the actual fare from the booking, fallback to 500 for old bookings without fare
+                decimal bookingRevenue = 0;
+                if (b.fare != null && decimal.TryParse(b.fare?.ToString(), out decimal parsedFare) && parsedFare > 0)
+                {
+                    bookingRevenue = parsedFare;
+                }
+                else
+                {
+                    bookingRevenue = 500; // fallback for old bookings without fare set
+                }
 
-                decimal bookingRevenue = basePrice * multiplier;
                 totalRevenue += bookingRevenue;
 
                 if (!revenueByRoute.ContainsKey(route))
