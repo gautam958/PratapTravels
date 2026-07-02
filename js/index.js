@@ -333,6 +333,14 @@ function _initBookingFormAutocomplete(options) {
       debounceTimer2 = setTimeout(function() { _autoCalcBookingFare(); }, 1500);
     });
   }
+  // Recalculate fare when trip type changes
+  var typeSelect = document.getElementById('bookType');
+  if (typeSelect && !typeSelect._tripTypeListenerAdded) {
+    typeSelect._tripTypeListenerAdded = true;
+    typeSelect.addEventListener('change', function() {
+      _autoCalcBookingFare();
+    });
+  }
 }
 
 // Lazy-load Google Maps if not yet loaded, then init booking autocomplete
@@ -446,9 +454,11 @@ function _computeAndDisplayBookingFare(distanceKm, distanceText, duration) {
   var vehicleMults = cfg.vehicleMultipliers || { sedan: 1.0, hatchback: 0.85, suv: 1.3, innova: 1.5, tempo: 2.0 };
   var tripMults = cfg.tripMultipliers || { 'one-way': 1.0, 'round-trip': 1.8, 'full-day': 2.2, 'rental': 2.5 };
 
-  // Default: sedan, one-way
+  // Read selected trip type from booking modal
+  var bookTypeEl = document.getElementById('bookType');
+  var selectedTripType = (bookTypeEl && bookTypeEl.value) ? bookTypeEl.value : 'one-way';
   var vMult = vehicleMults.sedan || 1.0;
-  var tMult = tripMults['one-way'] || 1.0;
+  var tMult = tripMults[selectedTripType] || 1.0;
   var rawFare = (baseFare + (distanceKm * perKm)) * vMult * tMult;
   var minTripFare = minFare * vMult * tMult;
   var fare = Math.max(rawFare, minTripFare);

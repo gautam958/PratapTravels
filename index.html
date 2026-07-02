@@ -1458,6 +1458,39 @@
                   aria-live="polite"
                 ></span>
               </div>
+              <div class="form-group">
+                <label for="bookType" data-i18n="modal.type"
+                  >यात्रा प्रकार *</label
+                >
+                <select id="bookType" name="type" required>
+                  <option
+                    value=""
+                    disabled
+                    selected
+                    data-i18n="modal.type.default"
+                  >
+                    यात्रा प्रकार चुनें
+                  </option>
+                  <option value="one-way" data-i18n="modal.type.one-way">
+                    एक तरफ़ा (One Way)
+                  </option>
+                  <option value="round-trip" data-i18n="modal.type.round-trip">
+                    राउंड ट्रिप (Round Trip)
+                  </option>
+                  <option value="full-day" data-i18n="modal.type.full-day">
+                    पूरा दिन / बहु-दिवसीय
+                  </option>
+                  <option value="rental" data-i18n="modal.type.rental">
+                    वाहन किराया
+                  </option>
+                </select>
+                <span
+                  class="form-error"
+                  id="typeError"
+                  role="alert"
+                  aria-live="polite"
+                ></span>
+              </div>
             </div>
             <div class="form-row">
               <div class="form-group">
@@ -1534,39 +1567,6 @@
                   <option value="6">6 यात्री</option>
                   <option value="7">7 यात्री</option>
                 </select>
-              </div>
-              <div class="form-group">
-                <label for="bookType" data-i18n="modal.type"
-                  >यात्रा प्रकार *</label
-                >
-                <select id="bookType" name="type" required>
-                  <option
-                    value=""
-                    disabled
-                    selected
-                    data-i18n="modal.type.default"
-                  >
-                    यात्रा प्रकार चुनें
-                  </option>
-                  <option value="one-way" data-i18n="modal.type.one-way">
-                    एक तरफ़ा
-                  </option>
-                  <option value="round-trip" data-i18n="modal.type.round-trip">
-                    राउंड ट्रिप
-                  </option>
-                  <option value="full-day" data-i18n="modal.type.full-day">
-                    पूरा दिन / बहु-दिवसीय
-                  </option>
-                  <option value="rental" data-i18n="modal.type.rental">
-                    वाहन किराया
-                  </option>
-                </select>
-                <span
-                  class="form-error"
-                  id="typeError"
-                  role="alert"
-                  aria-live="polite"
-                ></span>
               </div>
             </div>
             <div class="form-row">
