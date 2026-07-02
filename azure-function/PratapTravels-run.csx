@@ -417,6 +417,48 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Booking updated" });
         }
 
+        if (dataType == "booking_delete")
+        {
+            string bookingId = data.id?.ToString() ?? data.data?.bookingId?.ToString();
+
+            if (string.IsNullOrEmpty(bookingId))
+                return new BadRequestObjectResult(new { error = "Booking id is required for delete" });
+
+            string releasedVehicleId = null;
+            bool deleted = false;
+            for (int i = 0; i < bookingsList.Count; i++)
+            {
+                if (bookingsList[i].bookingId?.ToString() == bookingId)
+                {
+                    releasedVehicleId = bookingsList[i].vehicleId?.ToString();
+                    bookingsList.RemoveAt(i);
+                    deleted = true;
+                    break;
+                }
+            }
+
+            if (!deleted)
+                return new NotFoundObjectResult(new { error = "Booking " + bookingId + " not found" });
+
+            if (releasedVehicleId != null)
+            {
+                for (int i = 0; i < vehiclesList.Count; i++)
+                {
+                    if (vehiclesList[i].id?.ToString() == releasedVehicleId)
+                    {
+                        vehiclesList[i].status = "available";
+                        vehiclesList[i].updatedAt = DateTime.UtcNow.ToString("o");
+                        break;
+                    }
+                }
+            }
+
+            File.WriteAllText(bookingsFilePath, JsonConvert.SerializeObject(bookingsList, Formatting.Indented));
+            File.WriteAllText(vehiclesFilePath, JsonConvert.SerializeObject(vehiclesList, Formatting.Indented));
+            log.LogInformation("Booking deleted: " + bookingId);
+            return new OkObjectResult(new { success = true, message = "Booking deleted", releasedVehicleId = releasedVehicleId });
+        }
+
         if (dataType == "vehicle_update")
         {
             string vehicleId = data.id?.ToString();
@@ -549,7 +591,7 @@ public static async Task<IActionResult> Run(HttpRequest req, ILogger log)
             return new OkObjectResult(new { success = true, message = "Driver diary entry deleted" });
         }
 
-        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data', 'booking_update', 'booking_confirmation', 'audit_trail', 'vehicle_data', 'vehicle_update', 'vehicle_delete', 'driver_diary_data', 'driver_diary_update', or 'driver_diary_delete'." });
+        return new BadRequestObjectResult(new { error = "Unknown data type. Expected 'booking_data', 'booking_update', 'booking_delete', 'booking_confirmation', 'audit_trail', 'vehicle_data', 'vehicle_update', 'vehicle_delete', 'driver_diary_data', 'driver_diary_update', or 'driver_diary_delete'." });
     }
 
     // ================================================================

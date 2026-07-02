@@ -267,27 +267,61 @@ function completeBooking(bookingId) {
 
 
 
-function deleteBooking(bookingId) {
+async function deleteBooking(bookingId) {
   if (!confirm("Are you sure you want to permanently delete this booking? This cannot be undone."))
     return;
   var bookings = getBookings();
+  var deletedBooking = null;
   for (var i = 0; i < bookings.length; i++) {
     if (bookings[i].bookingId === bookingId) {
-      var vehicleId = bookings[i].vehicleId;
+      deletedBooking = bookings[i];
+      break;
+    }
+  }
+  if (!deletedBooking) {
+    showToast("Booking not found.", "error");
+    return;
+  }
+
+  var apiUrl = getDataApiUrl();
+  if (apiUrl) {
+    try {
+      var resp = await fetch(apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        body: JSON.stringify({ type: "booking_delete", id: bookingId, data: { bookingId: bookingId } }),
+      });
+      if (!resp.ok) {
+        var errText = "";
+        try {
+          errText = await resp.text();
+        } catch (_) {}
+        throw new Error("HTTP " + resp.status + (errText ? ": " + errText : ""));
+      }
+    } catch (e) {
+      console.error("[Bookings] Delete failed:", e);
+      showToast("Booking delete failed on server. Please try again.", "error");
+      return;
+    }
+  }
+
+  for (var j = 0; j < bookings.length; j++) {
+    if (bookings[j].bookingId === bookingId) {
+      var vehicleId = bookings[j].vehicleId;
       if (vehicleId) {
-        updateVehicle(vehicleId, { status: "available" });
+        var vehicles = getVehicles();
+        for (var v = 0; v < vehicles.length; v++) {
+          if (vehicles[v].id === vehicleId) {
+            vehicles[v].status = "available";
+            vehicles[v].updatedAt = new Date().toISOString();
+            saveVehicles(vehicles);
+            break;
+          }
+        }
         recordAuditTrail("vehicle_released", { bookingId: bookingId, vehicleId: vehicleId });
       }
-      bookings.splice(i, 1);
-      var apiUrl = getDataApiUrl();
-      if (apiUrl) {
-        fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          mode: "cors",
-          body: JSON.stringify({ type: "booking_delete", data: { bookingId: bookingId } }),
-        }).catch(function() {});
-      }
+      bookings.splice(j, 1);
       recordAuditTrail("booking_delete", { bookingId: bookingId });
       break;
     }
