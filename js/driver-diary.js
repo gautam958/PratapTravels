@@ -150,6 +150,7 @@ function openDriverDiaryModal(editEntry) {
     document.getElementById("ddStartPoint").value = editEntry.startPoint || "";
     document.getElementById("ddEndPoint").value = editEntry.endPoint || "";
     document.getElementById("ddTotalKM").value = editEntry.totalKM || "";
+    document.getElementById("ddRunningCost").value = editEntry.runningCost || "";
     document.getElementById("ddDriverPhone").value = editEntry.driverPhone || "";
     document.getElementById("ddNotes").value = editEntry.notes || "";
     if (editEntry.date) {
@@ -231,10 +232,11 @@ async function saveDriverDiaryEntry(e) {
   var startPoint = document.getElementById("ddStartPoint").value.trim();
   var endPoint = document.getElementById("ddEndPoint").value.trim();
   var totalKM = document.getElementById("ddTotalKM").value;
+  var runningCost = document.getElementById("ddRunningCost").value;
   var driverPhone = document.getElementById("ddDriverPhone").value.trim();
   var dateTime = document.getElementById("ddDateTime").value;
   var notes = document.getElementById("ddNotes").value.trim();
-  if (!vehicleId || !driverName || !startPoint || !endPoint || !totalKM || !dateTime) {
+  if (!vehicleId || !driverName || !startPoint || !endPoint || !totalKM || !runningCost || !dateTime) {
     showToast("कृपया सभी आवश्यक फ़ील्ड भरें।", "error");
     return;
   }
@@ -246,6 +248,7 @@ async function saveDriverDiaryEntry(e) {
     startPoint: startPoint,
     endPoint: endPoint,
     totalKM: parseFloat(totalKM),
+    runningCost: parseFloat(runningCost),
     driverPhone: driverPhone || "",
     date: new Date(dateTime).toISOString(),
     notes: notes || "",
@@ -309,6 +312,7 @@ function updateDriverDiaryKPIs() {
   var total = entries.length;
   var vehicles = {};
   var totalKM = 0;
+  var totalCost = 0;
   var todayCount = 0;
   var todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -317,15 +321,18 @@ function updateDriverDiaryKPIs() {
     var e = entries[i];
     if (e.vehicleId) vehicles[e.vehicleId] = true;
     totalKM += parseFloat(e.totalKM) || 0;
+    totalCost += parseFloat(e.runningCost) || 0;
     if (new Date(e.date).getTime() >= todayMs) todayCount++;
   }
   var elTotal = document.getElementById("ddKpiTotal");
   var elVehicles = document.getElementById("ddKpiVehicles");
   var elTotalKM = document.getElementById("ddKpiTotalKM");
+  var elTotalCost = document.getElementById("ddKpiTotalCost");
   var elToday = document.getElementById("ddKpiToday");
   if (elTotal) elTotal.textContent = total;
   if (elVehicles) elVehicles.textContent = Object.keys(vehicles).length;
   if (elTotalKM) elTotalKM.textContent = Math.round(totalKM);
+  if (elTotalCost) elTotalCost.textContent = '\u20b9' + Math.round(totalCost).toLocaleString();
   if (elToday) elToday.textContent = todayCount;
 }
 
@@ -358,10 +365,12 @@ function renderDriverDiarySummary() {
         driverName: e.driverName || "-",
         trips: 0,
         totalKM: 0,
+      totalCost: 0,
       };
     }
     summary[key].trips++;
     summary[key].totalKM += parseFloat(e.totalKM) || 0;
+    summary[key].totalCost += parseFloat(e.runningCost) || 0;
   }
 
   var rows = Object.values(summary).sort(function (a, b) {
@@ -376,6 +385,7 @@ function renderDriverDiarySummary() {
       "<td>" + escapeHtml(row.driverName) + "</td>" +
       "<td><b>" + row.trips + "</b></td>" +
       "<td><b>" + Math.round(row.totalKM) + " km</b></td>" +
+      "<td><b>₹" + Math.round(row.totalCost).toLocaleString() + "</b></td>" +
       "<td>" + avgKM + " km</td>";
     tbody.appendChild(tr);
   });
@@ -439,6 +449,7 @@ function renderDriverDiaryTable() {
       "<td>" + escapeHtml(e.startPoint || "-") + "</td>" +
       "<td>" + escapeHtml(e.endPoint || "-") + "</td>" +
       "<td><b>" + escapeHtml(String(e.totalKM || "-")) + " km</b></td>" +
+      "<td><b>₹" + escapeHtml(String(e.runningCost || "0")) + "</b></td>" +
       "<td>" + escapeHtml(e.driverName || "-") + "</td>" +
       "<td>" + escapeHtml(e.driverPhone || "-") + "</td>" +
       "<td><small>" + formatDate(e.savedAt || e.date) + "</small></td>" +
@@ -515,9 +526,9 @@ function exportDriverDiaryCSV() {
     showToast(I18N.t("dd.toast.noData"), "error");
     return;
   }
-  var headers = ["Date", "Vehicle Number", "Start Point", "End Point", "Total KM", "Driver Name", "Driver Phone", "Notes", "Created"];
+  var headers = ["Date", "Vehicle Number", "Start Point", "End Point", "Total KM", "Running Cost (₹)", "Driver Name", "Driver Phone", "Notes", "Created"];
   var rows = entries.map(function (e) {
-    return [e.date, e.vehicleNumber, e.startPoint, e.endPoint, e.totalKM, e.driverName, e.driverPhone, e.notes, e.savedAt || e.date];
+    return [e.date, e.vehicleNumber, e.startPoint, e.endPoint, e.totalKM, e.runningCost || 0, e.driverName, e.driverPhone, e.notes, e.savedAt || e.date];
   });
   var csv = headers.join(",") + "\n" + rows.map(function (row) {
     return row.map(function (c) {

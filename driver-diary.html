@@ -84,7 +84,7 @@
         </div>
 
         <!-- Driver Diary KPIs -->
-        <div class="referral-kpi-grid" style="grid-template-columns:repeat(4,1fr);">
+        <div class="referral-kpi-grid" style="grid-template-columns:repeat(5,1fr);">
           <div class="stat-card">
             <div class="stat-icon">📔</div>
             <div class="stat-number" id="ddKpiTotal">0</div>
@@ -99,6 +99,11 @@
             <div class="stat-icon">📏</div>
             <div class="stat-number" id="ddKpiTotalKM">0</div>
             <div class="stat-label" data-i18n="dd.kpi.totalKM">कुल किमी</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-number" id="ddKpiTotalCost">₹0</div>
+            <div class="stat-label" data-i18n="dd.kpi.totalCost">कुल लागत</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon">📅</div>
@@ -120,6 +125,7 @@
                   <th data-i18n="dd.summary.driver">ड्राइवर</th>
                   <th data-i18n="dd.summary.totalTrips">कुल ट्रिप</th>
                   <th data-i18n="dd.summary.totalKM">कुल किमी</th>
+                  <th data-i18n="dd.summary.totalCost">कुल लागत</th>
                   <th data-i18n="dd.summary.avgKM">औसत किमी</th>
                 </tr>
               </thead>
@@ -161,6 +167,7 @@
                   <th data-i18n="dd.table.th.startPoint">प्रारंभ बिंदु</th>
                   <th data-i18n="dd.table.th.endPoint">गंतव्य</th>
                   <th data-i18n="dd.table.th.totalKM">कुल किमी</th>
+                  <th data-i18n="dd.table.th.runningCost">चलाने की लागत</th>
                   <th data-i18n="dd.table.th.driverName">ड्राइवर नाम</th>
                   <th data-i18n="dd.table.th.driverPhone">ड्राइवर फ़ोन</th>
                   <th data-i18n="dd.table.th.created">बनाया</th>
@@ -219,9 +226,17 @@
                 <input type="number" id="ddTotalKM" placeholder="0" min="0" step="0.1" required />
               </div>
               <div class="form-group">
+                <label data-i18n="dd.modal.runningCost">⛽ वाहन चलाने की लागत (₹) *</label>
+                <input type="number" id="ddRunningCost" placeholder="0" min="0" step="1" required />
+              </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px">
+              <div class="form-group">
                 <label data-i18n="dd.modal.driverPhone">📞 ड्राइवर फ़ोन</label>
                 <input type="tel" id="ddDriverPhone" data-i18n-placeholder="dd.modal.driverPhone.placeholder" placeholder="फ़ोन नंबर" />
               </div>
+              <div></div>
             </div>
             
             <div class="form-group">

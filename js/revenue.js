@@ -38,14 +38,15 @@ function calculateLocalRevenue() {
       completedCount++;
       var route = b.route || 'Unknown';
       if (!routeMap[route]) routeMap[route] = { route: route, count: 0, revenue: 0 };
+      var fareAmount = Number(b.fare) || 500; // fallback for old bookings without fare
       routeMap[route].count++;
-      routeMap[route].revenue += 500; // Default fare per completed booking
-      totalRevenue += 500;
+      routeMap[route].revenue += fareAmount;
+      totalRevenue += fareAmount;
       if (b.date) {
         var monthKey = b.date.substring(0, 7);
         if (!monthMap[monthKey]) monthMap[monthKey] = { month: monthKey, count: 0, revenue: 0 };
         monthMap[monthKey].count++;
-        monthMap[monthKey].revenue += 500;
+        monthMap[monthKey].revenue += fareAmount;
       }
     }
   }

@@ -130,7 +130,7 @@ function renderBookingTable() {
     var isConfirmed = b.status === 'confirmed';
     var isTerminal = b.status === 'completed' || b.status === 'cancelled';
     var actionBtn =
-      '<button class="btn-action-edit" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Edit Booking"' + (isTerminal ? ' disabled' : '') + '><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
+      '<button class="btn-action-edit" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Edit Booking"><i data-lucide="pencil" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-delete" onclick="deleteBooking(\'' + b.bookingId + '\')" title="Delete Booking"><i data-lucide="trash-2" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-confirm" onclick="openConfirmBooking(\'' + b.bookingId + '\')" title="Confirm & Assign Vehicle"' + (!isPending ? ' disabled' : '') + '><i data-lucide="circle-check" style="width:16px;height:16px;vertical-align:middle"></i></button> ' +
       '<button class="btn-action-confirm" onclick="completeBooking(\'' + b.bookingId + '\')" title="Mark Trip Completed"' + (!isConfirmed ? ' disabled' : '') + '><i data-lucide="check-circle" style="width:16px;height:16px;vertical-align:middle"></i></button>';

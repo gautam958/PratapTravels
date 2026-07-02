@@ -337,15 +337,17 @@
             <input type="hidden" id="confirmBookingId" value="" />
             <!-- Fare Amount -->
             <div class="form-group">
-              <label data-i18n="booking.confirm.fare">💰 किराया (₹)</label>
+              <label data-i18n="booking.confirm.fare">💰 किराया (₹) *</label>
               <input
                 type="number"
                 id="confirmFare"
                 min="0"
                 step="any"
+                required
                 data-i18n-placeholder="booking.confirm.fare.placeholder"
                 placeholder="वास्तविक किराया राशि दर्ज करें"
               />
+              <span class="form-error" id="fareError" role="alert" aria-live="polite"></span>
             </div>
             <!-- From / To Location with Google Places Autocomplete -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">

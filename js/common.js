@@ -2431,6 +2431,12 @@ document.addEventListener("DOMContentLoaded", function () {
         showToast('Please select a vehicle', 'error');
         return;
       }
+      if (!fareVal) {
+        showToast('Please enter the fare amount', 'error');
+        var fareError = document.getElementById('fareError');
+        if (fareError) fareError.textContent = 'Fare is required';
+        return;
+      }
       if (!pickupDate) {
         showToast('Please select pickup date', 'error');
         return;
@@ -2456,8 +2462,32 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       }
       _bookingsCache = bookings;
+      // Preserve terminal status: if booking was completed or cancelled, don't change it to confirmed
+      var originalStatus = '';
+      for (var i = 0; i < bookings.length; i++) {
+        if (bookings[i].bookingId === bookingId) {
+          originalStatus = bookings[i].status;
+          break;
+        }
+      }
       // Now assign vehicle (sets status=confirmed, vehicleId, persists to API, updates vehicle status)
       assignVehicleToBooking(bookingId, vehicleId);
+      // If the booking was already completed or cancelled, restore original status and release vehicle
+      if (originalStatus === 'completed' || originalStatus === 'cancelled') {
+        for (var i = 0; i < bookings.length; i++) {
+          if (bookings[i].bookingId === bookingId) {
+            bookings[i].status = originalStatus;
+            bookings[i].needs_notification = false;
+            break;
+          }
+        }
+        _bookingsCache = bookings;
+        persistBookingToApi(bookingId, { status: originalStatus, needs_notification: false });
+        // Release vehicle since this is an edit, not a new booking
+        if (vehicleId) {
+          updateVehicle(vehicleId, { status: 'available' });
+        }
+      }
       // Persist the additional pickup/vehicle details to API (status+vehicleId already persisted by assignVehicleToBooking)
       persistBookingToApi(bookingId, {
         pickup_date: pickupDate,
