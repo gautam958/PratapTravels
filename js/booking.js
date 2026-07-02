@@ -6,7 +6,11 @@
 // ---------- Booking Dashboard Init ----------
 document.addEventListener("DOMContentLoaded", function () {
   if (document.getElementById("bookingTableBody")) {
-    fetchBookingsFromApi().then(function () { renderBookingTable(); updateBookingKPIs(); });
+    Promise.all([fetchBookingsFromApi(), fetchVehiclesFromApi()]).then(function () {
+      renderBookingTable();
+      updateBookingKPIs();
+      if (typeof updateVehicleDropdowns === "function") updateVehicleDropdowns();
+    });
   }
   // Note: confirmBookingForm submit handler is in common.js to avoid duplicate listeners on booking.html
   var confirmModalClose = document.getElementById("confirmBookingModalClose");

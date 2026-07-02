@@ -131,9 +131,10 @@
             <button
               class="btn-refresh"
               onclick="
-                fetchBookingsFromApi().then(function () {
+                Promise.all([fetchBookingsFromApi(), fetchVehiclesFromApi()]).then(function () {
                   renderBookingTable();
                   updateBookingKPIs();
+                  updateVehicleDropdowns();
                   showToast('Refreshed.', 'success');
                 })
               "
@@ -248,9 +249,10 @@
               <button
                 class="btn-refresh"
                 onclick="
-                  fetchBookingsFromApi().then(function () {
+                  Promise.all([fetchBookingsFromApi(), fetchVehiclesFromApi()]).then(function () {
                     renderBookingTable();
                     updateBookingKPIs();
+                    updateVehicleDropdowns();
                   })
                 "
               >
@@ -617,8 +619,8 @@
       });
     </script>
     <script src="js/common.js"></script>
-<script src="js/booking.js"></script>
     <script src="js/vehicle.js"></script>
+    <script src="js/booking.js"></script>
       <script src="https://unpkg.com/lucide@0.344.0"></script>
     <script>document.addEventListener("DOMContentLoaded", function() { lucide.createIcons(); });</script>
   </body>

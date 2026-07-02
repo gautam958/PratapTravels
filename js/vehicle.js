@@ -364,11 +364,13 @@ function updateVehicleDropdowns(filterDate, filterTime) {
         }
       }
     }
-    // Add 'Add New' option
-    var addOpt = document.createElement("option");
-    addOpt.value = "__new__";
-    addOpt.textContent = "+ Add New Vehicle";
-    sel.appendChild(addOpt);
+    // Add quick-add option only on pages that include the quick vehicle modal.
+    if (document.getElementById("quickVehicleModal")) {
+      var addOpt = document.createElement("option");
+      addOpt.value = "__new__";
+      addOpt.textContent = "+ Add New Vehicle";
+      sel.appendChild(addOpt);
+    }
     if (currentVal) sel.value = currentVal;
   });
 }
