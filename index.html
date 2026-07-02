@@ -693,37 +693,17 @@
           <div class="line"></div>
         </div>
         <div class="calculator-card">
-          <div class="calculator-form">
+          <div class="calculator-form calc-locations-row">
             <div class="calc-field">
-              <label data-i18n="calc.route"><i data-lucide="map" style="width:16px;height:16px"></i> Route</label>
-              <select id="calcRoute">
-                <option value="" data-i18n="calc.route.default">
-                  Select destination
-                </option>
-                <option value="Basukinath">Deoghar → Basukinath</option>
-                <option value="Tarapith">Deoghar → Tarapith</option>
-                <option value="Sultanganj">Deoghar → Sultanganj</option>
-                <option value="Ranchi">Deoghar → Ranchi</option>
-                <option value="Patna">Deoghar → Patna</option>
-                <option value="Kolkata">Deoghar → Kolkata</option>
-                <option value="Dumka">Deoghar → Dumka</option>
-                <option value="Dhanbad">Deoghar → Dhanbad</option>
-                <option value="Munger">Deoghar → Munger</option>
-                <option value="Muzaffarpur">Deoghar → Muzaffarpur</option>
-                <option value="AIIMS Deoghar">Deoghar → AIIMS</option>
-                <option value="Waterpark">Deoghar Waterpark</option>
-                <option value="Sarath">Deoghar → Sarath</option>
-                <option value="Madhupur">Deoghar → Madhupur</option>
-                <option value="Jamtara">Deoghar → Jamtara</option>
-                <option value="Budhai">Deoghar → Budhai</option>
-                <option value="other">Other (custom route)</option>
-              </select>
-              <div id="calcCustomRoute" class="calc-custom-route hidden">
-                <input type="text" id="calcCustomFrom" placeholder="From (e.g. Deoghar)" data-i18n-placeholder="calc.custom.from" class="calc-custom-input" />
-                <input type="text" id="calcCustomTo" placeholder="To (e.g. City Name)" data-i18n-placeholder="calc.custom.to" class="calc-custom-input" />
-                <input type="number" id="calcCustomDistance" placeholder="Distance (km)" data-i18n-placeholder="calc.custom.distance" class="calc-custom-input" min="1" max="2000" />
-              </div>
+              <label data-i18n="calc.from"><i data-lucide="map-pin" style="width:16px;height:16px"></i> From Location</label>
+              <input type="text" id="calcFrom" placeholder="Pickup location (e.g. Deoghar)" data-i18n-placeholder="calc.from.placeholder" autocomplete="off" />
             </div>
+            <div class="calc-field">
+              <label data-i18n="calc.to"><i data-lucide="flag" style="width:16px;height:16px"></i> To Location</label>
+              <input type="text" id="calcTo" placeholder="Destination (e.g. Ranchi)" data-i18n-placeholder="calc.to.placeholder" autocomplete="off" />
+            </div>
+          </div>
+          <div class="calculator-form">
             <div class="calc-field">
               <label data-i18n="calc.vehicle"><i data-lucide="car" style="width:16px;height:16px"></i> Vehicle Type</label>
               <select id="calcVehicle">
@@ -761,10 +741,15 @@
                 </option>
               </select>
             </div>
+            <div class="calc-field calc-btn-field">
+              <button class="btn btn-primary" onclick="calculateSectionFare()" style="width:100%;padding:14px 20px;">
+                💰 <span data-i18n="calc.getFare">Get Fare</span>
+              </button>
+            </div>
           </div>
           <div id="calcResult" class="calc-result">
             <p class="calc-placeholder">
-              📍 Select a route to see estimated fare
+              📍 Enter locations and click Get Fare to see estimated fare
             </p>
           </div>
         </div>
@@ -1350,75 +1335,28 @@
       🚗 <span data-i18n="floating.btn">बुक करें</span>
     </button>
 
-    <!-- Floating Chatbot - Fare Estimator -->
-    <div class="chatbot-fab" id="chatbotFab" onclick="toggleChatbot()" title="Fare Calculator">
-      <span class="chatbot-fab-icon">💬</span>
+    <!-- Floating Chatbot - FAQ Only -->
+    <div class="chatbot-fab" id="chatbotFab" onclick="initChatbotMapAndToggle()" title="Help & FAQs">
+      <span class="chatbot-fab-icon">❓</span>
     </div>
 
     <div class="chatbot-panel hidden" id="chatbotPanel">
       <div class="chatbot-header">
         <div class="chatbot-header-info">
-          <span class="chatbot-header-avatar">🚗</span>
+          <span class="chatbot-header-avatar">💬</span>
           <div>
-            <div class="chatbot-header-title" data-i18n="chatbot.title">फ़ेयर कैलकुलेटर</div>
-            <div class="chatbot-header-sub" data-i18n="chatbot.subtitle">अनुमानित किराया जानें</div>
+            <div class="chatbot-header-title" data-i18n="chatbot.faq.title">अक्सर पूछे जाने वाले सवाल</div>
+            <div class="chatbot-header-sub" data-i18n="chatbot.faq.subtitle">हम कैसे मदद कर सकते हैं?</div>
           </div>
         </div>
-        <button class="chatbot-close" onclick="toggleChatbot()" aria-label="Close">✕</button>
+        <button class="chatbot-close" onclick="toggleChatbot()" aria-label="Close" id="chatbotCloseBtn">✕</button>
       </div>
 
       <div class="chatbot-body" id="chatbotBody">
         <!-- Welcome message -->
         <div class="chat-msg bot">
           <div class="chat-msg-avatar">🤖</div>
-          <div class="chat-msg-bubble" data-i18n="chatbot.welcome">नमस्ते! अपनी यात्रा का अनुमानित किराया जानने के लिए नीचे विवरण भरें। 🚗</div>
-        </div>
-
-        <!-- Fare Form -->
-        <div class="chatbot-form">
-          <div class="chatbot-field">
-            <label data-i18n="chatbot.from">📍 कहाँ से</label>
-            <input type="text" id="chatFrom" placeholder="पिकअप लोकेशन टाइप करें..." data-i18n-placeholder="chatbot.from.placeholder" autocomplete="off" />
-          </div>
-          <div class="chatbot-field">
-            <label data-i18n="chatbot.to">🏁 कहाँ तक</label>
-            <input type="text" id="chatTo" placeholder="गंतव्य टाइप करें..." data-i18n-placeholder="chatbot.to.placeholder" autocomplete="off" />
-          </div>
-          <div class="chatbot-field-row">
-            <div class="chatbot-field half">
-              <label data-i18n="chatbot.vehicle">🚗 वाहन</label>
-              <select id="chatVehicle">
-                <option value="sedan" data-i18n="chatbot.vehicle.sedan">Sedan</option>
-                <option value="hatchback" data-i18n="chatbot.vehicle.hatchback">Hatchback</option>
-                <option value="suv" data-i18n="chatbot.vehicle.suv">SUV</option>
-                <option value="innova" data-i18n="chatbot.vehicle.innova">Innova/Ertiga</option>
-                <option value="tempo" data-i18n="chatbot.vehicle.tempo">Tempo</option>
-              </select>
-            </div>
-            <div class="chatbot-field half">
-              <label data-i18n="chatbot.trip">🔄 ट्रिप</label>
-              <select id="chatTrip">
-                <option value="one-way" data-i18n="chatbot.trip.oneway">एक तरफ़ा</option>
-                <option value="round-trip" data-i18n="chatbot.trip.roundtrip">राउंड ट्रिप</option>
-                <option value="full-day" data-i18n="chatbot.trip.fullday">पूरा दिन</option>
-                <option value="rental" data-i18n="chatbot.trip.rental">किराया</option>
-              </select>
-            </div>
-          </div>
-          <button class="chatbot-calc-btn" id="chatCalcBtn" onclick="calculateChatFare()">
-            <span data-i18n="chatbot.calc">💰 किराया जानें</span>
-          </button>
-        </div>
-
-        <!-- Fare Result -->
-        <div class="chatbot-result hidden" id="chatResult">
-          <div class="chat-msg bot">
-            <div class="chat-msg-avatar">🤖</div>
-            <div class="chat-msg-bubble">
-              <div class="chat-fare-result" id="chatFareResult"></div>
-            </div>
-          </div>
-          <button class="chatbot-clear-btn" id="chatClearBtn" onclick="clearChatResult()">✕ <span data-i18n="chatbot.clear">रिज़ल्ट साफ़ करें</span></button>
+          <div class="chat-msg-bubble" data-i18n="chatbot.faq.welcome">नमस्ते! हम आपकी कैसे मदद कर सकते हैं? नीचे कोई सवाल चुनें। 💡</div>
         </div>
 
         <!-- FAQ Section -->
@@ -1426,20 +1364,29 @@
           <div class="chat-msg bot">
             <div class="chat-msg-avatar">💡</div>
             <div class="chat-msg-bubble">
-              <div class="chatbot-faq-title" data-i18n="chatbot.faq.title">अक्सर पूछे जाने वाले सवाल:</div>
               <div class="chatbot-faq-list">
                 <button class="chatbot-faq-btn" onclick="handleChatFaq('vehicles')" data-i18n="chatbot.faq.q1">🚗 कौन से वाहन उपलब्ध हैं?</button>
                 <button class="chatbot-faq-btn" onclick="handleChatFaq('booking')" data-i18n="chatbot.faq.q2">📞 बुकिंग कैसे करें?</button>
                 <button class="chatbot-faq-btn" onclick="handleChatFaq('payment')" data-i18n="chatbot.faq.q3">💳 भुगतान के तरीके?</button>
                 <button class="chatbot-faq-btn" onclick="handleChatFaq('cancellation')" data-i18n="chatbot.faq.q4">❌ कैंसलेशन पॉलिसी?</button>
                 <button class="chatbot-faq-btn" onclick="handleChatFaq('contact')" data-i18n="chatbot.faq.q5">📱 संपर्क कैसे करें?</button>
+                <button class="chatbot-faq-btn" onclick="handleChatFaq('fare')" data-i18n="chatbot.faq.q6">💰 किराया कैसे पता करें?</button>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- FAQ Answer -->
+        <div class="chatbot-result hidden" id="chatResult">
+          <div class="chat-msg bot">
+            <div class="chat-msg-avatar">🤖</div>
+            <div class="chat-msg-bubble">
+              <div class="chat-fare-result" id="chatFareResult"></div>
+            </div>
+          </div>
+          <button class="chatbot-clear-btn" id="chatClearBtn" onclick="clearChatResult()">✕ <span data-i18n="chatbot.clear">साफ़ करें</span></button>
+        </div>
       </div>
-
-
     </div>
 
     <!-- Booking Modal -->
@@ -1693,6 +1640,10 @@
     <script>
       document.addEventListener("DOMContentLoaded", function () {
         I18N.init();
+        // Lazy-load Google Maps API for calculator section autocomplete
+        if (typeof loadGoogleMapsApi === 'function') {
+          setTimeout(function() { loadGoogleMapsApi(); }, 1000);
+        }
       });
     </script>
     <script src="js/common.js"></script>

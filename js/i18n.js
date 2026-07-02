@@ -543,6 +543,14 @@ var I18N = (function () {
       "calc.trip.roundtrip": "चक्र यात्रा",
       "calc.trip.fullday": "पूरा दिन / मल्टी-दिन",
       "calc.trip.rental": "वाहिकल किराय",
+      "calc.from": "📍 कहाँ से",
+      "calc.from.placeholder": "पिकअप लोकेशन (जैसे: देवघर)",
+      "calc.to": "🏁 कहाँ तक",
+      "calc.to.placeholder": "गंतव्य (जैसे: रांची)",
+      "calc.getFare": "किराया जानें",
+      "calc.error.fillBoth": "कृपया दोनों स्थान (कहाँ से और कहाँ तक) दर्ज करें",
+      "calc.error.geocodeFailed": "दूरी की गणना नहीं हो सकी। कृपया स्पष्ट स्थान का नाम दर्ज करें।",
+      "calc.error.mapsUnavailable": "Google Maps लोड नहीं हो सका। कृपया अपनी API key जाँचें।",
       // Revenue page
       "revenue.kpi.totalBookings": "कुल बुकिंग",
       "revenue.kpi.confirmed": "पुष्टि",
@@ -658,7 +666,8 @@ var I18N = (function () {
       "chatbot.faq.q2": "📞 बुकिंग कैसे करें?",
       "chatbot.faq.q3": "💳 भुगतान के तरीके?",
       "chatbot.faq.q4": "❌ कैंसलेशन पॉलिसी?",
-      "chatbot.faq.q5": "📱 संपर्क कैसे करें?"
+      "chatbot.faq.q5": "📱 संपर्क कैसे करें?",
+      "chatbot.faq.q6": "💰 किराया कैसे पता करें?"
     },
 
     en: {
@@ -1196,6 +1205,14 @@ var I18N = (function () {
       "calc.trip.roundtrip": "Round Trip",
       "calc.trip.fullday": "Full Day / Multi-Day",
       "calc.trip.rental": "Vehicle Rental",
+      "calc.from": "📍 From Location",
+      "calc.from.placeholder": "Pickup location (e.g. Deoghar)",
+      "calc.to": "🏁 To Location",
+      "calc.to.placeholder": "Destination (e.g. Ranchi)",
+      "calc.getFare": "Get Fare",
+      "calc.error.fillBoth": "Please enter both From and To locations",
+      "calc.error.geocodeFailed": "Could not calculate distance. Please enter clear location names.",
+      "calc.error.mapsUnavailable": "Google Maps not loaded. Please check your API key.",
       // Revenue page
       "revenue.kpi.totalBookings": "Total Bookings",
       "revenue.kpi.confirmed": "Confirmed",
@@ -1311,7 +1328,8 @@ var I18N = (function () {
       "chatbot.faq.q2": "📞 How to book?",
       "chatbot.faq.q3": "💳 Payment methods?",
       "chatbot.faq.q4": "❌ Cancellation policy?",
-      "chatbot.faq.q5": "📱 How to contact?"
+      "chatbot.faq.q5": "📱 How to contact?",
+      "chatbot.faq.q6": "💰 How to check fare?"
     },
   };
 
