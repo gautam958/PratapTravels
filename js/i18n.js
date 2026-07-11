@@ -488,7 +488,9 @@ var I18N = (function () {
       "admin.card.vehicles.title": "वाहन मास्टर",
       "admin.card.vehicles.desc": "वाहन, ड्राइवर और उपलब्धता प्रबंधित करें",
       "admin.card.vehicles.link": "डैशबोर्ड खोलें →",
-      "admin.card.calendar.title": "ud83dudcc5 u092cu0941u0915u093fu0902u0917 u0915u0948u0932u0947u0902u0921u0930",n      "admin.card.calendar.desc": "u0938u092du0940 u092cu0941u0915u093fu0902u0917 u0938u0915u094b u0915u0948u0932u0947u0902u0921u0930 u0935u094du092fu0942 u092eu0947u0902 u0926u0947u0916u0947u0902",n      "admin.card.calendar.link": "u0915u0948u0932u0947u0902u0921u0930 u0916u094bu0932u0947u0902 u2192",
+      "admin.card.calendar.title": "📅 बुकिंग कैलेंडर",
+      "admin.card.calendar.desc": "सभी बुकिंग्स को कैलेंडर व्यू में देखें",
+      "admin.card.calendar.link": "कैलेंडर खोलें →",
       // Vehicle type options
       "vehicle.type.sedan": "सेडान",
       "vehicle.type.suv": "SUV",
@@ -1155,7 +1157,9 @@ var I18N = (function () {
       "admin.card.vehicles.title": "Vehicle Master",
       "admin.card.vehicles.desc": "Manage vehicles, drivers, and availability",
       "admin.card.vehicles.link": "Open Dashboard →",
-      "admin.card.calendar.title": "ud83dudcc5 Booking Calendar",n      "admin.card.calendar.desc": "View all bookings in calendar view",n      "admin.card.calendar.link": "Open Calendar u2192",
+      "admin.card.calendar.title": "📅 Booking Calendar",
+      "admin.card.calendar.desc": "View all bookings in calendar view",
+      "admin.card.calendar.link": "Open Calendar →",
       // Vehicle type options
       "vehicle.type.sedan": "Sedan",
       "vehicle.type.suv": "SUV",
