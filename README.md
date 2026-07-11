@@ -17,6 +17,7 @@ A modern, responsive static website for **Pratap Travels** — a private car ren
 - [Audit Trail](#audit-trail)
 - [Vehicle Master](#vehicle-master)
 - [Booking Status Tracker](#booking-status-tracker)
+- [Booking Calendar](#booking-calendar)
 - [Revenue Dashboard](#revenue-dashboard)
 - [Agents Folder](#agents-folder)
 - [PratapTravels-Data Azure Function](#prataptravels-data-azure-function)
@@ -604,6 +605,59 @@ GET https://communication-fn.azurewebsites.net/api/PratapTravels-Data?type=reven
 
 ---
 
+
+## Booking Calendar
+
+Admin-only calendar view at `booking-calendar.html` showing all bookings on a monthly calendar.
+
+### How It Works
+
+- Fetches all bookings from the **PratapTravels-Data** Azure Function API (same endpoint as booking dashboard)
+- Groups bookings by date and displays them as color-coded dots on a monthly calendar grid
+- Click any day to view full booking details (date/time, from/to locations, customer name, email, phone)
+- Auto-refreshes when the user returns to the tab (window focus event)
+- Month navigation with Previous/Next buttons and Today shortcut
+- Status legend: Pending (yellow), Confirmed (green), Completed (blue), Cancelled (red)
+
+### Features
+
+- **Monthly Calendar View** — Full grid showing day, month, and year
+- **Booking Dots** — Color-coded status indicators on each day (max 6 visible per day)
+- **Booking Count Badge** — Shows total number of bookings when more than 1
+- **Day Detail Panel** — Click any day to see all bookings with full details:
+  - Date and Time
+  - Departure (From) and Destination (To) locations
+  - Customer Name, Email, and Phone Number
+  - Passengers, Vehicle, Driver, and Fare
+- **Auto-Refresh** — Calendar updates automatically when the browser tab regains focus
+- **Responsive Design** — Works on desktop, tablet, and mobile
+- **Bilingual Support** — Hindi and English translations via i18n system
+- **Admin-Only Access** — Protected by Google Sign-In authentication
+
+### Data Source
+
+- **API:** PratapTravels-Data Azure Function (`type=booking`)
+- **Cache:** In-memory cache (`_calBookings`) for fast reads
+- **No new backend required** — Reuses existing booking data structure
+
+### Page URL
+
+```
+https://agreeable-meadow-041d69800.7.azurestaticapps.net/booking-calendar.html
+```
+
+### Files Created/Modified
+
+| File | Description |
+|------|-------------|
+| `booking-calendar.html` | New calendar page with admin auth |
+| `js/booking-calendar.js` | Calendar logic with API data fetch |
+| `css/style.css` | Calendar CSS styles appended |
+| `admin.html` | Calendar card added to dashboard grid |
+| `js/admin.js` | Calendar refresh support added |
+| `js/i18n.js` | Hindi/English translations added |
+
+---
 ## Azure Function Changes Required
 
 Both the `type=status` and `type=revenue` handlers are already included in [`azure-function/PratapTravels-run.csx`](azure-function/PratapTravels-run.csx). See the source file for implementation details.

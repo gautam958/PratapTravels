@@ -104,6 +104,14 @@ function _refreshCurrentDashboard() {
       renderDriverDiarySummary();
     });
   }
+  if (document.getElementById("calendarGrid")) {
+    fetchBookingsFromApi().then(function () {
+      if (typeof _calBookings !== 'undefined') {
+        _calBookings = getBookings();
+        renderCalendar();
+      }
+    });
+  }
 }
 
 // ---------- File Upload ----------
