@@ -644,6 +644,9 @@ var I18N = (function () {
       "dd.toast.notFound": "एंट्री नहीं मिली।",
       "dd.toast.csvExported": "CSV एक्सपोर्ट हो गया।",
       "dd.toast.noData": "एक्सपोर्ट के लिए कोई डेटा नहीं।",
+      // Booking Calendar
+      "calendar.hero.title": "📅 बुकिंग कैलेंडर",
+      "calendar.hero.desc": "सभी बुकिंग्स को कैलेंडर व्यू में देखें",
       // Chatbot Fare Calculator
       "chatbot.title": "फ़ेयर कैलकुलेटर",
       "chatbot.subtitle": "अनुमानित किराया जानें",
@@ -1313,6 +1316,9 @@ var I18N = (function () {
       "dd.toast.notFound": "Entry not found.",
       "dd.toast.csvExported": "CSV exported.",
       "dd.toast.noData": "No data to export.",
+      // Booking Calendar
+      "calendar.hero.title": "📅 Booking Calendar",
+      "calendar.hero.desc": "View all bookings in calendar view",
       // Chatbot Fare Calculator
       "chatbot.title": "Fare Calculator",
       "chatbot.subtitle": "Get estimated fare",
@@ -1414,5 +1420,3 @@ var I18N = (function () {
     applyTranslations: applyTranslations,
   };
 })();
-    },
-    // Calendar hero i18n keys are defined above in the respective hi/en sections
