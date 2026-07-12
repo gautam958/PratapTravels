@@ -266,26 +266,30 @@ function __initChatbotPlaces() {
   // Initialize autocomplete on calculator section inputs
   var calcFromInput = document.getElementById('calcFrom');
   var calcToInput = document.getElementById('calcTo');
-  if (calcFromInput) {
-    _calcFromAutocomplete = new google.maps.places.Autocomplete(calcFromInput, options);
-    _calcFromAutocomplete.addListener('place_changed', function() {
-      var place = _calcFromAutocomplete.getPlace();
-      if (place && place.geometry && place.geometry.location) {
-        _calcFromCoords = place.geometry.location;
-      }
-    });
+  try {
+    if (calcFromInput && !_calcFromAutocomplete) {
+      _calcFromAutocomplete = new google.maps.places.Autocomplete(calcFromInput, options);
+      _calcFromAutocomplete.addListener('place_changed', function() {
+        var place = _calcFromAutocomplete.getPlace();
+        if (place && place.geometry && place.geometry.location) {
+          _calcFromCoords = place.geometry.location;
+        }
+      });
+    }
+    if (calcToInput && !_calcToAutocomplete) {
+      _calcToAutocomplete = new google.maps.places.Autocomplete(calcToInput, options);
+      _calcToAutocomplete.addListener('place_changed', function() {
+        var place = _calcToAutocomplete.getPlace();
+        if (place && place.geometry && place.geometry.location) {
+          _calcToCoords = place.geometry.location;
+        }
+      });
+    }
+    // Also initialize booking form location autocomplete
+    _initBookingFormAutocomplete(options);
+  } catch (err) {
+    console.error('[Places] Failed to initialize Google Places Autocomplete:', err);
   }
-  if (calcToInput) {
-    _calcToAutocomplete = new google.maps.places.Autocomplete(calcToInput, options);
-    _calcToAutocomplete.addListener('place_changed', function() {
-      var place = _calcToAutocomplete.getPlace();
-      if (place && place.geometry && place.geometry.location) {
-        _calcToCoords = place.geometry.location;
-      }
-    });
-  }
-  // Also initialize booking form location autocomplete
-  _initBookingFormAutocomplete(options);
 }
 
 // ---------- Booking Form Location Autocomplete ----------
@@ -304,23 +308,35 @@ function _initBookingFormAutocomplete(options) {
     bounds: indiaBounds,
     fields: ['formatted_address', 'geometry', 'name']
   };
-  if (fromInput && !_bookFromAutocomplete) {
-    _bookFromAutocomplete = new google.maps.places.Autocomplete(fromInput, opts);
-    _bookFromAutocomplete.addListener('place_changed', function() {
-      _autoCalcBookingFare();
-    });
-  }
-  if (toInput && !_bookToAutocomplete) {
-    _bookToAutocomplete = new google.maps.places.Autocomplete(toInput, opts);
-    _bookToAutocomplete.addListener('place_changed', function() {
-      _autoCalcBookingFare();
-    });
+  try {
+    if (fromInput && !_bookFromAutocomplete) {
+      _bookFromAutocomplete = new google.maps.places.Autocomplete(fromInput, opts);
+      _bookFromAutocomplete.addListener('place_changed', function() {
+        fromInput._autocompleteSelectActive = true;
+        _autoCalcBookingFare();
+        // Reset flag after a short delay to allow input event to settle
+        setTimeout(function() { fromInput._autocompleteSelectActive = false; }, 500);
+      });
+    }
+    if (toInput && !_bookToAutocomplete) {
+      _bookToAutocomplete = new google.maps.places.Autocomplete(toInput, opts);
+      _bookToAutocomplete.addListener('place_changed', function() {
+        toInput._autocompleteSelectActive = true;
+        _autoCalcBookingFare();
+        // Reset flag after a short delay to allow input event to settle
+        setTimeout(function() { toInput._autocompleteSelectActive = false; }, 500);
+      });
+    }
+  } catch (err) {
+    console.error('[Places] Failed to initialize booking autocomplete:', err);
   }
   // Also trigger on manual input changes (debounced)
+  // Skip if autocomplete just placed a value to avoid double-trigger
   if (fromInput && !fromInput._inputListenerAdded) {
     fromInput._inputListenerAdded = true;
     var debounceTimer = null;
     fromInput.addEventListener('input', function() {
+      if (fromInput._autocompleteSelectActive) return;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(function() { _autoCalcBookingFare(); }, 1500);
     });
@@ -329,6 +345,7 @@ function _initBookingFormAutocomplete(options) {
     toInput._inputListenerAdded = true;
     var debounceTimer2 = null;
     toInput.addEventListener('input', function() {
+      if (toInput._autocompleteSelectActive) return;
       clearTimeout(debounceTimer2);
       debounceTimer2 = setTimeout(function() { _autoCalcBookingFare(); }, 1500);
     });
@@ -391,28 +408,33 @@ function _autoCalcBookingFare() {
 
   // Use Distance Matrix if available
   if (typeof google !== 'undefined' && google.maps && google.maps.DistanceMatrixService) {
-    var service = new google.maps.DistanceMatrixService();
-    service.getDistanceMatrix(
-      {
-        origins: [fromText],
-        destinations: [toText],
-        travelMode: google.maps.TravelMode.DRIVING,
-        unitSystem: google.maps.UnitSystem.METRIC,
-        avoidHighways: false,
-        avoidTolls: false
-      },
-      function(response, status) {
-        if (status === 'OK' && response.rows[0] && response.rows[0].elements[0]) {
-          var element = response.rows[0].elements[0];
-          if (element.status === 'OK') {
-            var distanceKm = element.distance.value / 1000;
-            _computeAndDisplayBookingFare(distanceKm, element.distance.text, element.duration.text);
-            return;
+    try {
+      var service = new google.maps.DistanceMatrixService();
+      service.getDistanceMatrix(
+        {
+          origins: [fromText],
+          destinations: [toText],
+          travelMode: google.maps.TravelMode.DRIVING,
+          unitSystem: google.maps.UnitSystem.METRIC,
+          avoidHighways: false,
+          avoidTolls: false
+        },
+        function(response, status) {
+          if (status === 'OK' && response.rows[0] && response.rows[0].elements[0]) {
+            var element = response.rows[0].elements[0];
+            if (element.status === 'OK') {
+              var distanceKm = element.distance.value / 1000;
+              _computeAndDisplayBookingFare(distanceKm, element.distance.text, element.duration.text);
+              return;
+            }
           }
+          _autoCalcBookingFareFallback(fromText, toText);
         }
-        _autoCalcBookingFareFallback(fromText, toText);
-      }
-    );
+      );
+    } catch (err) {
+      console.error('[FareCalc] Distance Matrix error:', err);
+      _autoCalcBookingFareFallback(fromText, toText);
+    }
   } else {
     _autoCalcBookingFareFallback(fromText, toText);
   }

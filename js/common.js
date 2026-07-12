@@ -2110,12 +2110,16 @@ function _initConfirmBookingPlaces() {
     bounds: indiaBounds,
     fields: ['formatted_address', 'geometry', 'name']
   };
-  // Only create if not already attached
-  if (fromEl && !_confirmFromAutocomplete) {
-    _confirmFromAutocomplete = new google.maps.places.Autocomplete(fromEl, options);
-  }
-  if (toEl && !_confirmToAutocomplete) {
-    _confirmToAutocomplete = new google.maps.places.Autocomplete(toEl, options);
+  // Only create if not already attached, with error handling
+  try {
+    if (fromEl && !_confirmFromAutocomplete) {
+      _confirmFromAutocomplete = new google.maps.places.Autocomplete(fromEl, options);
+    }
+    if (toEl && !_confirmToAutocomplete) {
+      _confirmToAutocomplete = new google.maps.places.Autocomplete(toEl, options);
+    }
+  } catch (err) {
+    console.error('[Places] Failed to initialize confirm booking autocomplete:', err);
   }
 }
 
