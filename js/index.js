@@ -501,6 +501,20 @@ function _computeAndDisplayBookingFare(distanceKm, distanceText, duration) {
   var lowFare = Math.round(fare * 0.85 / 10) * 10;
   var highFare = Math.round(fare * 1.15 / 10) * 10;
 
+  // Adjust displayed KM and duration based on trip type
+  var displayDistanceText = distanceText;
+  var displayDuration = duration;
+  if (selectedTripType === 'round-trip') {
+    displayDistanceText = Math.round(distanceKm * 2) + ' km (Round Trip)';
+    displayDuration = duration + ' + ' + duration;
+  } else if (selectedTripType === 'full-day') {
+    displayDistanceText = distanceText + ' (Full Day)';
+    displayDuration = duration + ' (Full Day ~8-10 hrs)';
+  } else if (selectedTripType === 'rental') {
+    displayDistanceText = distanceText + ' (Rental)';
+    displayDuration = duration + ' (Rental Basis)';
+  }
+
   _bookingFareData = {
     distanceKm: distanceKm,
     distanceText: distanceText,
@@ -512,8 +526,8 @@ function _computeAndDisplayBookingFare(distanceKm, distanceText, duration) {
 
   var summaryDiv = document.getElementById('bookingFareSummary');
   if (summaryDiv) summaryDiv.classList.remove('hidden');
-  document.getElementById('bookingTotalKM').textContent = distanceText;
-  document.getElementById('bookingDuration').textContent = duration;
+  document.getElementById('bookingTotalKM').textContent = displayDistanceText;
+  document.getElementById('bookingDuration').textContent = displayDuration;
   document.getElementById('bookingEstPrice').textContent = '₹' + lowFare.toLocaleString('en-IN') + ' – ₹' + highFare.toLocaleString('en-IN');
 }
 
@@ -647,12 +661,26 @@ function displaySectionFare(distanceKm, distanceText, duration, vehicleType, tri
   var vehicleLabel = vehicleSelect ? vehicleSelect.options[vehicleSelect.selectedIndex].text : vehicleType;
   var tripLabel = tripSelect ? tripSelect.options[tripSelect.selectedIndex].text : tripType;
 
+  // Adjust displayed KM and duration based on trip type
+  var displayDistanceText = distanceText;
+  var displayDuration = duration;
+  if (tripType === 'round-trip') {
+    displayDistanceText = Math.round(distanceKm * 2) + ' km (Round Trip)';
+    displayDuration = duration + ' + ' + duration;
+  } else if (tripType === 'full-day') {
+    displayDistanceText = distanceText + ' (Full Day)';
+    displayDuration = duration + ' (Full Day ~8-10 hrs)';
+  } else if (tripType === 'rental') {
+    displayDistanceText = distanceText + ' (Rental)';
+    displayDuration = duration + ' (Rental Basis)';
+  }
+
   resultDiv.innerHTML =
     '<div class="calc-result-content">' +
     '<div class="calc-price-range">₹' + lowFare.toLocaleString('en-IN') + ' – ₹' + highFare.toLocaleString('en-IN') + '</div>' +
     '<div class="calc-details">' +
-    '<span>📏 ' + escapeHtml(distanceText) + '</span>' +
-    '<span>⏱️ ' + escapeHtml(duration) + '</span>' +
+    '<span>📏 ' + escapeHtml(displayDistanceText) + '</span>' +
+    '<span>⏱️ ' + escapeHtml(displayDuration) + '</span>' +
     '<span>🚗 ' + escapeHtml(vehicleLabel) + '</span>' +
     '<span>🔄 ' + escapeHtml(tripLabel) + '</span>' +
     '</div>' +
