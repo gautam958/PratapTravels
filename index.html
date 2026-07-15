@@ -1441,8 +1441,9 @@
                 ></span>
               </div>
             </div>
+            <!-- Email: Full Width Row -->
             <div class="form-row">
-              <div class="form-group">
+              <div class="form-group form-full">
                 <label for="bookEmail" data-i18n="modal.email">ईमेल पता</label>
                 <input
                   type="email"
@@ -1458,6 +1459,9 @@
                   aria-live="polite"
                 ></span>
               </div>
+            </div>
+            <!-- Trip Type + Vehicle Type: One Row -->
+            <div class="form-row">
               <div class="form-group">
                 <label for="bookType" data-i18n="modal.type"
                   >यात्रा प्रकार *</label
@@ -1491,7 +1495,20 @@
                   aria-live="polite"
                 ></span>
               </div>
+              <div class="form-group">
+                <label for="bookVehicleType" data-i18n="modal.vehicleType">🚗 वाहन प्रकार *</label>
+                <select id="bookVehicleType" name="vehicleType" required>
+                  <option value="" disabled selected data-i18n="modal.vehicleType.default">वाहन प्रकार चुनें</option>
+                  <option value="sedan" data-i18n="vehicle.type.sedan">सेडान (Swift Dzire)</option>
+                  <option value="hatchback" data-i18n="vehicle.type.hatchback">हैचबैक (Celerio)</option>
+                  <option value="suv" data-i18n="vehicle.type.suv">SUV (Brezza/XUV)</option>
+                  <option value="innova" data-i18n="vehicle.type.innova">इनोवा / एर्टिगा</option>
+                  <option value="tempo" data-i18n="vehicle.type.tempo">टेम्पो ट्रैवेलर</option>
+                </select>
+                <span class="form-error" id="vehicleTypeError" role="alert" aria-live="polite"></span>
+              </div>
             </div>
+            <!-- From Location + To Location: One Row -->
             <div class="form-row">
               <div class="form-group">
                 <label for="bookFromLocation">📍 From Location *</label>
@@ -1553,24 +1570,26 @@
                 <input type="time" id="bookTime" name="time" />
               </div>
             </div>
+            <!-- Number of Passengers: Full Width Row -->
             <div class="form-row">
-              <div class="form-group">
+              <div class="form-group form-full">
                 <label for="bookPassengers" data-i18n="modal.passengers"
                   >यात्रियों की संख्या</label
                 >
                 <select id="bookPassengers" name="passengers">
-                  <option value="1">1 यात्री</option>
-                  <option value="2">2 यात्री</option>
-                  <option value="3">3 यात्री</option>
-                  <option value="4" selected>4 यात्री</option>
-                  <option value="5">5 यात्री</option>
-                  <option value="6">6 यात्री</option>
-                  <option value="7">7 यात्री</option>
+                  <option value="1" data-i18n="modal.passengers.1">1 यात्री</option>
+                  <option value="2" data-i18n="modal.passengers.2">2 यात्री</option>
+                  <option value="3" data-i18n="modal.passengers.3">3 यात्री</option>
+                  <option value="4" selected data-i18n="modal.passengers.4">4 यात्री</option>
+                  <option value="5" data-i18n="modal.passengers.5">5 यात्री</option>
+                  <option value="6" data-i18n="modal.passengers.6">6 यात्री</option>
+                  <option value="7" data-i18n="modal.passengers.7">7 यात्री</option>
                 </select>
               </div>
             </div>
+            <!-- Referral Code: Full Width Row -->
             <div class="form-row">
-              <div class="form-group">
+              <div class="form-group form-full">
                 <label for="bookReferral" data-i18n="modal.referral"
                   >रेफ़रल कोड</label
                 >
@@ -1582,7 +1601,6 @@
                   placeholder="यदि है तो रेफ़रल कोड दर्ज करें"
                 />
               </div>
-              <div class="form-group"></div>
             </div>
             <div class="form-group form-full">
               <label for="bookRemarks" data-i18n="modal.remarks"

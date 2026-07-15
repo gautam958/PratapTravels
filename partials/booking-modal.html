@@ -25,13 +25,17 @@
             <span class="form-error" id="phoneError" role="alert" aria-live="polite"></span>
           </div>
         </div>
+        <!-- Email: Full Width Row -->
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group form-full">
             <label for="bookEmail">Email Address</label>
             <input type="email" id="bookEmail" name="email" placeholder="e.g. you@example.com">
             <span class="form-error" id="emailError" role="alert" aria-live="polite"></span>
           </div>
-          <div class="form-group">
+        </div>
+        <!-- Route: Full Width Row -->
+        <div class="form-row">
+          <div class="form-group form-full">
             <label for="bookRoute">Route *</label>
             <select id="bookRoute" name="route" required>
               <option value="" disabled selected>Select your destination</option>
@@ -52,6 +56,7 @@
             <span class="form-error" id="routeError" role="alert" aria-live="polite"></span>
           </div>
         </div>
+        <!-- Date + Time: One Row -->
         <div class="form-row">
           <div class="form-group">
             <label for="bookDate">Travel Date *</label>
@@ -63,8 +68,9 @@
             <input type="time" id="bookTime" name="time">
           </div>
         </div>
+        <!-- Passengers: Full Width -->
         <div class="form-row">
-          <div class="form-group">
+          <div class="form-group form-full">
             <label for="bookPassengers">No. of Passengers</label>
             <select id="bookPassengers" name="passengers">
               <option value="1">1 Passenger</option>
@@ -76,6 +82,9 @@
               <option value="7">7 Passengers</option>
             </select>
           </div>
+        </div>
+        <!-- Trip Type + Vehicle Type: One Row -->
+        <div class="form-row">
           <div class="form-group">
             <label for="bookType">Trip Type *</label>
             <select id="bookType" name="type" required>
@@ -86,6 +95,18 @@
               <option value="rental">Vehicle Rental</option>
             </select>
             <span class="form-error" id="typeError" role="alert" aria-live="polite"></span>
+          </div>
+          <div class="form-group">
+            <label for="bookVehicleType">🚗 Vehicle Type *</label>
+            <select id="bookVehicleType" name="vehicleType" required>
+              <option value="" disabled selected>Select vehicle type</option>
+              <option value="sedan">Sedan (Swift Dzire)</option>
+              <option value="hatchback">Hatchback (Celerio)</option>
+              <option value="suv">SUV (Brezza/XUV)</option>
+              <option value="innova">Innova / Ertiga</option>
+              <option value="tempo">Tempo Traveller</option>
+            </select>
+            <span class="form-error" id="vehicleTypeError" role="alert" aria-live="polite"></span>
           </div>
         </div>
         <div class="form-group form-full">

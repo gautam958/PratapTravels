@@ -387,15 +387,27 @@ var _bookingFareData = null; // { distanceKm, distanceText, duration, fare, lowF
 function _autoCalcBookingFare() {
   var fromInput = document.getElementById('bookFromLocation');
   var toInput = document.getElementById('bookToLocation');
+  var typeSelect = document.getElementById('bookType');
+  var vehicleSelect = document.getElementById('bookVehicleType');
   var summaryDiv = document.getElementById('bookingFareSummary');
   if (!fromInput || !toInput || !summaryDiv) return;
 
   var fromText = fromInput.value.trim();
   var toText = toInput.value.trim();
+  var tripType = typeSelect ? typeSelect.value : '';
+  var vehicleType = vehicleSelect ? vehicleSelect.value : '';
 
-  // Need at least some text in both fields
-  if (!fromText || !toText) {
-    summaryDiv.classList.add('hidden');
+  // Need all 4 fields to calculate fare
+  if (!fromText || !toText || !tripType || !vehicleType) {
+    summaryDiv.classList.remove('hidden');
+    var missingFields = [];
+    if (!tripType) missingFields.push(typeof I18N !== 'undefined' ? I18N.t('modal.type') : 'Trip Type');
+    if (!vehicleType) missingFields.push(typeof I18N !== 'undefined' ? I18N.t('modal.vehicleType') : 'Vehicle Type');
+    if (!fromText) missingFields.push('From Location');
+    if (!toText) missingFields.push('To Location');
+    document.getElementById('bookingTotalKM').textContent = '—';
+    document.getElementById('bookingDuration').textContent = '—';
+    document.getElementById('bookingEstPrice').innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;">⚠️ Please select: ' + escapeHtml(missingFields.join(', ')) + '</span>';
     _bookingFareData = null;
     return;
   }
@@ -476,10 +488,12 @@ function _computeAndDisplayBookingFare(distanceKm, distanceText, duration) {
   var vehicleMults = cfg.vehicleMultipliers || { sedan: 1.0, hatchback: 0.85, suv: 1.3, innova: 1.5, tempo: 2.0 };
   var tripMults = cfg.tripMultipliers || { 'one-way': 1.0, 'round-trip': 1.8, 'full-day': 2.2, 'rental': 2.5 };
 
-  // Read selected trip type from booking modal
+  // Read selected trip type and vehicle type from booking modal
   var bookTypeEl = document.getElementById('bookType');
+  var bookVehicleEl = document.getElementById('bookVehicleType');
   var selectedTripType = (bookTypeEl && bookTypeEl.value) ? bookTypeEl.value : 'one-way';
-  var vMult = vehicleMults.sedan || 1.0;
+  var selectedVehicleType = (bookVehicleEl && bookVehicleEl.value) ? bookVehicleEl.value : 'sedan';
+  var vMult = vehicleMults[selectedVehicleType] || 1.0;
   var tMult = tripMults[selectedTripType] || 1.0;
   var rawFare = (baseFare + (distanceKm * perKm)) * vMult * tMult;
   var minTripFare = minFare * vMult * tMult;
@@ -755,6 +769,14 @@ function openBookingModal() {
     }
     // Initialize Google Places autocomplete for booking form fields
     _ensureGoogleMapsForBooking();
+    // Register vehicle type change listener (independent of Google Maps)
+    var vehicleSelect = document.getElementById('bookVehicleType');
+    if (vehicleSelect && !vehicleSelect._vehicleTypeListenerAdded) {
+      vehicleSelect._vehicleTypeListenerAdded = true;
+      vehicleSelect.addEventListener('change', function() {
+        _autoCalcBookingFare();
+      });
+    }
   }
 }
 
@@ -814,11 +836,13 @@ function resetBookingForm() {
     form.reset();
     form.classList.remove("hidden");
     success.classList.add("hidden");
-    // Clear from/to location autocomplete fields
+    // Clear from/to location autocomplete fields and vehicle type
     var fi = document.getElementById('bookFromLocation');
     var ti = document.getElementById('bookToLocation');
+    var vt = document.getElementById('bookVehicleType');
     if (fi) fi.value = '';
     if (ti) ti.value = '';
+    if (vt) vt.value = '';
     // Clear fare summary
     var summaryDiv = document.getElementById('bookingFareSummary');
     if (summaryDiv) summaryDiv.classList.add('hidden');

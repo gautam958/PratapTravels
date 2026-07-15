@@ -317,6 +317,14 @@ document.addEventListener("DOMContentLoaded", function () {
         type.classList.add("error");
         valid = false;
       }
+      // Validate vehicle type
+      var vehicleTypeEl = document.getElementById("bookVehicleType");
+      if (vehicleTypeEl && !vehicleTypeEl.value) {
+        document.getElementById("vehicleTypeError").textContent =
+          "Please select a vehicle type";
+        vehicleTypeEl.classList.add("error");
+        valid = false;
+      }
 
       if (!valid) return;
 
@@ -332,6 +340,8 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById("bookTime").value || "Not specified";
       var passengersVal = document.getElementById("bookPassengers").value;
       var typeVal = type.value;
+      var vehicleTypeEl = document.getElementById("bookVehicleType");
+      var vehicleTypeVal = vehicleTypeEl ? vehicleTypeEl.value : '';
       var remarksVal = document.getElementById("bookRemarks").value.trim();
 
       // Show loading state
@@ -404,6 +414,7 @@ document.addEventListener("DOMContentLoaded", function () {
         time: timeVal,
         passengers: passengersVal,
         trip_type: typeVal,
+        vehicle_type: vehicleTypeVal || "",
         remarks: remarksVal || "",
         referral_code: referralVal || "",
         createdAt: new Date().toISOString(),
